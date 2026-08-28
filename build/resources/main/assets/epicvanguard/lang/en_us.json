@@ -1,0 +1,16 @@
+{
+  "itemGroup.epicvanguard.vanguard_tab": "Epic Vanguard - Companions",
+  "entity.epicvanguard.warrior_companion": "Warrior Companion",
+  "item.epicvanguard.gold_coin": "Gold Coin",
+  "item.epicvanguard.warrior_companion_spawn_egg": "Warrior Companion Spawn Egg",
+  "gui.epicvanguard.warrior.level": "Level: %s",
+  "gui.epicvanguard.warrior.health": "Health: %s/%s",
+  "gui.epicvanguard.warrior.mode.aggressive": "Aggressive",
+  "gui.epicvanguard.warrior.mode.defensive": "Defensive",
+  "gui.epicvanguard.warrior.mode.guard": "Guard",
+  "gui.epicvanguard.warrior.mode.stay": "Stay",
+  "gui.epicvanguard.warrior.tree.attack": "Attack",
+  "gui.epicvanguard.warrior.tree.defense": "Defense",
+  "gui.epicvanguard.warrior.tree.speed": "Speed",
+  "gui.epicvanguard.warrior.tree.vitality": "Vitality"
+}
