@@ -44,6 +44,7 @@ public class VanguardCombatEvents {
     public static void onLevelTick(TickEvent.LevelTickEvent event) {
         if (event.phase == TickEvent.Phase.END && event.level instanceof ServerLevel serverLevel) {
             VillageCompanionSpawner.tick(serverLevel);
+            VillageWarriorSpawner.tick(serverLevel);
         }
     }
 

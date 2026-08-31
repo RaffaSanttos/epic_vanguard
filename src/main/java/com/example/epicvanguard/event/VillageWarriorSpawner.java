@@ -10,23 +10,20 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
-import net.minecraftforge.event.level.ChunkEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 
 import java.util.Map;
 
-@Mod.EventBusSubscriber(modid = EpicVanguardMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class VillageWarriorSpawner {
 
     public static final TagKey<Structure> VILLAGE_TAG =
@@ -36,39 +33,57 @@ public class VillageWarriorSpawner {
     public static final ResourceLocation WARRIOR_HOUSE_RL =
             new ResourceLocation(EpicVanguardMod.MOD_ID, "warrior_house");
 
-    @SubscribeEvent
-    public static void onChunkLoad(ChunkEvent.Load event) {
-        if (!(event.getLevel() instanceof ServerLevel serverLevel)) {
-            return;
-        }
+    public static void tick(ServerLevel level) {
+        // Run check every 40 ticks (~2 seconds) when players are in overworld
+        if (level.getGameTime() % 40 != 0) return;
 
-        ChunkAccess chunk = event.getChunk();
-        Map<Structure, StructureStart> starts = chunk.getAllStarts();
-        if (starts.isEmpty()) return;
+        var players = level.players();
+        if (players.isEmpty()) return;
 
-        VillageWarriorSavedData savedData = VillageWarriorSavedData.get(serverLevel.getServer());
+        VillageWarriorSavedData savedData = VillageWarriorSavedData.get(level.getServer());
 
-        for (Map.Entry<Structure, StructureStart> entry : starts.entrySet()) {
-            StructureStart start = entry.getValue();
-            if (start != null && start.isValid()) {
-                Holder<Structure> structureHolder = serverLevel.registryAccess()
-                        .registryOrThrow(Registries.STRUCTURE)
-                        .wrapAsHolder(entry.getKey());
+        for (ServerPlayer player : players) {
+            if (!player.isAlive() || player.isSpectator()) continue;
 
-                ResourceLocation structureId = serverLevel.registryAccess()
-                        .registryOrThrow(Registries.STRUCTURE)
-                        .getKey(entry.getKey());
+            int playerChunkX = player.getBlockX() >> 4;
+            int playerChunkZ = player.getBlockZ() >> 4;
 
-                ChunkPos startPos = start.getChunkPos();
-                if (startPos.equals(chunk.getPos())) {
-                    long key = startPos.toLong();
-                    if (!savedData.hasSpawned(key)) {
-                        if (structureHolder.is(VILLAGE_TAG)) {
-                            savedData.markSpawned(key);
-                            spawnWarriorsInVillage(serverLevel, start);
-                        } else if (structureHolder.is(WARRIOR_HOUSE_KEY) || (structureId != null && structureId.equals(WARRIOR_HOUSE_RL))) {
-                            savedData.markSpawned(key);
-                            spawnWarriorInHouse(serverLevel, start);
+            // Check loaded chunks in a 3x3 radius around player without triggering blocking loads
+            for (int dx = -2; dx <= 2; dx++) {
+                for (int dz = -2; dz <= 2; dz++) {
+                    int cx = playerChunkX + dx;
+                    int cz = playerChunkZ + dz;
+
+                    LevelChunk chunk = level.getChunkSource().getChunkNow(cx, cz);
+                    if (chunk == null) continue;
+
+                    Map<Structure, StructureStart> starts = chunk.getAllStarts();
+                    if (starts.isEmpty()) continue;
+
+                    for (Map.Entry<Structure, StructureStart> entry : starts.entrySet()) {
+                        StructureStart start = entry.getValue();
+                        if (start != null && start.isValid()) {
+                            ChunkPos startPos = start.getChunkPos();
+                            if (startPos.x == cx && startPos.z == cz) {
+                                long key = startPos.toLong();
+                                if (!savedData.hasSpawned(key)) {
+                                    Holder<Structure> structureHolder = level.registryAccess()
+                                            .registryOrThrow(Registries.STRUCTURE)
+                                            .wrapAsHolder(entry.getKey());
+
+                                    ResourceLocation structureId = level.registryAccess()
+                                            .registryOrThrow(Registries.STRUCTURE)
+                                            .getKey(entry.getKey());
+
+                                    if (structureHolder.is(VILLAGE_TAG)) {
+                                        savedData.markSpawned(key);
+                                        spawnWarriorsInVillage(level, start);
+                                    } else if (structureHolder.is(WARRIOR_HOUSE_KEY) || (structureId != null && structureId.equals(WARRIOR_HOUSE_RL))) {
+                                        savedData.markSpawned(key);
+                                        spawnWarriorInHouse(level, start);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
