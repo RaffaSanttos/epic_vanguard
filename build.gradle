@@ -48,6 +48,11 @@ minecraft {
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 repositories {
+    mavenCentral()
+    maven {
+        name = "MinecraftForge"
+        url = "https://maven.minecraftforge.net/"
+    }
     flatDir {
         dir 'libs'
     }
@@ -61,6 +66,10 @@ dependencies {
 
     // Epic Fight (Local flatDir)
     implementation fg.deobf("local:epic-fight:20.14.17-mc1.20.1-forge")
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
 }
 
 tasks.named('processResources', ProcessResources).configure {
