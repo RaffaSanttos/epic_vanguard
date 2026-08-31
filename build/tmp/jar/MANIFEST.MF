@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Specification-Title: epicvanguard
+Specification-Vendor: Rafael Santos
+Specification-Version: 1
+Implementation-Title: epic_vanguard
+Implementation-Version: 1.0.0
+Implementation-Vendor: Rafael Santos
+Implementation-Timestamp: 2026-08-28T19:02:23-0300
+
