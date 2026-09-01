@@ -19,30 +19,16 @@ import java.util.List;
 @Mod.EventBusSubscriber(modid = EpicVanguardMod.MOD_ID)
 public class JigsawPoolInjector {
 
-    private static final ResourceLocation[] VILLAGE_POOLS = {
-            new ResourceLocation("minecraft:village/plains/houses"),
-            new ResourceLocation("minecraft:village/desert/houses"),
-            new ResourceLocation("minecraft:village/savanna/houses"),
-            new ResourceLocation("minecraft:village/snowy/houses"),
-            new ResourceLocation("minecraft:village/taiga/houses")
-    };
+    private static final ResourceLocation[] VILLAGE_POOLS = {};
 
     @SubscribeEvent
     public static void onServerAboutToStart(ServerAboutToStartEvent event) {
-        Registry<StructureTemplatePool> templatePoolRegistry =
-                event.getServer().registryAccess().registryOrThrow(Registries.TEMPLATE_POOL);
-
-        for (ResourceLocation poolId : VILLAGE_POOLS) {
-            StructureTemplatePool pool = templatePoolRegistry.get(poolId);
-            if (pool == null) continue;
-
-            injectPoolElement(pool, poolId, "epicvanguard:tavern", 5);
-        }
+        // Taverns removed - companions spawn directly and naturally in villages
     }
 
     @SuppressWarnings("unchecked")
     public static void injectPoolElement(StructureTemplatePool pool, ResourceLocation poolId, String structureLocation, int weight) {
-        StructurePoolElement element = StructurePoolElement.legacy(structureLocation)
+        StructurePoolElement element = StructurePoolElement.single(structureLocation)
                 .apply(StructureTemplatePool.Projection.RIGID);
 
         try {
