@@ -97,17 +97,27 @@ public class HonorContractScreen extends AbstractContainerScreen<HonorContractMe
         guiGraphics.drawString(this.font, titleStr, titleX, 12, 0x8B4513, false);
 
         // Informacoes do mercenario com contraste perfeito no pergaminho
-        guiGraphics.drawString(this.font, "§8Guerreiro: §0§l" + warrior.getWarriorName(), 18, 32, 0x333333, false);
-        guiGraphics.drawString(this.font, "§8Preço: §6§l" + cost + " §8Moedas de Ouro", 18, 48, 0x333333, false);
+        guiGraphics.drawString(this.font, "§8Guerreiro: §0§l" + warrior.getWarriorName(), 18, 30, 0x333333, false);
+
+        int tier = warrior.getEquipmentTier();
+        String tierName = switch (tier) {
+            case 0 -> "§2Recruta §8(Couro/Madeira)";
+            case 1 -> "§1Veterano §8(Cota de Malha)";
+            case 2 -> "§5Elite §8(Ferro)";
+            case -1 -> "§cPrisioneiro de Guerra";
+            default -> "§8Mercenário";
+        };
+        guiGraphics.drawString(this.font, "§8Patente: " + tierName, 18, 44, 0x333333, false);
+        guiGraphics.drawString(this.font, "§8Preço: §6§l" + cost + " §8Moedas de Ouro", 18, 58, 0x333333, false);
 
         String coinStr = isCreative ? "§2§lCriativo (Grátis)" : (canAfford ? "§2§l" : "§c§l") + coins + " §8/ §6§l" + cost + " 🪙";
-        guiGraphics.drawString(this.font, "§8Seu Ouro: " + coinStr, 18, 64, 0x333333, false);
+        guiGraphics.drawString(this.font, "§8Seu Ouro: " + coinStr, 18, 72, 0x333333, false);
 
         // Mensagem descritiva com quebra de linha automatica dentro das margens do pergaminho
         String desc = canAfford
                 ? "§2Você possui os recursos para selar o contrato. Este guerreiro lutará ao seu lado com honra!"
                 : "§4Ouro insuficiente. Junte mais " + (cost - coins) + " moeda(s) de ouro para contratar.";
-        guiGraphics.drawWordWrap(this.font, FormattedText.of(desc), 18, 84, 154, 0x444444);
+        guiGraphics.drawWordWrap(this.font, FormattedText.of(desc), 18, 90, 154, 0x444444);
     }
 
     @Override

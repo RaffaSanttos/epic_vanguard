@@ -31,10 +31,10 @@ glintStrength:0.75
 damageTiltStrength:1.0
 highContrast:false
 gamma:0.5
-renderDistance:2
-simulationDistance:5
+renderDistance:11
+simulationDistance:14
 entityDistanceScaling:1.0
-guiScale:0
+guiScale:2
 particles:0
 maxFps:120
 graphicsMode:1
@@ -45,7 +45,7 @@ renderClouds:"true"
 resourcePacks:[]
 incompatibleResourcePacks:[]
 lastServer:
-lang:en_us
+lang:pt_br
 soundDevice:""
 chatVisibility:0
 chatOpacity:1.0

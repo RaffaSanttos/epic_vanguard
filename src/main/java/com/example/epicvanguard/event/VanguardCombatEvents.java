@@ -6,7 +6,6 @@ import com.example.epicvanguard.entity.CompanionSavedData;
 import com.example.epicvanguard.entity.WarriorCompanionEntity;
 import com.example.epicvanguard.init.ModEntityTypes;
 import com.example.epicvanguard.networking.Messages;
-import com.example.epicvanguard.world.VillageCompanionSpawner;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -43,7 +42,6 @@ public class VanguardCombatEvents {
     @SubscribeEvent
     public static void onLevelTick(TickEvent.LevelTickEvent event) {
         if (event.phase == TickEvent.Phase.END && event.level instanceof ServerLevel serverLevel) {
-            VillageCompanionSpawner.tick(serverLevel);
             VillageWarriorSpawner.tick(serverLevel);
         }
     }

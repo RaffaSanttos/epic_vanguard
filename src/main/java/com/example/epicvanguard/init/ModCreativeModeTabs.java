@@ -18,6 +18,7 @@ public class ModCreativeModeTabs {
                     .title(Component.translatable("itemGroup.epicvanguard.vanguard_tab"))
                     .displayItems((parameters, output) -> {
                         output.accept(ModItems.GOLD_COIN.get());
+                        output.accept(ModItems.VANGUARD_POINT.get());
                         output.accept(ModItems.WARRIOR_SPAWN_EGG.get());
                     })
                     .build());

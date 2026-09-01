@@ -1,9 +1,11 @@
 package com.example.epicvanguard;
 
+import com.example.epicvanguard.init.ModBlocks;
 import com.example.epicvanguard.init.ModCreativeModeTabs;
 import com.example.epicvanguard.init.ModEntityTypes;
 import com.example.epicvanguard.init.ModItems;
 import com.example.epicvanguard.init.ModMenus;
+import com.example.epicvanguard.init.ModPoiTypes;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
@@ -20,7 +22,9 @@ public class EpicVanguardMod {
     public EpicVanguardMod() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
+        ModBlocks.BLOCKS.register(modEventBus);
         ModItems.ITEMS.register(modEventBus);
+        ModPoiTypes.POI_TYPES.register(modEventBus);
         ModEntityTypes.ENTITY_TYPES.register(modEventBus);
         ModMenus.MENUS.register(modEventBus);
         ModCreativeModeTabs.CREATIVE_MODE_TABS.register(modEventBus);

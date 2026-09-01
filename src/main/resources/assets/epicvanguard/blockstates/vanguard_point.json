@@ -1,0 +1,8 @@
+﻿{
+  "variants": {
+    "facing=north": { "model": "epicvanguard:block/vanguard_point" },
+    "facing=south": { "model": "epicvanguard:block/vanguard_point", "y": 180 },
+    "facing=west":  { "model": "epicvanguard:block/vanguard_point", "y": 270 },
+    "facing=east":  { "model": "epicvanguard:block/vanguard_point", "y": 90 }
+  }
+}

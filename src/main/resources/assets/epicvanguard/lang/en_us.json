@@ -3,6 +3,7 @@
   "entity.epicvanguard.warrior_companion": "Warrior Companion",
   "item.epicvanguard.gold_coin": "Gold Coin",
   "item.epicvanguard.warrior_companion_spawn_egg": "Warrior Companion Spawn Egg",
+  "block.epicvanguard.vanguard_point": "Vanguard Point",
   "gui.epicvanguard.warrior.level": "Level: %s",
   "gui.epicvanguard.warrior.health": "Health: %s/%s",
   "gui.epicvanguard.warrior.mode.aggressive": "Aggressive",
@@ -12,5 +13,9 @@
   "gui.epicvanguard.warrior.tree.attack": "Attack",
   "gui.epicvanguard.warrior.tree.defense": "Defense",
   "gui.epicvanguard.warrior.tree.speed": "Speed",
-  "gui.epicvanguard.warrior.tree.vitality": "Vitality"
+  "gui.epicvanguard.warrior.tree.vitality": "Vitality",
+  "gui.epicvanguard.contract.tier1": "Recruit (Leather/Wood)",
+  "gui.epicvanguard.contract.tier2": "Veteran (Chainmail/Stone)",
+  "gui.epicvanguard.contract.tier3": "Elite (Iron/Iron)",
+  "gui.epicvanguard.contract.prisoner": "Prisoner of War (Free Rescue)"
 }

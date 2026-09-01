@@ -4,15 +4,21 @@ import com.example.epicvanguard.EpicVanguardMod;
 import com.example.epicvanguard.entity.VillageWarriorSavedData;
 import com.example.epicvanguard.entity.WarriorCompanionEntity;
 import com.example.epicvanguard.init.ModEntityTypes;
+import com.example.epicvanguard.init.ModPoiTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.ai.village.poi.PoiManager;
+import net.minecraft.world.entity.ai.village.poi.PoiRecord;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -21,20 +27,34 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
+import net.minecraft.world.phys.AABB;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class VillageWarriorSpawner {
 
     public static final TagKey<Structure> VILLAGE_TAG =
             TagKey.create(Registries.STRUCTURE, new ResourceLocation("minecraft", "village"));
+    public static final TagKey<Structure> PILLAGER_OUTPOST_TAG =
+            TagKey.create(Registries.STRUCTURE, new ResourceLocation("minecraft", "pillager_outpost"));
     public static final ResourceKey<Structure> WARRIOR_HOUSE_KEY =
             ResourceKey.create(Registries.STRUCTURE, new ResourceLocation(EpicVanguardMod.MOD_ID, "warrior_house"));
     public static final ResourceLocation WARRIOR_HOUSE_RL =
             new ResourceLocation(EpicVanguardMod.MOD_ID, "warrior_house");
+    public static final ResourceLocation PILLAGER_OUTPOST_RL =
+            new ResourceLocation("minecraft", "pillager_outpost");
+
+    // Rastreia o tempo do último respawn em cada POI de taverna (72.000 ticks = 3 dias de Minecraft)
+    private static final Map<BlockPos, Long> LAST_TAVERN_SPAWN = new HashMap<>();
+    private static final long TAVERN_RESPAWN_INTERVAL = 72000L; // 3 dias in-game
 
     public static void tick(ServerLevel level) {
-        // Run check every 40 ticks (~2 seconds) when players are in overworld
+        // Executa a cada 40 ticks (~2 segundos) quando jogadores estão no Overworld
         if (level.getGameTime() % 40 != 0) return;
 
         var players = level.players();
@@ -48,7 +68,7 @@ public class VillageWarriorSpawner {
             int playerChunkX = player.getBlockX() >> 4;
             int playerChunkZ = player.getBlockZ() >> 4;
 
-            // Check loaded chunks in a 3x3 radius around player without triggering blocking loads
+            // 1. Checa estruturas em chunks carregados ao redor do jogador
             for (int dx = -2; dx <= 2; dx++) {
                 for (int dz = -2; dz <= 2; dz++) {
                     int cx = playerChunkX + dx;
@@ -75,9 +95,9 @@ public class VillageWarriorSpawner {
                                             .registryOrThrow(Registries.STRUCTURE)
                                             .getKey(entry.getKey());
 
-                                    if (structureHolder.is(VILLAGE_TAG)) {
+                                    if (structureHolder.is(PILLAGER_OUTPOST_TAG) || (structureId != null && structureId.equals(PILLAGER_OUTPOST_RL))) {
                                         savedData.markSpawned(key);
-                                        spawnWarriorsInVillage(level, start);
+                                        spawnPrisonerInOutpost(level, start);
                                     } else if (structureHolder.is(WARRIOR_HOUSE_KEY) || (structureId != null && structureId.equals(WARRIOR_HOUSE_RL))) {
                                         savedData.markSpawned(key);
                                         spawnWarriorInHouse(level, start);
@@ -87,6 +107,149 @@ public class VillageWarriorSpawner {
                         }
                     }
                 }
+            }
+
+            // 2. Checa POIs de Taverna (Vanguard Point) ao redor do jogador para spawn inicial e respawn a cada 3 dias
+            checkTavernRespawn(level, player);
+        }
+    }
+
+    private static void checkTavernRespawn(ServerLevel level, ServerPlayer player) {
+        PoiManager poiManager = level.getPoiManager();
+        List<BlockPos> tavernPoints = poiManager.getInRange(
+                holder -> holder.is(ModPoiTypes.VANGUARD_POI.getKey()),
+                player.blockPosition(),
+                48,
+                PoiManager.Occupancy.ANY
+        ).map(PoiRecord::getPos).toList();
+
+        long currentTime = level.getGameTime();
+
+        for (BlockPos poiPos : tavernPoints) {
+            var unrecruitedWarriors = level.getEntitiesOfClass(
+                    WarriorCompanionEntity.class,
+                    new AABB(poiPos).inflate(24.0D),
+                    w -> !w.isRecruited() && !w.isPrisoner()
+            );
+
+            if (unrecruitedWarriors.isEmpty()) {
+                long lastSpawn = LAST_TAVERN_SPAWN.getOrDefault(poiPos, 0L);
+                if (lastSpawn == 0L || (currentTime - lastSpawn) >= TAVERN_RESPAWN_INTERVAL) {
+                    LAST_TAVERN_SPAWN.put(poiPos, currentTime);
+                    int count = (lastSpawn == 0L) ? (1 + level.random.nextInt(2)) : 1;
+                    for (int i = 0; i < count; i++) {
+                        spawnTavernMercenary(level, poiPos);
+                    }
+                }
+            }
+        }
+    }
+
+    private static void spawnTavernMercenary(ServerLevel level, BlockPos poiPos) {
+        BlockPos spawnPos = poiPos.above();
+        if (!level.getBlockState(spawnPos).isAir()) {
+            spawnPos = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, poiPos);
+        }
+
+        WarriorCompanionEntity warrior = ModEntityTypes.WARRIOR_COMPANION.get().create(level);
+        if (warrior != null) {
+            warrior.moveTo(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D,
+                    level.random.nextFloat() * 360.0F, 0.0F);
+            warrior.finalizeSpawn(level, level.getCurrentDifficultyAt(spawnPos), MobSpawnType.STRUCTURE, null, null);
+            warrior.applyEquipmentTier(WarriorCompanionEntity.rollRandomTier(level.random));
+            warrior.setRecruited(false);
+            warrior.setCombatMode(1);
+            level.addFreshEntity(warrior);
+
+            level.sendParticles(ParticleTypes.HAPPY_VILLAGER,
+                    spawnPos.getX() + 0.5D, spawnPos.getY() + 1.0D, spawnPos.getZ() + 0.5D,
+                    15, 0.5D, 0.5D, 0.5D, 0.05D);
+            level.playSound(null, spawnPos, SoundEvents.VILLAGER_YES, SoundSource.NEUTRAL, 1.0F, 1.0F);
+        }
+    }
+
+    private static void spawnPrisonerInOutpost(ServerLevel level, StructureStart start) {
+        BoundingBox bb = start.getBoundingBox();
+        int centerX = (bb.minX() + bb.maxX()) / 2;
+        int centerZ = (bb.minZ() + bb.maxZ()) / 2;
+
+        // Localiza um ponto aberto no posto avançado para a cela 4x4
+        BlockPos cagePos = null;
+        for (int dx = -14; dx <= 14; dx += 4) {
+            for (int dz = -14; dz <= 14; dz += 4) {
+                if (Math.abs(dx) < 6 && Math.abs(dz) < 6) continue;
+                int x = centerX + dx;
+                int z = centerZ + dz;
+                if (x < bb.minX() || x > bb.maxX() || z < bb.minZ() || z > bb.maxZ()) continue;
+
+                BlockPos ground = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(x, 0, z));
+                BlockPos below = ground.below();
+                if (level.getBlockState(below).isSolidRender(level, below) && !level.getBlockState(below).is(Blocks.LAVA)) {
+                    cagePos = ground;
+                    break;
+                }
+            }
+            if (cagePos != null) break;
+        }
+
+        if (cagePos == null) {
+            cagePos = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(centerX + 10, 0, centerZ + 10));
+        }
+
+        // Constrói a Cela de Prisioneiro 4x4 de Carvalho Escuro
+        buildPillagerPrisonerCage(level, cagePos);
+
+        // Spawna o Prisioneiro exatamente no interior da cela (espaço 2x2)
+        BlockPos insidePos = cagePos.offset(1, 1, 1);
+        WarriorCompanionEntity prisoner = ModEntityTypes.WARRIOR_COMPANION.get().create(level);
+        if (prisoner != null) {
+            prisoner.moveTo(insidePos.getX() + 0.5D, insidePos.getY(), insidePos.getZ() + 0.5D,
+                    level.random.nextFloat() * 360.0F, 0.0F);
+            prisoner.finalizeSpawn(level, level.getCurrentDifficultyAt(insidePos), MobSpawnType.STRUCTURE, null, null);
+            prisoner.applyEquipmentTier(-1); // Prisioneiro: Sem armadura, 3.0 HP, Fraqueza permanente
+            prisoner.setRecruited(false);
+            prisoner.setCombatMode(1);
+            level.addFreshEntity(prisoner);
+        }
+    }
+
+    private static void buildPillagerPrisonerCage(ServerLevel level, BlockPos origin) {
+        // Base 4x4 no chão (Y = 0)
+        for (int x = 0; x < 4; x++) {
+            for (int z = 0; z < 4; z++) {
+                level.setBlock(origin.offset(x, 0, z), Blocks.DARK_OAK_PLANKS.defaultBlockState(), 3);
+            }
+        }
+
+        // Paredes (Y = 1 e Y = 2) com cantos de toras e cercas de carvalho escuro
+        for (int y = 1; y <= 2; y++) {
+            for (int x = 0; x < 4; x++) {
+                for (int z = 0; z < 4; z++) {
+                    BlockPos p = origin.offset(x, y, z);
+                    boolean isCorner = (x == 0 || x == 3) && (z == 0 || z == 3);
+                    boolean isEdge = (x == 0 || x == 3 || z == 0 || z == 3);
+
+                    if (isCorner) {
+                        level.setBlock(p, Blocks.DARK_OAK_LOG.defaultBlockState(), 3);
+                    } else if (isEdge) {
+                        level.setBlock(p, Blocks.DARK_OAK_FENCE.defaultBlockState(), 3);
+                    } else {
+                        level.setBlock(p, Blocks.AIR.defaultBlockState(), 3);
+                    }
+                }
+            }
+        }
+
+        // Teto (Y = 3)
+        for (int x = 0; x < 4; x++) {
+            for (int z = 0; z < 4; z++) {
+                level.setBlock(origin.offset(x, 3, z), Blocks.DARK_OAK_PLANKS.defaultBlockState(), 3);
+            }
+        }
+        // Detalhe no topo (Y = 4) - Lajes 2x2
+        for (int x = 1; x <= 2; x++) {
+            for (int z = 1; z <= 2; z++) {
+                level.setBlock(origin.offset(x, 4, z), Blocks.DARK_OAK_SLAB.defaultBlockState(), 3);
             }
         }
     }
@@ -106,8 +269,9 @@ public class VillageWarriorSpawner {
             warrior.moveTo(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D,
                     level.random.nextFloat() * 360.0F, 0.0F);
             warrior.finalizeSpawn(level, level.getCurrentDifficultyAt(spawnPos), MobSpawnType.STRUCTURE, null, null);
+            warrior.applyEquipmentTier(WarriorCompanionEntity.rollRandomTier(level.random));
             warrior.setRecruited(false);
-            warrior.setCombatMode(1); // Defensivo por padrão
+            warrior.setCombatMode(1);
             level.addFreshEntity(warrior);
         }
     }
@@ -140,32 +304,5 @@ public class VillageWarriorSpawner {
             }
         }
         return null;
-    }
-
-    private static void spawnWarriorsInVillage(ServerLevel level, StructureStart start) {
-        int centerX = (start.getBoundingBox().minX() + start.getBoundingBox().maxX()) / 2;
-        int centerZ = (start.getBoundingBox().minZ() + start.getBoundingBox().maxZ()) / 2;
-
-        // Cada vila terá garantidamente entre 2 e 4 guerreiros
-        int count = 2 + level.random.nextInt(3);
-
-        for (int i = 0; i < count; i++) {
-            int offsetX = (level.random.nextInt(9) - 4) * 3;
-            int offsetZ = (level.random.nextInt(9) - 4) * 3;
-            int targetX = centerX + offsetX;
-            int targetZ = centerZ + offsetZ;
-
-            BlockPos spawnPos = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(targetX, 0, targetZ));
-
-            WarriorCompanionEntity warrior = ModEntityTypes.WARRIOR_COMPANION.get().create(level);
-            if (warrior != null) {
-                warrior.moveTo(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D,
-                        level.random.nextFloat() * 360.0F, 0.0F);
-                warrior.finalizeSpawn(level, level.getCurrentDifficultyAt(spawnPos), MobSpawnType.STRUCTURE, null, null);
-                warrior.setRecruited(false);
-                warrior.setCombatMode(1); // Defensivo por padrão
-                level.addFreshEntity(warrior);
-            }
-        }
     }
 }

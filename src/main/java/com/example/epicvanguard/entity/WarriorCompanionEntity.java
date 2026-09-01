@@ -1,5 +1,6 @@
 package com.example.epicvanguard.entity;
 
+import com.example.epicvanguard.init.ModBlocks;
 import com.example.epicvanguard.init.ModItems;
 import com.example.epicvanguard.inventory.WarriorInventory;
 import com.example.epicvanguard.networking.Messages;
@@ -23,34 +24,48 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.TargetGoal;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.AbstractIllager;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.PotionItem;
 import net.minecraft.world.item.ShieldItem;
+import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
@@ -93,6 +108,10 @@ public class WarriorCompanionEntity extends PathfinderMob {
             SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> RECRUIT_COST =
             SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> EQUIPMENT_TIER =
+            SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> PRISONER =
+            SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.BOOLEAN);
 
     private final WarriorInventory warriorInventory = new WarriorInventory();
     private int stamina = 100;
@@ -232,9 +251,27 @@ public class WarriorCompanionEntity extends PathfinderMob {
         this.entityData.define(QUEST_STARTED, false);
         this.entityData.define(QUEST_TYPE, 0);
         this.entityData.define(RECRUIT_COST, 40);
+        this.entityData.define(EQUIPMENT_TIER, 0);
+        this.entityData.define(PRISONER, false);
     }
 
     // ── Getters / Setters ─────────────────────────────────────────────────────
+    public int getEquipmentTier() {
+        return this.entityData.get(EQUIPMENT_TIER);
+    }
+
+    public void setEquipmentTier(int tier) {
+        this.entityData.set(EQUIPMENT_TIER, tier);
+    }
+
+    public boolean isPrisoner() {
+        return this.entityData.get(PRISONER);
+    }
+
+    public void setPrisoner(boolean prisoner) {
+        this.entityData.set(PRISONER, prisoner);
+    }
+
     public Optional<UUID> getOwnerUUID() {
         return this.entityData.get(OWNER_UUID);
     }
@@ -364,17 +401,84 @@ public class WarriorCompanionEntity extends PathfinderMob {
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new FleeIllagersGoal(this, 12.0F, 1.2D, 1.35D));
         this.goalSelector.addGoal(1, new EmergencyRetreatAndEatGoal(this));
         this.goalSelector.addGoal(2, new DefendOwnerGoal(this));
         this.goalSelector.addGoal(3, new WarriorCombatGoal(this, 1.2D, false));
         this.goalSelector.addGoal(3, new FollowOwnerGoal(this, 1.15D, 5.0F, 2.0F));
         this.goalSelector.addGoal(4, new GuardRadiusGoal(this, 1.1D));
         this.goalSelector.addGoal(5, new AutoFeedGoal(this));
+        this.goalSelector.addGoal(6, new TavernRelaxGoal(this, 0.9D));
         this.goalSelector.addGoal(7, new WaterAvoidingRandomStrollGoal(this, 0.8D));
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
 
-        this.targetSelector.addGoal(1, new AggressiveTargetGoal(this));
+        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(2, new AggressiveTargetGoal(this));
+    }
+
+    @Override
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor pLevel, DifficultyInstance pDifficulty, MobSpawnType pReason, @Nullable SpawnGroupData pSpawnData, @Nullable CompoundTag pDataTag) {
+        SpawnGroupData data = super.finalizeSpawn(pLevel, pDifficulty, pReason, pSpawnData, pDataTag);
+        if (!this.isPrisoner() && this.getEquipmentTier() == 0 && this.getWarriorInventory().getItem(WarriorInventory.SLOT_WEAPON_MAIN).isEmpty()) {
+            int rolledTier = rollRandomTier(pLevel.getRandom());
+            this.applyEquipmentTier(rolledTier);
+        }
+        return data;
+    }
+
+    public void applyEquipmentTier(int tier) {
+        this.setEquipmentTier(tier);
+        if (tier == -1) {
+            this.setPrisoner(true);
+            this.setHealth(3.0F);
+            this.setRecruitCost(0);
+            this.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 999999, 1, false, false));
+            for (int i = 0; i < warriorInventory.getContainerSize(); i++) {
+                warriorInventory.setItem(i, ItemStack.EMPTY);
+            }
+            this.syncEquipmentWithInventory();
+            return;
+        }
+
+        this.setPrisoner(false);
+        switch (tier) {
+            case 0: // 60% Couro / Madeira
+                warriorInventory.setItem(WarriorInventory.SLOT_HELMET, new ItemStack(Items.LEATHER_HELMET));
+                warriorInventory.setItem(WarriorInventory.SLOT_CHEST, new ItemStack(Items.LEATHER_CHESTPLATE));
+                warriorInventory.setItem(WarriorInventory.SLOT_LEGS, new ItemStack(Items.LEATHER_LEGGINGS));
+                warriorInventory.setItem(WarriorInventory.SLOT_BOOTS, new ItemStack(Items.LEATHER_BOOTS));
+                warriorInventory.setItem(WarriorInventory.SLOT_WEAPON_MAIN, new ItemStack(this.random.nextBoolean() ? Items.WOODEN_SWORD : Items.WOODEN_AXE));
+                this.setRecruitCost(20 + this.random.nextInt(11)); // 20 a 30 moedas
+                break;
+            case 1: // 30% Cota de Malha / Pedra
+                warriorInventory.setItem(WarriorInventory.SLOT_HELMET, new ItemStack(Items.CHAINMAIL_HELMET));
+                warriorInventory.setItem(WarriorInventory.SLOT_CHEST, new ItemStack(Items.CHAINMAIL_CHESTPLATE));
+                warriorInventory.setItem(WarriorInventory.SLOT_LEGS, new ItemStack(Items.CHAINMAIL_LEGGINGS));
+                warriorInventory.setItem(WarriorInventory.SLOT_BOOTS, new ItemStack(Items.CHAINMAIL_BOOTS));
+                warriorInventory.setItem(WarriorInventory.SLOT_WEAPON_MAIN, new ItemStack(this.random.nextBoolean() ? Items.STONE_SWORD : Items.STONE_AXE));
+                warriorInventory.setItem(WarriorInventory.SLOT_WEAPON_OFF, new ItemStack(Items.SHIELD));
+                this.setRecruitCost(40 + this.random.nextInt(11)); // 40 a 50 moedas
+                break;
+            case 2: // 10% Ferro
+            default:
+                warriorInventory.setItem(WarriorInventory.SLOT_HELMET, new ItemStack(Items.IRON_HELMET));
+                warriorInventory.setItem(WarriorInventory.SLOT_CHEST, new ItemStack(Items.IRON_CHESTPLATE));
+                warriorInventory.setItem(WarriorInventory.SLOT_LEGS, new ItemStack(Items.IRON_LEGGINGS));
+                warriorInventory.setItem(WarriorInventory.SLOT_BOOTS, new ItemStack(Items.IRON_BOOTS));
+                warriorInventory.setItem(WarriorInventory.SLOT_WEAPON_MAIN, new ItemStack(this.random.nextBoolean() ? Items.IRON_SWORD : Items.IRON_AXE));
+                warriorInventory.setItem(WarriorInventory.SLOT_WEAPON_OFF, new ItemStack(Items.SHIELD));
+                this.setRecruitCost(60 + this.random.nextInt(21)); // 60 a 80 moedas
+                break;
+        }
+        this.syncEquipmentWithInventory();
+    }
+
+    public static int rollRandomTier(net.minecraft.util.RandomSource random) {
+        int roll = random.nextInt(100);
+        if (roll < 60) return 0; // 60%
+        if (roll < 90) return 1; // 30%
+        return 2; // 10%
     }
 
     // ── Tick & Equipment Sync ─────────────────────────────────────────────────
@@ -679,8 +783,54 @@ public class WarriorCompanionEntity extends PathfinderMob {
         ServerPlayer serverPlayer = (ServerPlayer) pPlayer;
         this.startTalkingWith(serverPlayer, 160);
 
+        if (this.isPrisoner()) {
+            ItemStack heldItem = pPlayer.getItemInHand(pHand);
+            boolean isFood = heldItem.isEdible();
+            boolean isPotion = heldItem.getItem() instanceof PotionItem;
+            boolean isWeapon = heldItem.getItem() instanceof SwordItem || heldItem.getItem() instanceof AxeItem;
+
+            if (isFood || isPotion || isWeapon) {
+                if (!pPlayer.isCreative()) {
+                    if (isWeapon) {
+                        this.getWarriorInventory().setItem(WarriorInventory.SLOT_WEAPON_MAIN, heldItem.copy());
+                        heldItem.shrink(1);
+                    } else {
+                        heldItem.shrink(1);
+                    }
+                } else if (isWeapon) {
+                    this.getWarriorInventory().setItem(WarriorInventory.SLOT_WEAPON_MAIN, heldItem.copy());
+                }
+
+                // Resgate com sucesso: cura vida, remove fraqueza, assina contrato de honra de graça!
+                this.setPrisoner(false);
+                this.removeEffect(MobEffects.WEAKNESS);
+                this.setHealth(this.getMaxHealth());
+                this.setOwnerUUID(pPlayer.getUUID());
+                this.setRecruited(true);
+                this.setCombatMode(1); // Defensivo
+                this.setEquipmentTier(0);
+                this.syncEquipmentWithInventory();
+
+                if (this.level() instanceof ServerLevel serverLevel) {
+                    serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER,
+                            this.getX(), this.getY() + 1.0D, this.getZ(),
+                            25, 0.5D, 0.5D, 0.5D, 0.05D);
+                    serverLevel.sendParticles(ParticleTypes.HEART,
+                            this.getX(), this.getY() + 1.2D, this.getZ(),
+                            10, 0.4D, 0.4D, 0.4D, 0.05D);
+                    serverLevel.playSound(null, this.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1.0F, 1.0F);
+                }
+
+                pPlayer.sendSystemMessage(Component.literal("§6[" + this.getWarriorName() + "] §aVocê salvou a minha vida! Juro lealdade absoluta à sua espada!"));
+                return InteractionResult.SUCCESS;
+            } else {
+                pPlayer.sendSystemMessage(Component.literal("§c" + this.getWarriorName() + " está fraco e ferido! Entregue comida/poção para curá-lo ou uma arma para resgatá-lo."));
+                return InteractionResult.SUCCESS;
+            }
+        }
+
         if (!isRecruited()) {
-            // Sempre abre a tela do Contrato de Honra para contratação manual pelo botão
+            // Abre a tela do Contrato de Honra para contratação manual pelo botão
             NetworkHooks.openScreen(serverPlayer, new SimpleMenuProvider(
                     (id, inv, p) -> new HonorContractMenu(id, inv, this.getId()),
                     Component.literal("Contrato de Honra")
@@ -714,6 +864,8 @@ public class WarriorCompanionEntity extends PathfinderMob {
         pCompound.putBoolean("QuestStarted", isQuestStarted());
         pCompound.putInt("QuestType", getQuestType());
         pCompound.putInt("RecruitCost", getRecruitCost());
+        pCompound.putInt("EquipmentTier", getEquipmentTier());
+        pCompound.putBoolean("Prisoner", isPrisoner());
 
         if (guardPos != null) {
             pCompound.putInt("GuardX", guardPos.getX());
@@ -749,6 +901,12 @@ public class WarriorCompanionEntity extends PathfinderMob {
         }
         if (pCompound.contains("RecruitCost")) {
             setRecruitCost(pCompound.getInt("RecruitCost"));
+        }
+        if (pCompound.contains("EquipmentTier")) {
+            setEquipmentTier(pCompound.getInt("EquipmentTier"));
+        }
+        if (pCompound.contains("Prisoner")) {
+            setPrisoner(pCompound.getBoolean("Prisoner"));
         }
         if (pCompound.contains("QuestStarted")) {
             setQuestStarted(pCompound.getBoolean("QuestStarted"));
@@ -1044,7 +1202,14 @@ public class WarriorCompanionEntity extends PathfinderMob {
         @Override
         public boolean canUse() {
             if (warrior.inStaminaRegen || warrior.isDuelMode() || warrior.isEmergencyRetreating() || warrior.isLowHealth()) return false;
-            if (warrior.isRecruited()) {
+            if (warrior.isPrisoner()) return false;
+
+            if (!warrior.isRecruited()) {
+                // Mercenários não recrutados em tavernas só atacam se forem atacados primeiro (defesa própria)
+                if (warrior.getLastHurtByMob() == null && warrior.getTarget() == null) {
+                    return false;
+                }
+            } else {
                 if (warrior.getCombatMode() == 3) { // Base / Ficar
                     warrior.clearCombatTarget();
                     return false;
@@ -1073,6 +1238,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
         @Override
         public boolean canContinueToUse() {
             if (warrior.isEmergencyRetreating() || warrior.isLowHealth()) return false;
+            if (warrior.isPrisoner()) return false;
             if (warrior.isRecruited()) {
                 if (warrior.getCombatMode() == 3) {
                     warrior.clearCombatTarget();
@@ -1126,6 +1292,110 @@ public class WarriorCompanionEntity extends PathfinderMob {
                     comboCount = 0;
                 }
             }
+        }
+    }
+
+    /**
+     * Flee Illagers Goal: Flee from Pillagers, Vindicators, Evokers, etc. when captive.
+     */
+    public static class FleeIllagersGoal extends AvoidEntityGoal<AbstractIllager> {
+        private final WarriorCompanionEntity warrior;
+
+        public FleeIllagersGoal(WarriorCompanionEntity warrior, float maxDist, double walkSpeed, double sprintSpeed) {
+            super(warrior, AbstractIllager.class, maxDist, walkSpeed, sprintSpeed);
+            this.warrior = warrior;
+        }
+
+        @Override
+        public boolean canUse() {
+            return warrior.isPrisoner() && super.canUse();
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return warrior.isPrisoner() && super.canContinueToUse();
+        }
+    }
+
+    /**
+     * Tavern Relax Goal: Mercenaries stay in the tavern around Vanguard Point when unrecruited.
+     */
+    public static class TavernRelaxGoal extends Goal {
+        private final WarriorCompanionEntity warrior;
+        private final double speed;
+        private BlockPos tavernPointPos = null;
+        private int relaxTimer = 0;
+        private int consumeTimer = 0;
+
+        public TavernRelaxGoal(WarriorCompanionEntity warrior, double speed) {
+            this.warrior = warrior;
+            this.speed = speed;
+            this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
+        }
+
+        @Override
+        public boolean canUse() {
+            if (warrior.isRecruited() || warrior.isPrisoner() || warrior.isDuelMode() || warrior.isTalking() || warrior.getTarget() != null) {
+                return false;
+            }
+            if (tavernPointPos == null || !warrior.level().getBlockState(tavernPointPos).is(ModBlocks.VANGUARD_POINT.get())) {
+                findTavernPoint();
+            }
+            return tavernPointPos != null;
+        }
+
+        private void findTavernPoint() {
+            BlockPos origin = warrior.blockPosition();
+            BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
+            for (int dx = -16; dx <= 16; dx++) {
+                for (int dy = -6; dy <= 6; dy++) {
+                    for (int dz = -16; dz <= 16; dz++) {
+                        mut.set(origin.getX() + dx, origin.getY() + dy, origin.getZ() + dz);
+                        if (warrior.level().getBlockState(mut).is(ModBlocks.VANGUARD_POINT.get())) {
+                            tavernPointPos = mut.immutable();
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void tick() {
+            if (tavernPointPos == null) return;
+
+            double distSq = warrior.distanceToSqr(tavernPointPos.getX() + 0.5D, tavernPointPos.getY(), tavernPointPos.getZ() + 0.5D);
+            if (distSq > 36.0D) {
+                warrior.getNavigation().moveTo(tavernPointPos.getX() + 0.5D, tavernPointPos.getY(), tavernPointPos.getZ() + 0.5D, this.speed);
+                warrior.setPose(Pose.STANDING);
+            } else {
+                warrior.getNavigation().stop();
+                warrior.getLookControl().setLookAt(tavernPointPos.getX() + 0.5D, tavernPointPos.getY() + 1.0D, tavernPointPos.getZ() + 0.5D, 10.0F, 10.0F);
+
+                relaxTimer++;
+                if (relaxTimer % 80 == 0) {
+                    if (warrior.getRandom().nextFloat() < 0.5F) {
+                        warrior.setPose(Pose.SITTING);
+                    } else {
+                        warrior.setPose(Pose.STANDING);
+                    }
+                }
+
+                consumeTimer++;
+                if (consumeTimer >= 200) {
+                    consumeTimer = 0;
+                    if (warrior.level() instanceof ServerLevel serverLevel && warrior.getRandom().nextFloat() < 0.4F) {
+                        serverLevel.playSound(null, warrior.blockPosition(), SoundEvents.GENERIC_DRINK, SoundSource.NEUTRAL, 0.8F, 1.0F);
+                        serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, warrior.getX(), warrior.getY() + 1.2D, warrior.getZ(), 4, 0.2D, 0.2D, 0.2D, 0.02D);
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void stop() {
+            warrior.setPose(Pose.STANDING);
+            super.stop();
         }
     }
 

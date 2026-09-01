@@ -45,10 +45,15 @@ public class PacketRecruitWarrior {
             if (warrior.isRecruited() || warrior.distanceTo(player) > 8.0F) return;
 
             int cost = warrior.getRecruitCost();
-            if (consumeGoldCoins(player, cost)) {
+            if (cost <= 0 || consumeGoldCoins(player, cost)) {
                 warrior.setOwnerUUID(player.getUUID());
                 warrior.setRecruited(true);
                 warrior.setCombatMode(1); // Defensivo por padrao
+                if (warrior.isPrisoner()) {
+                    warrior.setPrisoner(false);
+                    warrior.removeEffect(net.minecraft.world.effect.MobEffects.WEAKNESS);
+                    warrior.setHealth(warrior.getMaxHealth());
+                }
 
                 if (player.level() instanceof ServerLevel serverLevel) {
                     serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER,
