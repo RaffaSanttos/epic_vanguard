@@ -302,6 +302,10 @@ public class WarriorCompanionEntity extends PathfinderMob {
         this.clearCombatTarget();
         if (mode == 2) {
             this.setGuardPos(this.blockPosition());
+        } else if (mode == 3) {
+            this.getNavigation().stop();
+            this.setDeltaMovement(0.0D, this.getDeltaMovement().y, 0.0D);
+            this.setSpeed(0.0F);
         }
     }
 
@@ -409,7 +413,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
         this.goalSelector.addGoal(4, new GuardRadiusGoal(this, 1.1D));
         this.goalSelector.addGoal(5, new AutoFeedGoal(this));
         this.goalSelector.addGoal(6, new TavernRelaxGoal(this, 0.9D));
-        this.goalSelector.addGoal(7, new WaterAvoidingRandomStrollGoal(this, 0.8D));
+        this.goalSelector.addGoal(7, new WarriorStrollGoal(this, 0.8D));
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
 
@@ -558,6 +562,17 @@ public class WarriorCompanionEntity extends PathfinderMob {
                 }
             }
 
+            // Modo Parado (3): Garante imobilidade absoluta quando sem ameaças
+            if (isRecruited() && getCombatMode() == 3) {
+                if (this.getTarget() == null && this.getLastHurtByMob() == null && !isEmergencyRetreating()) {
+                    if (this.getNavigation().isInProgress()) {
+                        this.getNavigation().stop();
+                    }
+                    this.setDeltaMovement(0.0D, this.getDeltaMovement().y, 0.0D);
+                    this.setSpeed(0.0F);
+                }
+            }
+
             // Update CompanionSavedData periodically
             if (isRecruited() && this.tickCount % 40 == 0 && this.getServer() != null && getOwnerUUID().isPresent()) {
                 CompanionSavedData.get(this.getServer()).registerOrUpdate(
@@ -583,6 +598,49 @@ public class WarriorCompanionEntity extends PathfinderMob {
             this.setItemSlot(EquipmentSlot.MAINHAND, warriorInventory.getItem(WarriorInventory.SLOT_WEAPON_MAIN));
             this.setItemSlot(EquipmentSlot.OFFHAND, warriorInventory.getItem(WarriorInventory.SLOT_WEAPON_OFF));
         }
+    }
+
+    @Override
+    public boolean isPushable() {
+        if (this.isRecruited() && this.getCombatMode() == 3) {
+            return false;
+        }
+        return super.isPushable();
+    }
+
+    @Override
+    public void push(Entity pEntity) {
+        if (this.isRecruited() && this.getCombatMode() == 3) {
+            return;
+        }
+        super.push(pEntity);
+    }
+
+    @Override
+    public void aiStep() {
+        if (this.isRecruited() && this.getCombatMode() == 3) {
+            if (this.getTarget() == null && this.getLastHurtByMob() == null && !this.isEmergencyRetreating()) {
+                this.getNavigation().stop();
+                this.xxa = 0.0F;
+                this.zza = 0.0F;
+                this.setSpeed(0.0F);
+            }
+        }
+        super.aiStep();
+    }
+
+    @Override
+    public void travel(net.minecraft.world.phys.Vec3 travelVector) {
+        if (this.isRecruited() && this.getCombatMode() == 3) {
+            if (this.getTarget() == null && this.getLastHurtByMob() == null && !this.isEmergencyRetreating()) {
+                if (this.isEffectiveAi()) {
+                    this.setDeltaMovement(0.0D, this.getDeltaMovement().y, 0.0D);
+                    super.travel(new net.minecraft.world.phys.Vec3(0.0D, travelVector.y, 0.0D));
+                    return;
+                }
+            }
+        }
+        super.travel(travelVector);
     }
 
         public static boolean isSpellOrMagicDamage(DamageSource source) {
@@ -1797,6 +1855,35 @@ public class WarriorCompanionEntity extends PathfinderMob {
                     this.mob.doHurtTarget(pEnemy);
                 }
             }
+        }
+    }
+
+    /**
+     * Warrior Stroll Goal: Random stroll that respects Stay/Base (3) and Guard (2) modes.
+     */
+    public static class WarriorStrollGoal extends WaterAvoidingRandomStrollGoal {
+        private final WarriorCompanionEntity warrior;
+
+        public WarriorStrollGoal(WarriorCompanionEntity warrior, double speed) {
+            super(warrior, speed);
+            this.warrior = warrior;
+        }
+
+        @Override
+        public boolean canUse() {
+            if (warrior.isRecruited() && (warrior.getCombatMode() == 3 || warrior.getCombatMode() == 2)) {
+                return false;
+            }
+            if (warrior.isTalking() || warrior.isDuelMode()) return false;
+            return super.canUse();
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            if (warrior.isRecruited() && (warrior.getCombatMode() == 3 || warrior.getCombatMode() == 2)) {
+                return false;
+            }
+            return super.canContinueToUse();
         }
     }
 }

@@ -61,4 +61,60 @@ public class VanguardCombatEvents {
             }
         }
     }
+
+    @SubscribeEvent
+    public static void onLivingDeath(net.minecraftforge.event.entity.living.LivingDeathEvent event) {
+        LivingEntity victim = event.getEntity();
+        if (victim.level() instanceof ServerLevel serverLevel) {
+            Entity attacker = event.getSource().getEntity();
+            if (attacker == null) {
+                attacker = event.getSource().getDirectEntity();
+            }
+
+            if (attacker instanceof WarriorCompanionEntity warrior && !(victim instanceof Player) && !(victim instanceof WarriorCompanionEntity)) {
+                if (serverLevel.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_DOMOBLOOT)) {
+                    int xp = calculateMobExperience(victim);
+                    if (xp > 0) {
+                        net.minecraft.world.entity.ExperienceOrb.award(serverLevel, victim.position(), xp);
+                    }
+                }
+            }
+        }
+    }
+
+    private static int calculateMobExperience(LivingEntity entity) {
+        if (entity instanceof net.minecraft.world.entity.Mob mob) {
+            try {
+                java.lang.reflect.Method m = net.minecraftforge.fml.util.ObfuscationReflectionHelper.findMethod(
+                        net.minecraft.world.entity.Mob.class, "m_213860_"); // getExperienceReward
+                m.setAccessible(true);
+                return (int) m.invoke(mob);
+            } catch (Exception ignored) {
+                try {
+                    java.lang.reflect.Method m = net.minecraft.world.entity.Mob.class.getDeclaredMethod("getExperienceReward");
+                    m.setAccessible(true);
+                    return (int) m.invoke(mob);
+                } catch (Exception ignored2) {
+                }
+            }
+
+            if (entity instanceof net.minecraft.world.entity.boss.wither.WitherBoss) return 50;
+            if (entity instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon) return 500;
+            if (entity instanceof net.minecraft.world.entity.monster.ElderGuardian) return 20;
+            if (entity instanceof net.minecraft.world.entity.monster.Ravager || entity instanceof net.minecraft.world.entity.monster.Evoker) return 20;
+            if (entity instanceof net.minecraft.world.entity.monster.Blaze || entity instanceof net.minecraft.world.entity.monster.Guardian) return 10;
+            if (entity instanceof net.minecraft.world.entity.monster.Monster) {
+                int base = 5;
+                for (net.minecraft.world.item.ItemStack armor : entity.getArmorSlots()) {
+                    if (!armor.isEmpty()) base += 1;
+                }
+                return base;
+            }
+            if (entity instanceof net.minecraft.world.entity.animal.Animal) {
+                return entity.isBaby() ? 0 : (1 + entity.level().random.nextInt(3));
+            }
+            return 3;
+        }
+        return 0;
+    }
 }
