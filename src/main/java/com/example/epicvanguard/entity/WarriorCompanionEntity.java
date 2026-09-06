@@ -2,12 +2,16 @@ package com.example.epicvanguard.entity;
 
 import com.example.epicvanguard.init.ModBlocks;
 import com.example.epicvanguard.init.ModItems;
+import com.example.epicvanguard.init.ModPoiTypes;
 import com.example.epicvanguard.inventory.WarriorInventory;
 import com.example.epicvanguard.networking.Messages;
 import com.example.epicvanguard.networking.packet.PacketOpenWarriorGUI;
 import com.example.epicvanguard.networking.packet.PacketRecruitWarrior;
 import com.example.epicvanguard.screen.HonorContractMenu;
 import com.example.epicvanguard.screen.WarriorCompanionMenu;
+import net.minecraft.world.entity.ai.village.poi.PoiManager;
+import net.minecraft.world.entity.ai.village.poi.PoiRecord;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -1376,19 +1380,22 @@ public class WarriorCompanionEntity extends PathfinderMob {
     }
 
     /**
-     * Tavern Relax Goal: Mercenaries stay in the tavern around Vanguard Point when unrecruited.
+     * Tavern Relax & Patrol Goal:
+     * Unrecruited mercenaries stay near the Vanguard Point (within 8 blocks),
+     * walking around naturally, looking at players/surroundings, and occasionally resting.
      */
     public static class TavernRelaxGoal extends Goal {
         private final WarriorCompanionEntity warrior;
         private final double speed;
         private BlockPos tavernPointPos = null;
-        private int relaxTimer = 0;
+        private int wanderCooldown = 0;
         private int consumeTimer = 0;
+        private int sitTimer = 0;
 
         public TavernRelaxGoal(WarriorCompanionEntity warrior, double speed) {
             this.warrior = warrior;
             this.speed = speed;
-            this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
+            this.setFlags(EnumSet.of(Goal.Flag.MOVE));
         }
 
         @Override
@@ -1403,11 +1410,26 @@ public class WarriorCompanionEntity extends PathfinderMob {
         }
 
         private void findTavernPoint() {
+            if (warrior.level() instanceof ServerLevel serverLevel) {
+                var poiManager = serverLevel.getPoiManager();
+                var opt = poiManager.getInRange(
+                        holder -> holder.is(ModPoiTypes.VANGUARD_POI.getKey()),
+                        warrior.blockPosition(),
+                        48,
+                        PoiManager.Occupancy.ANY
+                ).map(PoiRecord::getPos).findFirst();
+
+                if (opt.isPresent()) {
+                    tavernPointPos = opt.get();
+                    return;
+                }
+            }
+
             BlockPos origin = warrior.blockPosition();
             BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
-            for (int dx = -16; dx <= 16; dx++) {
-                for (int dy = -6; dy <= 6; dy++) {
-                    for (int dz = -16; dz <= 16; dz++) {
+            for (int dx = -32; dx <= 32; dx += 2) {
+                for (int dy = -10; dy <= 10; dy++) {
+                    for (int dz = -32; dz <= 32; dz += 2) {
                         mut.set(origin.getX() + dx, origin.getY() + dy, origin.getZ() + dz);
                         if (warrior.level().getBlockState(mut).is(ModBlocks.VANGUARD_POINT.get())) {
                             tavernPointPos = mut.immutable();
@@ -1423,29 +1445,58 @@ public class WarriorCompanionEntity extends PathfinderMob {
             if (tavernPointPos == null) return;
 
             double distSq = warrior.distanceToSqr(tavernPointPos.getX() + 0.5D, tavernPointPos.getY(), tavernPointPos.getZ() + 0.5D);
-            if (distSq > 36.0D) {
-                warrior.getNavigation().moveTo(tavernPointPos.getX() + 0.5D, tavernPointPos.getY(), tavernPointPos.getZ() + 0.5D, this.speed);
-                warrior.setPose(Pose.STANDING);
-            } else {
-                warrior.getNavigation().stop();
-                warrior.getLookControl().setLookAt(tavernPointPos.getX() + 0.5D, tavernPointPos.getY() + 1.0D, tavernPointPos.getZ() + 0.5D, 10.0F, 10.0F);
 
-                relaxTimer++;
-                if (relaxTimer % 80 == 0) {
-                    if (warrior.getRandom().nextFloat() < 0.5F) {
-                        warrior.setPose(Pose.SITTING);
-                    } else {
+            // 1. Se estiver muito longe do Vanguard Point (> 8 blocos), caminha de volta para a área
+            if (distSq > 64.0D) {
+                if (warrior.getPose() == Pose.SITTING) {
+                    warrior.setPose(Pose.STANDING);
+                }
+                if (warrior.getNavigation().isDone() || warrior.tickCount % 40 == 0) {
+                    warrior.getNavigation().moveTo(tavernPointPos.getX() + 0.5D, tavernPointPos.getY(), tavernPointPos.getZ() + 0.5D, this.speed);
+                }
+                return;
+            }
+
+            // 2. Dentro do raio do mural (<= 8 blocos): anda naturalmente pelas redondezas
+            if (wanderCooldown > 0) {
+                wanderCooldown--;
+            }
+
+            if (warrior.getNavigation().isDone() && wanderCooldown <= 0) {
+                wanderCooldown = 60 + warrior.getRandom().nextInt(100); // 3 a 8 segundos
+
+                // 45% de chance de caminhar para um ponto aleatório perto do mural
+                if (warrior.getRandom().nextFloat() < 0.45F) {
+                    if (warrior.getPose() == Pose.SITTING) {
                         warrior.setPose(Pose.STANDING);
                     }
-                }
-
-                consumeTimer++;
-                if (consumeTimer >= 200) {
-                    consumeTimer = 0;
-                    if (warrior.level() instanceof ServerLevel serverLevel && warrior.getRandom().nextFloat() < 0.4F) {
-                        serverLevel.playSound(null, warrior.blockPosition(), SoundEvents.GENERIC_DRINK, SoundSource.NEUTRAL, 0.8F, 1.0F);
-                        serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, warrior.getX(), warrior.getY() + 1.2D, warrior.getZ(), 4, 0.2D, 0.2D, 0.2D, 0.02D);
+                    int rx = tavernPointPos.getX() + warrior.getRandom().nextInt(11) - 5;
+                    int rz = tavernPointPos.getZ() + warrior.getRandom().nextInt(11) - 5;
+                    BlockPos target = warrior.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(rx, 0, rz));
+                    if (warrior.level().getBlockState(target.below()).isSolidRender(warrior.level(), target.below())) {
+                        warrior.getNavigation().moveTo(target.getX() + 0.5D, target.getY(), target.getZ() + 0.5D, this.speed * 0.75D);
                     }
+                } else if (warrior.getRandom().nextFloat() < 0.25F) {
+                    // Ocasionalmente senta para descansar
+                    sitTimer = 80 + warrior.getRandom().nextInt(80);
+                    warrior.setPose(Pose.SITTING);
+                }
+            }
+
+            if (sitTimer > 0) {
+                sitTimer--;
+                if (sitTimer == 0) {
+                    warrior.setPose(Pose.STANDING);
+                }
+            }
+
+            // Animação e som de consumo de bebida ocasional
+            consumeTimer++;
+            if (consumeTimer >= 220) {
+                consumeTimer = 0;
+                if (warrior.level() instanceof ServerLevel serverLevel && warrior.getRandom().nextFloat() < 0.35F) {
+                    serverLevel.playSound(null, warrior.blockPosition(), SoundEvents.GENERIC_DRINK, SoundSource.NEUTRAL, 0.8F, 1.0F);
+                    serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, warrior.getX(), warrior.getY() + 1.2D, warrior.getZ(), 4, 0.2D, 0.2D, 0.2D, 0.02D);
                 }
             }
         }

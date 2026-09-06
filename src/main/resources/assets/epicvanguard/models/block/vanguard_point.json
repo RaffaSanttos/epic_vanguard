@@ -1,12 +1,9 @@
 {
-  "parent": "minecraft:block/cube",
+  "parent": "minecraft:block/orientable_with_bottom",
   "textures": {
-    "particle": "minecraft:block/cartography_table_top",
-    "down": "minecraft:block/dark_oak_planks",
-    "up": "minecraft:block/cartography_table_top",
-    "north": "minecraft:block/cartography_table_side3",
-    "south": "minecraft:block/cartography_table_side1",
-    "east": "minecraft:block/cartography_table_side2",
-    "west": "minecraft:block/cartography_table_side3"
+    "top": "epicvanguard:block/vanguard_point_top",
+    "bottom": "epicvanguard:block/vanguard_point_bottom",
+    "front": "epicvanguard:block/vanguard_point_front",
+    "side": "epicvanguard:block/vanguard_point_side"
   }
 }

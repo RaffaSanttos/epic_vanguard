@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:barrel"
+    },
+    [
+      { "item": "epicvanguard:gold_coin" },
+      { "item": "minecraft:iron_ingot" },
+      { "item": "minecraft:gold_ingot" }
+    ],
+    {
+      "tag": "minecraft:planks"
+    },
+    {
+      "tag": "minecraft:planks"
+    },
+    {
+      "tag": "minecraft:planks"
+    },
+    {
+      "tag": "minecraft:planks"
+    }
+  ],
+  "result": {
+    "item": "epicvanguard:vanguard_point",
+    "count": 1
+  }
+}

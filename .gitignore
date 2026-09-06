@@ -1,5 +1,5 @@
 .gradle/
 build/
-run/logs/
+run/
 *.log
 *.gz
