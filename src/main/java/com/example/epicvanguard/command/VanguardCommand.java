@@ -2,10 +2,13 @@ package com.example.epicvanguard.command;
 
 import com.example.epicvanguard.entity.CompanionSavedData;
 import com.example.epicvanguard.entity.WarriorCompanionEntity;
+import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.ClickEvent;
@@ -26,40 +29,128 @@ import java.util.UUID;
 
 public class VanguardCommand {
 
-        public static void register(com.mojang.brigadier.CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("vanguard")
-            .executes(context -> listCompanions(context.getSource()))
-            .then(Commands.literal("listar").executes(context -> listCompanions(context.getSource())))
-            .then(Commands.literal("chamar").requires(VanguardCommand::hasAdminAccess).executes(context -> summonAllCompanions(context.getSource())))
-            .then(Commands.literal("tp").requires(VanguardCommand::hasAdminAccess).then(Commands.argument("alvo", StringArgumentType.string()).executes(context -> teleportCompanionToPlayer(context.getSource(), StringArgumentType.getString(context, "alvo")))))
-            .then(Commands.literal("ir").requires(VanguardCommand::hasAdminAccess).then(Commands.argument("alvo", StringArgumentType.string()).executes(context -> teleportPlayerToCompanion(context.getSource(), StringArgumentType.getString(context, "alvo")))))
-            .then(Commands.literal("remover").then(Commands.argument("alvo", StringArgumentType.string()).executes(context -> removeCompanion(context.getSource(), StringArgumentType.getString(context, "alvo")))))
-            .then(Commands.literal("dispensar").then(Commands.argument("alvo", StringArgumentType.string()).executes(context -> removeCompanion(context.getSource(), StringArgumentType.getString(context, "alvo")))))
-            .then(Commands.literal("limpar").executes(context -> cleanInactiveCompanions(context.getSource())))
-            .then(Commands.literal("fogoamigo")
+    private static final SuggestionProvider<CommandSourceStack> TARGET_SUGGESTIONS = (ctx, builder) -> {
+        if (ctx.getSource().getEntity() instanceof ServerPlayer player) {
+            CompanionSavedData data = CompanionSavedData.get(ctx.getSource().getServer());
+            List<CompanionSavedData.CompanionInfo> companions = data.getPlayerCompanions(player.getUUID());
+            for (int i = 0; i < companions.size(); i++) {
+                CompanionSavedData.CompanionInfo c = companions.get(i);
+                builder.suggest("#" + (i + 1));
+                if (c.name != null && !c.name.isEmpty()) {
+                    builder.suggest(c.name.contains(" ") ? "\"" + c.name + "\"" : c.name);
+                }
+                if (c.companionUUID != null) {
+                    builder.suggest(c.companionUUID.toString());
+                }
+            }
+        }
+        return builder.buildFuture();
+    };
+
+    private static final SuggestionProvider<CommandSourceStack> FRIENDLY_FIRE_SUGGESTIONS = (ctx, builder) ->
+            SharedSuggestionProvider.suggest(List.of("livre", "desativado", "melee", "fisico", "magias", "total", "ativado"), builder);
+
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Registra comando principal em Português
+        dispatcher.register(buildRootCommand("companhias"));
+        dispatcher.register(buildRootCommand("companhia"));
+        dispatcher.register(buildRootCommand("companions"));
+        dispatcher.register(buildRootCommand("companion"));
+
+        // Registra comando com o nome do Mod
+        dispatcher.register(buildRootCommand("vanguard"));
+        dispatcher.register(buildRootCommand("epicvanguard"));
+
+        // Compatibilidade retroativa
+        dispatcher.register(buildRootCommand("grimal"));
+
+        // Atalhos diretos para comando de Fogo Amigo
+        dispatcher.register(Commands.literal("fogoamigo")
                 .executes(context -> getFriendlyFire(context.getSource()))
                 .then(Commands.argument("modo", StringArgumentType.word())
-                    .suggests((ctx, builder) -> net.minecraft.commands.SharedSuggestionProvider.suggest(List.of("livre", "melee", "total"), builder))
-                    .executes(context -> setFriendlyFire(context.getSource(), StringArgumentType.getString(context, "modo")))))
+                        .suggests(FRIENDLY_FIRE_SUGGESTIONS)
+                        .executes(context -> setFriendlyFire(context.getSource(), StringArgumentType.getString(context, "modo"))))
         );
+        dispatcher.register(Commands.literal("friendlyfire")
+                .executes(context -> getFriendlyFire(context.getSource()))
+                .then(Commands.argument("modo", StringArgumentType.word())
+                        .suggests(FRIENDLY_FIRE_SUGGESTIONS)
+                        .executes(context -> setFriendlyFire(context.getSource(), StringArgumentType.getString(context, "modo"))))
+        );
+    }
 
-        dispatcher.register(Commands.literal("companhias")
-            .executes(context -> listCompanions(context.getSource()))
-            .then(Commands.literal("listar").executes(context -> listCompanions(context.getSource())))
-            .then(Commands.literal("chamar").requires(VanguardCommand::hasAdminAccess).executes(context -> summonAllCompanions(context.getSource())))
-            .then(Commands.literal("tp").requires(VanguardCommand::hasAdminAccess).then(Commands.argument("alvo", StringArgumentType.string()).executes(context -> teleportCompanionToPlayer(context.getSource(), StringArgumentType.getString(context, "alvo")))))
-            .then(Commands.literal("ir").requires(VanguardCommand::hasAdminAccess).then(Commands.argument("alvo", StringArgumentType.string()).executes(context -> teleportPlayerToCompanion(context.getSource(), StringArgumentType.getString(context, "alvo")))))
-            .then(Commands.literal("remover").then(Commands.argument("alvo", StringArgumentType.string()).executes(context -> removeCompanion(context.getSource(), StringArgumentType.getString(context, "alvo")))))
-            .then(Commands.literal("dispensar").then(Commands.argument("alvo", StringArgumentType.string()).executes(context -> removeCompanion(context.getSource(), StringArgumentType.getString(context, "alvo")))))
-            .then(Commands.literal("limpar").executes(context -> cleanInactiveCompanions(context.getSource())))
-        );
+    private static LiteralArgumentBuilder<CommandSourceStack> buildRootCommand(String rootName) {
+        return Commands.literal(rootName)
+                .executes(context -> listCompanions(context.getSource()))
+                .then(Commands.literal("listar")
+                        .executes(context -> listCompanions(context.getSource())))
+                .then(Commands.literal("list")
+                        .executes(context -> listCompanions(context.getSource())))
+                .then(Commands.literal("chamar")
+                        .executes(context -> summonAllCompanions(context.getSource())))
+                .then(Commands.literal("call")
+                        .executes(context -> summonAllCompanions(context.getSource())))
+                .then(Commands.literal("summon")
+                        .executes(context -> summonAllCompanions(context.getSource())))
+                .then(Commands.literal("tp")
+                        .then(Commands.argument("alvo", StringArgumentType.greedyString())
+                                .suggests(TARGET_SUGGESTIONS)
+                                .executes(context -> teleportCompanionToPlayer(context.getSource(), StringArgumentType.getString(context, "alvo")))))
+                .then(Commands.literal("trazer")
+                        .then(Commands.argument("alvo", StringArgumentType.greedyString())
+                                .suggests(TARGET_SUGGESTIONS)
+                                .executes(context -> teleportCompanionToPlayer(context.getSource(), StringArgumentType.getString(context, "alvo")))))
+                .then(Commands.literal("bring")
+                        .then(Commands.argument("alvo", StringArgumentType.greedyString())
+                                .suggests(TARGET_SUGGESTIONS)
+                                .executes(context -> teleportCompanionToPlayer(context.getSource(), StringArgumentType.getString(context, "alvo")))))
+                .then(Commands.literal("ir")
+                        .then(Commands.argument("alvo", StringArgumentType.greedyString())
+                                .suggests(TARGET_SUGGESTIONS)
+                                .executes(context -> teleportPlayerToCompanion(context.getSource(), StringArgumentType.getString(context, "alvo")))))
+                .then(Commands.literal("goto")
+                        .then(Commands.argument("alvo", StringArgumentType.greedyString())
+                                .suggests(TARGET_SUGGESTIONS)
+                                .executes(context -> teleportPlayerToCompanion(context.getSource(), StringArgumentType.getString(context, "alvo")))))
+                .then(Commands.literal("dispensar")
+                        .then(Commands.argument("alvo", StringArgumentType.greedyString())
+                                .suggests(TARGET_SUGGESTIONS)
+                                .executes(context -> removeCompanion(context.getSource(), StringArgumentType.getString(context, "alvo")))))
+                .then(Commands.literal("remover")
+                        .then(Commands.argument("alvo", StringArgumentType.greedyString())
+                                .suggests(TARGET_SUGGESTIONS)
+                                .executes(context -> removeCompanion(context.getSource(), StringArgumentType.getString(context, "alvo")))))
+                .then(Commands.literal("dismiss")
+                        .then(Commands.argument("alvo", StringArgumentType.greedyString())
+                                .suggests(TARGET_SUGGESTIONS)
+                                .executes(context -> removeCompanion(context.getSource(), StringArgumentType.getString(context, "alvo")))))
+                .then(Commands.literal("limpar")
+                        .executes(context -> cleanInactiveCompanions(context.getSource())))
+                .then(Commands.literal("clean")
+                        .executes(context -> cleanInactiveCompanions(context.getSource())))
+                .then(Commands.literal("fogoamigo")
+                        .executes(context -> getFriendlyFire(context.getSource()))
+                        .then(Commands.argument("modo", StringArgumentType.word())
+                                .suggests(FRIENDLY_FIRE_SUGGESTIONS)
+                                .executes(context -> setFriendlyFire(context.getSource(), StringArgumentType.getString(context, "modo")))))
+                .then(Commands.literal("friendlyfire")
+                        .executes(context -> getFriendlyFire(context.getSource()))
+                        .then(Commands.argument("modo", StringArgumentType.word())
+                                .suggests(FRIENDLY_FIRE_SUGGESTIONS)
+                                .executes(context -> setFriendlyFire(context.getSource(), StringArgumentType.getString(context, "modo")))));
+    }
+
+    public static boolean hasAdminAccess(CommandSourceStack source) {
+        if (source.hasPermission(2)) return true;
+        if (source.getEntity() instanceof ServerPlayer player && player.isCreative()) return true;
+        return false;
     }
 
     private static int getFriendlyFire(CommandSourceStack source) {
         CompanionSavedData data = CompanionSavedData.get(source.getServer());
         CompanionSavedData.FriendlyFireMode currentMode = data.getGlobalFriendlyFireMode();
         source.sendSuccess(() -> Component.literal("§6⚔ Fogo Amigo Atual: " + currentMode.getFormatted()), false);
-        source.sendSuccess(() -> Component.literal("§7Modos: §blivre §7(sem dano) | §emelee §7(apenas golpes fisicos) | §ctotal §7(todos acertam)"), false);
+        source.sendSuccess(() -> Component.literal("§7Modos disponíveis: §blivre §7(sem dano) | §emelee §7(apenas golpes físicos) | §ctotal §7(todos acertam)"), false);
         return 1;
     }
 
@@ -71,133 +162,9 @@ public class VanguardCommand {
         return 1;
     }
 
-    public static boolean hasAdminAccess(CommandSourceStack source) {
-        if (source.hasPermission(2)) return true;
-        if (source.getEntity() instanceof ServerPlayer player && player.isCreative()) return true;
-        return false;
-    }
-
-    public static LiteralArgumentBuilder<CommandSourceStack> buildSubcommand() {
-        return Commands.literal("companhias")
-            .executes(context -> listCompanions(context.getSource()))
-            .then(Commands.literal("listar")
-                .executes(context -> listCompanions(context.getSource()))
-            )
-            .then(Commands.literal("chamar")
-                .requires(VanguardCommand::hasAdminAccess)
-                .executes(context -> summonAllCompanions(context.getSource()))
-            )
-            .then(Commands.literal("tp")
-                .requires(VanguardCommand::hasAdminAccess)
-                .then(Commands.argument("alvo", StringArgumentType.string())
-                    .executes(context -> teleportCompanionToPlayer(
-                            context.getSource(),
-                            StringArgumentType.getString(context, "alvo")
-                    ))
-                )
-            )
-            .then(Commands.literal("ir")
-                .requires(VanguardCommand::hasAdminAccess)
-                .then(Commands.argument("alvo", StringArgumentType.string())
-                    .executes(context -> teleportPlayerToCompanion(
-                            context.getSource(),
-                            StringArgumentType.getString(context, "alvo")
-                    ))
-                )
-            )
-            .then(Commands.literal("goto")
-                .requires(VanguardCommand::hasAdminAccess)
-                .then(Commands.argument("alvo", StringArgumentType.string())
-                    .executes(context -> teleportPlayerToCompanion(
-                            context.getSource(),
-                            StringArgumentType.getString(context, "alvo")
-                    ))
-                )
-            )
-            .then(Commands.literal("remover")
-                .then(Commands.argument("alvo", StringArgumentType.string())
-                    .executes(context -> removeCompanion(
-                            context.getSource(),
-                            StringArgumentType.getString(context, "alvo")
-                    ))
-                )
-            )
-            .then(Commands.literal("dispensar")
-                .then(Commands.argument("alvo", StringArgumentType.string())
-                    .executes(context -> removeCompanion(
-                            context.getSource(),
-                            StringArgumentType.getString(context, "alvo")
-                    ))
-                )
-            )
-            .then(Commands.literal("limpar")
-                .executes(context -> cleanInactiveCompanions(context.getSource()))
-            );
-    }
-
-    public static LiteralArgumentBuilder<CommandSourceStack> buildDirectCommand() {
-        return Commands.literal("companhias")
-            .executes(context -> listCompanions(context.getSource()))
-            .then(Commands.literal("listar")
-                .executes(context -> listCompanions(context.getSource()))
-            )
-            .then(Commands.literal("chamar")
-                .requires(VanguardCommand::hasAdminAccess)
-                .executes(context -> summonAllCompanions(context.getSource()))
-            )
-            .then(Commands.literal("tp")
-                .requires(VanguardCommand::hasAdminAccess)
-                .then(Commands.argument("alvo", StringArgumentType.string())
-                    .executes(context -> teleportCompanionToPlayer(
-                            context.getSource(),
-                            StringArgumentType.getString(context, "alvo")
-                    ))
-                )
-            )
-            .then(Commands.literal("ir")
-                .requires(VanguardCommand::hasAdminAccess)
-                .then(Commands.argument("alvo", StringArgumentType.string())
-                    .executes(context -> teleportPlayerToCompanion(
-                            context.getSource(),
-                            StringArgumentType.getString(context, "alvo")
-                    ))
-                )
-            )
-            .then(Commands.literal("goto")
-                .requires(VanguardCommand::hasAdminAccess)
-                .then(Commands.argument("alvo", StringArgumentType.string())
-                    .executes(context -> teleportPlayerToCompanion(
-                            context.getSource(),
-                            StringArgumentType.getString(context, "alvo")
-                    ))
-                )
-            )
-            .then(Commands.literal("remover")
-                .then(Commands.argument("alvo", StringArgumentType.string())
-                    .executes(context -> removeCompanion(
-                            context.getSource(),
-                            StringArgumentType.getString(context, "alvo")
-                    ))
-                )
-            )
-            .then(Commands.literal("dispensar")
-                .then(Commands.argument("alvo", StringArgumentType.string())
-                    .executes(context -> removeCompanion(
-                            context.getSource(),
-                            StringArgumentType.getString(context, "alvo")
-                    ))
-                )
-            )
-            .then(Commands.literal("limpar")
-                .executes(context -> cleanInactiveCompanions(context.getSource()))
-            );
-    }
-
-
-
     private static int listCompanions(CommandSourceStack source) {
         if (!(source.getEntity() instanceof ServerPlayer player)) {
-            source.sendFailure(Component.literal("\u00a7cApenas jogadores podem executar este comando."));
+            source.sendFailure(Component.literal("§cApenas jogadores podem executar este comando."));
             return 0;
         }
 
@@ -205,13 +172,11 @@ public class VanguardCommand {
         List<CompanionSavedData.CompanionInfo> companions = data.getPlayerCompanions(player.getUUID());
 
         if (companions.isEmpty()) {
-            player.sendSystemMessage(Component.literal("\u00a7e+ Voce ainda nao possui nenhum companheiro contratado no mundo."));
+            player.sendSystemMessage(Component.literal("§e✦ Você ainda não possui nenhuma companhia contratada no mundo."));
             return 1;
         }
 
-        boolean isAdmin = hasAdminAccess(source);
-
-        player.sendSystemMessage(Component.literal("\u00a76============== + SUAS COMPANHIAS (" + companions.size() + ") + =============="));
+        player.sendSystemMessage(Component.literal("§6============== ⚔ SUAS COMPANHIAS (" + companions.size() + ") ⚔ =============="));
 
         for (int i = 0; i < companions.size(); i++) {
             CompanionSavedData.CompanionInfo info = companions.get(i);
@@ -237,73 +202,71 @@ public class VanguardCommand {
 
             String modeName;
             switch (currentMode) {
-                case 0 -> modeName = "\u00a7c Agressivo";
-                case 1 -> modeName = "\u00a7e Defensivo";
-                case 2 -> modeName = "\u00a7b Guarda";
-                case 3 -> modeName = "\u00a77 Ficar / Base";
-                default -> modeName = "\u00a7fDesconhecido";
+                case 0 -> modeName = "§c Agressivo";
+                case 1 -> modeName = "§e Defensivo";
+                case 2 -> modeName = "§b Guarda";
+                case 3 -> modeName = "§7 Ficar / Base";
+                default -> modeName = "§f Desconhecido";
             }
 
             String distText = "";
-            if (player.level().dimension().location().toString().equals(currentDim) && currentPos != null) {
+            if (currentPos != null && player.level().dimension().location().toString().equals(currentDim)) {
                 double dist = Math.sqrt(player.blockPosition().distSqr(currentPos));
-                distText = " \u00a77(\u00a7f" + (int) dist + " blocos de distancia\u00a77)";
+                distText = " §7(§f" + (int) dist + " blocos de distância§7)";
             }
 
-            String hpText = " \u00a7c " + (int) currentHp + "/" + (int) maxHp;
+            String hpText = " §c " + (int) currentHp + "/" + (int) maxHp;
 
-            MutableComponent line = Component.literal("\u00a7e[#" + (i + 1) + "] \u00a7b\u00a7l" + displayName + hpText + "\n")
-                    .append(Component.literal("  \u00a77 Coordenadas: \u00a7fX: " + currentPos.getX() + ", Y: " + currentPos.getY() + ", Z: " + currentPos.getZ() + " \u00a77(\u00a7d" + dimName + "\u00a77)" + distText + "\n"))
-                    .append(Component.literal("  \u00a77 Modo: " + modeName + "\n  "));
+            int posX = currentPos != null ? currentPos.getX() : 0;
+            int posY = currentPos != null ? currentPos.getY() : 0;
+            int posZ = currentPos != null ? currentPos.getZ() : 0;
+
+            MutableComponent line = Component.literal("§e[#" + (i + 1) + "] §b§l" + displayName + hpText + "\n")
+                    .append(Component.literal("  §7 Coordenadas: §fX: " + posX + ", Y: " + posY + ", Z: " + posZ + " §7(§d" + dimName + "§7)" + distText + "\n"))
+                    .append(Component.literal("  §7 Modo:" + modeName + "\n  "));
 
             if (info.companionUUID != null) {
                 String uuidStr = info.companionUUID.toString();
 
-                if (isAdmin) {
-                    String tpBringCmd = "/grimal companhias tp " + uuidStr;
-                    MutableComponent btnBring = Component.literal("\u00a78[\u00a7a Trazer\u00a78]")
-                            .withStyle(style -> style
-                                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpBringCmd))
-                                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("\u00a7a[Admin] Clique para teletransportar " + displayName + " ate sua posicao"))));
+                String tpBringCmd = "/companhias tp " + uuidStr;
+                MutableComponent btnBring = Component.literal("§8[§a Trazer§8]")
+                        .withStyle(style -> style
+                                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpBringCmd))
+                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("§aClique para teletransportar " + displayName + " até você"))));
 
-                    String tpGoCmd = "/grimal companhias ir " + uuidStr;
-                    MutableComponent btnGo = Component.literal(" \u00a78[\u00a7b Ir\u00a78]")
-                            .withStyle(style -> style
-                                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpGoCmd))
-                                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("\u00a7b[Admin] Clique para se teletransportar ate a posicao de " + displayName))));
+                String tpGoCmd = "/companhias ir " + uuidStr;
+                MutableComponent btnGo = Component.literal(" §8[§b Ir§8]")
+                        .withStyle(style -> style
+                                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpGoCmd))
+                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("§bClique para se teletransportar até a posição de " + displayName))));
 
-                    line.append(btnBring).append(btnGo);
-                }
-
-                String removeCmd = "/grimal companhias remover " + uuidStr;
-                MutableComponent btnDismiss = Component.literal(" \u00a78[\u00a7c Dispensar\u00a78]")
+                String removeCmd = "/companhias dispensar " + uuidStr;
+                MutableComponent btnDismiss = Component.literal(" §8[§c Dispensar§8]")
                         .withStyle(style -> style
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, removeCmd))
-                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("\u00a7cClique para dispensar " + displayName + " e remover da lista"))));
+                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("§cClique para dispensar " + displayName + " e remover da lista"))));
 
-                line.append(btnDismiss);
+                line.append(btnBring).append(btnGo).append(btnDismiss);
             }
 
             player.sendSystemMessage(line);
         }
 
-        MutableComponent footer = Component.literal("\u00a76==================================================");
-        if (isAdmin) {
-            footer.append(Component.literal("\n\u00a78[\u00a7a Chamar Todas as Companhias\u00a78]")
-                    .withStyle(style -> style
-                            .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/grimal companhias chamar"))
-                            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("\u00a7a[Admin] Clique para teletransportar TODAS as suas companhias ate voce")))));
-        }
-
-        footer.append(Component.literal(" \u00a78[\u00a7e Limpar Inexistentes\u00a78]")
+        MutableComponent footer = Component.literal("§6==================================================");
+        footer.append(Component.literal("\n§8[§a Chamar Todas as Companhias§8]")
                 .withStyle(style -> style
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/grimal companhias limpar"))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("\u00a7eLimpa registros de companhias que nao existem mais no mundo")))));
+                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/companhias chamar"))
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("§aClique para teletransportar TODAS as suas companhias até você")))));
 
-        footer.append(Component.literal(" \u00a78[\u00a7b Fogo Amigo\u00a78]")
+        footer.append(Component.literal(" §8[§e Limpar Inexistentes§8]")
                 .withStyle(style -> style
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/grimal fogoamigo"))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("\u00a7bClique para configurar o fogo amigo com suas companhias")))));
+                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/companhias limpar"))
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("§eLimpa registros de companhias que não existem mais no mundo")))));
+
+        footer.append(Component.literal(" §8[§b Fogo Amigo§8]")
+                .withStyle(style -> style
+                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/fogoamigo"))
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("§bClique para ver e configurar o fogo amigo")))));
 
         player.sendSystemMessage(footer);
 
@@ -349,12 +312,7 @@ public class VanguardCommand {
 
     private static int teleportCompanionToPlayer(CommandSourceStack source, String targetIdentifier) {
         if (!(source.getEntity() instanceof ServerPlayer player)) {
-            source.sendFailure(Component.literal("\u00a7cApenas jogadores podem executar este comando."));
-            return 0;
-        }
-
-        if (!hasAdminAccess(source)) {
-            player.sendSystemMessage(Component.literal("\u00a7cVoce precisa de privilegio de Operador (OP) ou Modo Criativo para teletransportar companhias."));
+            source.sendFailure(Component.literal("§cApenas jogadores podem executar este comando."));
             return 0;
         }
 
@@ -362,12 +320,12 @@ public class VanguardCommand {
         CompanionSavedData.CompanionInfo info = findCompanionInfo(data, player, targetIdentifier, source.hasPermission(2));
 
         if (info == null) {
-            player.sendSystemMessage(Component.literal("\u00a7cCompanhia '" + targetIdentifier + "' nao encontrada na lista."));
+            player.sendSystemMessage(Component.literal("§cCompanhia '" + targetIdentifier + "' não encontrada na lista."));
             return 0;
         }
 
-        if (!player.getUUID().equals(info.ownerUUID) && !source.hasPermission(2)) {
-            player.sendSystemMessage(Component.literal("\u00a7cVoce nao e o dono desta companhia!"));
+        if (!player.getUUID().equals(info.ownerUUID) && !hasAdminAccess(source)) {
+            player.sendSystemMessage(Component.literal("§cVocê não é o dono desta companhia!"));
             return 0;
         }
 
@@ -377,22 +335,22 @@ public class VanguardCommand {
                 entity.teleportTo((ServerLevel) player.level(), player.getX(), player.getY(), player.getZ(), null, entity.getYRot(), entity.getXRot());
             }
             entity.safeTeleportTo(player);
-            player.sendSystemMessage(Component.literal("\u00a7a+ " + entity.getWarriorName() + " foi teletransportado(a) ate voce com sucesso!"));
+            player.sendSystemMessage(Component.literal("§a✦ " + entity.getWarriorName() + " foi teletransportado(a) até você com sucesso!"));
             return 1;
         } else {
             boolean isNear = player.level().dimension().location().toString().equals(info.dimension)
                     && info.pos != null && player.blockPosition().distSqr(info.pos) < 64 * 64;
 
             if (isNear) {
-                String removeCmd = "/grimal companhias remover " + info.companionUUID;
-                MutableComponent btnRemove = Component.literal(" \u00a7c[ Remover Registro]")
+                String removeCmd = "/companhias dispensar " + info.companionUUID;
+                MutableComponent btnRemove = Component.literal(" §c[Remover Registro]")
                         .withStyle(style -> style
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, removeCmd))
-                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("\u00a7cClique para remover este guerreiro que nao existe mais no mundo"))));
+                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("§cClique para remover este guerreiro que não existe mais"))));
 
-                player.sendSystemMessage(Component.literal("\u00a7c+ " + info.name + " nao foi encontrado(a) nesta area (pode ter sido derrotado(a) ou removido(a)).").append(btnRemove));
+                player.sendSystemMessage(Component.literal("§c✦ " + info.name + " não foi encontrado(a) nesta área (pode ter sido derrotado(a) ou removido(a)).").append(btnRemove));
             } else {
-                player.sendSystemMessage(Component.literal("\u00a7e+ O chunk onde " + info.name + " esta localizado (" + info.pos.getX() + ", " + info.pos.getY() + ", " + info.pos.getZ() + ") esta descarregado. Va ate proximo dele para localiza-lo!"));
+                player.sendSystemMessage(Component.literal("§e✦ O chunk onde " + info.name + " está localizado (" + (info.pos != null ? info.pos.getX() + ", " + info.pos.getY() + ", " + info.pos.getZ() : "desconhecido") + ") está descarregado. Vá até próximo dele para localizá-lo!"));
             }
             return 1;
         }
@@ -400,12 +358,7 @@ public class VanguardCommand {
 
     private static int teleportPlayerToCompanion(CommandSourceStack source, String targetIdentifier) {
         if (!(source.getEntity() instanceof ServerPlayer player)) {
-            source.sendFailure(Component.literal("\u00a7cApenas jogadores podem executar este comando."));
-            return 0;
-        }
-
-        if (!hasAdminAccess(source)) {
-            player.sendSystemMessage(Component.literal("\u00a7cVoce precisa de privilegio de Operador (OP) ou Modo Criativo para teletransportar ate companhias."));
+            source.sendFailure(Component.literal("§cApenas jogadores podem executar este comando."));
             return 0;
         }
 
@@ -413,12 +366,12 @@ public class VanguardCommand {
         CompanionSavedData.CompanionInfo info = findCompanionInfo(data, player, targetIdentifier, source.hasPermission(2));
 
         if (info == null) {
-            player.sendSystemMessage(Component.literal("\u00a7cCompanhia '" + targetIdentifier + "' nao encontrada na lista."));
+            player.sendSystemMessage(Component.literal("§cCompanhia '" + targetIdentifier + "' não encontrada na lista."));
             return 0;
         }
 
-        if (!player.getUUID().equals(info.ownerUUID) && !source.hasPermission(2)) {
-            player.sendSystemMessage(Component.literal("\u00a7cVoce nao e o dono desta companhia!"));
+        if (!player.getUUID().equals(info.ownerUUID) && !hasAdminAccess(source)) {
+            player.sendSystemMessage(Component.literal("§cVocê não é o dono desta companhia!"));
             return 0;
         }
 
@@ -443,7 +396,7 @@ public class VanguardCommand {
 
         player.teleportTo(targetLevel, targetX, targetY, targetZ, yRot, xRot);
         String name = entity != null ? entity.getWarriorName() : info.name;
-        player.sendSystemMessage(Component.literal("\u00a7a+ Voce foi teletransportado(a) ate a posicao de \u00a7b" + name + "\u00a7a!"));
+        player.sendSystemMessage(Component.literal("§a✦ Você foi teletransportado(a) até a posição de §b" + name + "§a!"));
 
         targetLevel.sendParticles(ParticleTypes.PORTAL, targetX, targetY + 1.0D, targetZ, 30, 0.5D, 0.5D, 0.5D, 0.1D);
         targetLevel.playSound(null, targetX, targetY, targetZ, SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 1.0F, 1.0F);
@@ -453,7 +406,7 @@ public class VanguardCommand {
 
     private static int removeCompanion(CommandSourceStack source, String targetIdentifier) {
         if (!(source.getEntity() instanceof ServerPlayer player)) {
-            source.sendFailure(Component.literal("\u00a7cApenas jogadores podem executar este comando."));
+            source.sendFailure(Component.literal("§cApenas jogadores podem executar este comando."));
             return 0;
         }
 
@@ -461,12 +414,12 @@ public class VanguardCommand {
         CompanionSavedData.CompanionInfo info = findCompanionInfo(data, player, targetIdentifier, source.hasPermission(2));
 
         if (info == null) {
-            player.sendSystemMessage(Component.literal("\u00a7cCompanhia '" + targetIdentifier + "' nao encontrada na lista."));
+            player.sendSystemMessage(Component.literal("§cCompanhia '" + targetIdentifier + "' não encontrada na lista."));
             return 0;
         }
 
-        if (!player.getUUID().equals(info.ownerUUID) && !source.hasPermission(2)) {
-            player.sendSystemMessage(Component.literal("\u00a7cVoce nao e o dono desta companhia!"));
+        if (!player.getUUID().equals(info.ownerUUID) && !hasAdminAccess(source)) {
+            player.sendSystemMessage(Component.literal("§cVocê não é o dono desta companhia!"));
             return 0;
         }
 
@@ -474,17 +427,17 @@ public class VanguardCommand {
         if (live != null) {
             live.setRecruited(false);
             live.setOwnerUUID(null);
-            live.setCustomName(Component.literal("\u00a77" + live.getWarriorName()));
+            live.setCustomName(Component.literal("§7" + live.getWarriorName()));
         }
 
         data.unregister(info.companionUUID);
-        player.sendSystemMessage(Component.literal("\u00a7a+ Companhia \u00a7b" + info.name + "\u00a7a foi dispensada e removida da lista."));
+        player.sendSystemMessage(Component.literal("§a✦ Companhia §b" + info.name + "§a foi dispensada e removida da lista."));
         return 1;
     }
 
     private static int cleanInactiveCompanions(CommandSourceStack source) {
         if (!(source.getEntity() instanceof ServerPlayer player)) {
-            source.sendFailure(Component.literal("\u00a7cApenas jogadores podem executar este comando."));
+            source.sendFailure(Component.literal("§cApenas jogadores podem executar este comando."));
             return 0;
         }
 
@@ -505,21 +458,16 @@ public class VanguardCommand {
         }
 
         if (removed > 0) {
-            player.sendSystemMessage(Component.literal("\u00a7a+ " + removed + " registro(s) de companhias inexistentes foram limpos da sua lista!"));
+            player.sendSystemMessage(Component.literal("§a✦ " + removed + " registro(s) de companhias inexistentes foram limpos da sua lista!"));
         } else {
-            player.sendSystemMessage(Component.literal("\u00a7e+ Nenhuma companhia inexistente encontrada perto de voce para limpar."));
+            player.sendSystemMessage(Component.literal("§e✦ Nenhuma companhia inexistente encontrada perto de você para limpar."));
         }
         return 1;
     }
 
     private static int summonAllCompanions(CommandSourceStack source) {
         if (!(source.getEntity() instanceof ServerPlayer player)) {
-            source.sendFailure(Component.literal("\u00a7cApenas jogadores podem executar este comando."));
-            return 0;
-        }
-
-        if (!hasAdminAccess(source)) {
-            player.sendSystemMessage(Component.literal("\u00a7cVoce precisa de privilegio de Operador (OP) ou Modo Criativo para chamar companhias."));
+            source.sendFailure(Component.literal("§cApenas jogadores podem executar este comando."));
             return 0;
         }
 
@@ -527,7 +475,7 @@ public class VanguardCommand {
         List<CompanionSavedData.CompanionInfo> companions = data.getPlayerCompanions(player.getUUID());
 
         if (companions.isEmpty()) {
-            player.sendSystemMessage(Component.literal("\u00a7e+ Voce nao possui companhias para chamar."));
+            player.sendSystemMessage(Component.literal("§e✦ Você não possui companhias para chamar."));
             return 1;
         }
 
@@ -543,7 +491,7 @@ public class VanguardCommand {
             }
         }
 
-        player.sendSystemMessage(Component.literal("\u00a7a+ " + count + " de " + companions.size() + " companhia(s) foram teletransportadas ate voce!"));
+        player.sendSystemMessage(Component.literal("§a✦ " + count + " de " + companions.size() + " companhia(s) foram teletransportadas até você!"));
         return 1;
     }
 
@@ -566,12 +514,16 @@ public class VanguardCommand {
             if (level.dimension().location().toString().equals(info.dimension)) {
                 if (info.pos != null) {
                     ChunkPos cpos = new ChunkPos(info.pos);
-                    level.getChunkSource().addRegionTicket(TicketType.FORCED, cpos, 2, cpos);
-                    level.getChunk(cpos.x, cpos.z, ChunkStatus.FULL, true);
+                    try {
+                        level.getChunkSource().addRegionTicket(TicketType.FORCED, cpos, 2, cpos);
+                        level.getChunk(cpos.x, cpos.z, ChunkStatus.FULL, true);
 
-                    Entity e = level.getEntity(info.companionUUID);
-                    if (e instanceof WarriorCompanionEntity warrior && warrior.isAlive()) {
-                        return warrior;
+                        Entity e = level.getEntity(info.companionUUID);
+                        if (e instanceof WarriorCompanionEntity warrior && warrior.isAlive()) {
+                            return warrior;
+                        }
+                    } finally {
+                        level.getChunkSource().removeRegionTicket(TicketType.FORCED, cpos, 2, cpos);
                     }
                 }
             }
