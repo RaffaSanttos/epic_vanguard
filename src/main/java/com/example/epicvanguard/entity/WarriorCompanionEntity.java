@@ -797,7 +797,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
     @Override
     public boolean doHurtTarget(Entity target) {
         float damage = (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE);
-        damage = Math.max(1.0F, damage * 0.65F);
+        damage = Math.max(1.0F, damage * 0.75F);
         DamageSource source = this.damageSources().mobAttack(this);
         return target.hurt(source, damage);
     }
