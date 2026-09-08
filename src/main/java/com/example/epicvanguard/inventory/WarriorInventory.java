@@ -141,4 +141,59 @@ public class WarriorInventory extends SimpleContainer {
             }
         }
     }
+
+    /**
+     * Tenta adicionar um item aos slots de mochila (6 a 20).
+     * Retorna a quantidade ou ItemStack restante que não coube.
+     */
+    public ItemStack addItemToBackpack(ItemStack stack) {
+        if (stack.isEmpty()) return ItemStack.EMPTY;
+        ItemStack toInsert = stack.copy();
+
+        // 1. Tenta mesclar com stacks existentes na mochila
+        for (int i = SLOT_BACKPACK_START; i <= SLOT_BACKPACK_END; i++) {
+            ItemStack existing = this.getItem(i);
+            if (!existing.isEmpty() && ItemStack.isSameItemSameTags(existing, toInsert)) {
+                int max = Math.min(this.getMaxStackSize(), existing.getMaxStackSize());
+                int available = max - existing.getCount();
+                if (available > 0) {
+                    int add = Math.min(available, toInsert.getCount());
+                    existing.grow(add);
+                    toInsert.shrink(add);
+                    this.setChanged();
+                    if (toInsert.isEmpty()) {
+                        return ItemStack.EMPTY;
+                    }
+                }
+            }
+        }
+
+        // 2. Tenta colocar em slots vazios da mochila
+        for (int i = SLOT_BACKPACK_START; i <= SLOT_BACKPACK_END; i++) {
+            ItemStack existing = this.getItem(i);
+            if (existing.isEmpty()) {
+                int max = Math.min(this.getMaxStackSize(), toInsert.getMaxStackSize());
+                int add = Math.min(max, toInsert.getCount());
+                ItemStack placed = toInsert.split(add);
+                this.setItem(i, placed);
+                if (toInsert.isEmpty()) {
+                    return ItemStack.EMPTY;
+                }
+            }
+        }
+
+        return toInsert;
+    }
+
+    public boolean canHoldInBackpack(ItemStack stack) {
+        if (stack.isEmpty()) return false;
+        for (int i = SLOT_BACKPACK_START; i <= SLOT_BACKPACK_END; i++) {
+            ItemStack existing = this.getItem(i);
+            if (existing.isEmpty()) return true;
+            if (ItemStack.isSameItemSameTags(existing, stack) && existing.getCount() < Math.min(this.getMaxStackSize(), existing.getMaxStackSize())) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

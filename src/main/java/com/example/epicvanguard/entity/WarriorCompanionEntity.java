@@ -577,6 +577,9 @@ public class WarriorCompanionEntity extends PathfinderMob {
                 }
             }
 
+            // Coleta automática de itens do chão ao passar por cima
+            pickUpGroundItems();
+
             // Update CompanionSavedData periodically
             if (isRecruited() && this.tickCount % 40 == 0 && this.getServer() != null && getOwnerUUID().isPresent()) {
                 CompanionSavedData.get(this.getServer()).registerOrUpdate(
@@ -589,6 +592,37 @@ public class WarriorCompanionEntity extends PathfinderMob {
                         this.getHealth(),
                         this.getMaxHealth()
                 );
+            }
+        }
+    }
+
+    private void pickUpGroundItems() {
+        if (!this.isAlive() || this.level().isClientSide() || !this.isRecruited() || this.isPrisoner()) {
+            return;
+        }
+
+        AABB pickupBox = this.getBoundingBox().inflate(1.0D, 0.5D, 1.0D);
+        List<ItemEntity> items = this.level().getEntitiesOfClass(ItemEntity.class, pickupBox, e -> !e.isRemoved() && !e.hasPickUpDelay());
+
+        for (ItemEntity itemEntity : items) {
+            ItemStack groundStack = itemEntity.getItem();
+            if (groundStack.isEmpty()) continue;
+
+            int originalCount = groundStack.getCount();
+            ItemStack remaining = this.warriorInventory.addItemToBackpack(groundStack);
+            int pickedUpCount = originalCount - remaining.getCount();
+
+            if (pickedUpCount > 0) {
+                this.take(itemEntity, pickedUpCount);
+                this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                        SoundEvents.ITEM_PICKUP, SoundSource.NEUTRAL,
+                        0.2F, (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
+
+                if (remaining.isEmpty()) {
+                    itemEntity.discard();
+                } else {
+                    itemEntity.setItem(remaining);
+                }
             }
         }
     }
