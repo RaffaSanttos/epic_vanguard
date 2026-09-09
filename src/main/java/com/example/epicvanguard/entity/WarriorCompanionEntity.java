@@ -70,6 +70,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.PotionItem;
 import net.minecraft.world.item.ShieldItem;
 import net.minecraft.world.item.SwordItem;
+import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Blocks;
@@ -1601,13 +1603,208 @@ public class WarriorCompanionEntity extends PathfinderMob {
         }
     }
 
+    // ── Sobrevivência Autônoma & Consumíveis ───────────────────────────────────
+
     /**
-     * Emergency Retreat & Eat Goal:
-     * When health is <= 30% and food exists in the backpack:
+     * Verifica se um item é uma poção benéfica de cura ou regeneração.
+     */
+    public static boolean isHealingPotion(ItemStack stack) {
+        if (stack.isEmpty() || !(stack.getItem() instanceof PotionItem)) return false;
+        List<MobEffectInstance> effects = PotionUtils.getMobEffects(stack);
+        for (MobEffectInstance effect : effects) {
+            if (effect.getEffect() == MobEffects.HEAL || effect.getEffect() == MobEffects.REGENERATION) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Encontra o melhor item de cura na mochila (slots 6 a 20).
+     */
+    public int findBestConsumableSlot(boolean inEmergency) {
+        WarriorInventory inv = this.getWarriorInventory();
+        int bestSlot = -1;
+        int highestScore = -1;
+
+        for (int i = WarriorInventory.SLOT_BACKPACK_START; i <= WarriorInventory.SLOT_BACKPACK_END; i++) {
+            ItemStack stack = inv.getItem(i);
+            if (!stack.isEmpty()) {
+                int score = this.getConsumableHealingScore(stack, inEmergency);
+                if (score > highestScore) {
+                    highestScore = score;
+                    bestSlot = i;
+                }
+            }
+        }
+        return bestSlot;
+    }
+
+    /**
+     * Calcula a pontuação de utilidade de um consumível de cura (quanto maior, mais prioritário).
+     * Retorna -1 se o item não for adequado para cura.
+     */
+    public int getConsumableHealingScore(ItemStack stack, boolean inEmergency) {
+        if (stack.isEmpty()) return -1;
+
+        // 1. Poção de Cura / Regeneração
+        if (stack.getItem() instanceof PotionItem) {
+            List<MobEffectInstance> effects = PotionUtils.getMobEffects(stack);
+            for (MobEffectInstance effect : effects) {
+                if (effect.getEffect() == MobEffects.HEAL) {
+                    // Cura instantânea: prioridade absoluta em emergência (< 40% HP)
+                    return inEmergency ? 1000 + (effect.getAmplifier() * 100) : 100;
+                }
+                if (effect.getEffect() == MobEffects.REGENERATION) {
+                    boolean hasRegen = this.hasEffect(MobEffects.REGENERATION);
+                    if (hasRegen) {
+                        return inEmergency ? 350 : 50;
+                    }
+                    return inEmergency ? 800 + (effect.getAmplifier() * 50) : 150;
+                }
+            }
+            return -1;
+        }
+
+        // 2. Alimentos especiais lendários (Maçã Dourada / Encantada)
+        if (stack.is(Items.ENCHANTED_GOLDEN_APPLE)) {
+            return inEmergency ? 950 : 200;
+        }
+        if (stack.is(Items.GOLDEN_APPLE)) {
+            return inEmergency ? 900 : 180;
+        }
+
+        // 3. Alimentos comuns
+        if (stack.isEdible()) {
+            var foodProps = stack.getItem().getFoodProperties(stack, this);
+            if (foodProps != null) {
+                // Evita alimentos com efeitos negativos (Veneno, Wither, Dano Instantâneo)
+                for (var effectPair : foodProps.getEffects()) {
+                    var effect = effectPair.getFirst().getEffect();
+                    if (effect == MobEffects.POISON || effect == MobEffects.WITHER || effect == MobEffects.HARM) {
+                        return -1;
+                    }
+                }
+                int nutrition = foodProps.getNutrition();
+                float saturation = foodProps.getSaturationModifier();
+                // Fora de emergência, comida normal é a prioridade para poupar poções caras
+                int baseScore = inEmergency ? 400 : 500;
+                return baseScore + (nutrition * 10) + (int) (saturation * 10);
+            }
+        }
+
+        return -1;
+    }
+
+    /**
+     * Aplica o consumo de um item (comida ou poção), executando a cura, efeitos,
+     * partículas completas de regeneração e som de término, além de gerenciar frasco vazio ou tigela.
+     */
+    public void consumeHealingItem(ItemStack stack, int slotIndex) {
+        if (stack.isEmpty()) return;
+
+        boolean isDrink = stack.getUseAnimation() == UseAnim.DRINK || stack.getItem() instanceof PotionItem;
+
+        if (stack.getItem() instanceof PotionItem) {
+            // 1. Aplica efeitos da poção
+            List<MobEffectInstance> effects = PotionUtils.getMobEffects(stack);
+            for (MobEffectInstance effect : effects) {
+                if (effect.getEffect() == MobEffects.HEAL) {
+                    this.heal(4.0F * (effect.getAmplifier() + 1));
+                } else if (effect.getEffect().isInstantenous()) {
+                    effect.getEffect().applyInstantenousEffect(this, this, this, effect.getAmplifier(), 1.0D);
+                } else {
+                    this.addEffect(new MobEffectInstance(effect));
+                }
+            }
+
+            // Som de beber poção
+            this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                    SoundEvents.GENERIC_DRINK, SoundSource.NEUTRAL, 0.8F, 0.9F + (this.getRandom().nextFloat() * 0.1F));
+
+            // Partículas de poção e regeneração sobre a companhia
+            if (this.level() instanceof ServerLevel serverLevel) {
+                serverLevel.sendParticles(ParticleTypes.HEART, this.getX(), this.getY() + 1.2D, this.getZ(),
+                        8, 0.35D, 0.35D, 0.35D, 0.05D);
+                serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 1.0D, this.getZ(),
+                        12, 0.4D, 0.5D, 0.4D, 0.05D);
+                serverLevel.sendParticles(ParticleTypes.ENTITY_EFFECT, this.getX(), this.getY() + 1.0D, this.getZ(),
+                        10, 0.3D, 0.5D, 0.3D, 1.0D);
+            }
+
+            // Consumo da poção e devolução do frasco de vidro
+            stack.shrink(1);
+            if (stack.isEmpty()) {
+                this.getWarriorInventory().setItem(slotIndex, new ItemStack(Items.GLASS_BOTTLE));
+            } else {
+                ItemStack bottle = new ItemStack(Items.GLASS_BOTTLE);
+                ItemStack remaining = this.getWarriorInventory().addItemToBackpack(bottle);
+                if (!remaining.isEmpty()) {
+                    this.spawnAtLocation(remaining);
+                }
+            }
+        } else if (stack.isEdible()) {
+            // 2. Alimento comum ou especial (Maçã Dourada)
+            var foodProps = stack.getItem().getFoodProperties(stack, this);
+            int nutrition = foodProps != null ? foodProps.getNutrition() : 4;
+            float saturation = foodProps != null ? foodProps.getSaturationModifier() : 0.6F;
+            float healAmount = Math.max(4.0F, nutrition + (saturation * 2.0F));
+
+            this.heal(healAmount);
+
+            // Efeitos de comida especial
+            if (foodProps != null) {
+                for (var effectPair : foodProps.getEffects()) {
+                    if (effectPair.getFirst() != null && this.getRandom().nextFloat() < effectPair.getSecond()) {
+                        this.addEffect(new MobEffectInstance(effectPair.getFirst()));
+                    }
+                }
+            }
+
+            // Som de satisfação / arroto
+            this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                    isDrink ? SoundEvents.GENERIC_DRINK : SoundEvents.PLAYER_BURP, SoundSource.NEUTRAL, 0.7F, 1.0F);
+
+            // Partículas de cura e corações
+            if (this.level() instanceof ServerLevel serverLevel) {
+                serverLevel.sendParticles(ParticleTypes.HEART, this.getX(), this.getY() + 1.2D, this.getZ(),
+                        6, 0.3D, 0.3D, 0.3D, 0.05D);
+                serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 1.0D, this.getZ(),
+                        8, 0.3D, 0.4D, 0.3D, 0.05D);
+            }
+
+            // Devolução de tigela (sopas/ensopados) ou frasco de mel
+            ItemStack containerItem = ItemStack.EMPTY;
+            if (stack.is(Items.HONEY_BOTTLE)) {
+                containerItem = new ItemStack(Items.GLASS_BOTTLE);
+            } else if (stack.is(Items.MUSHROOM_STEW) || stack.is(Items.RABBIT_STEW) || stack.is(Items.BEETROOT_SOUP) || stack.is(Items.SUSPICIOUS_STEW)) {
+                containerItem = new ItemStack(Items.BOWL);
+            } else if (stack.hasCraftingRemainingItem()) {
+                containerItem = stack.getCraftingRemainingItem();
+            }
+
+            stack.shrink(1);
+            if (stack.isEmpty()) {
+                this.getWarriorInventory().setItem(slotIndex, containerItem.isEmpty() ? ItemStack.EMPTY : containerItem);
+            } else if (!containerItem.isEmpty()) {
+                ItemStack remaining = this.getWarriorInventory().addItemToBackpack(containerItem);
+                if (!remaining.isEmpty()) {
+                    this.spawnAtLocation(remaining);
+                }
+            }
+        }
+
+        this.stopUsingItem();
+        this.syncEquipmentWithInventory();
+    }
+
+    /**
+     * Emergency Retreat & Eat/Drink Goal:
+     * When health is <= 40% and healing consumables (food or potions) exist in the backpack:
      * 1. Performs an immediate evasion roll away from danger.
-     * 2. Clears combat target and runs away at high speed (1.4x).
-     * 3. Equips food in main hand and performs full eating animation with sound and particles.
-     * 4. Consumes food, heals HP, and repeats until health >= 70% or food runs out.
+     * 2. Clears combat target and runs away at high speed (1.25x).
+     * 3. Equips healing item in main hand and performs full eating/drinking animation with sound and particles.
+     * 4. Consumes item, heals HP, returns empty containers, and repeats until health >= 75% or consumables run out.
      */
     public static class EmergencyRetreatAndEatGoal extends Goal {
         private final WarriorCompanionEntity warrior;
@@ -1621,29 +1818,22 @@ public class WarriorCompanionEntity extends PathfinderMob {
             this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
         }
 
-        private int findFoodSlot() {
-            WarriorInventory inv = warrior.getWarriorInventory();
-            for (int i = WarriorInventory.SLOT_BACKPACK_START; i <= WarriorInventory.SLOT_BACKPACK_END; i++) {
-                ItemStack stack = inv.getItem(i);
-                if (!stack.isEmpty() && stack.isEdible()) {
-                    return i;
-                }
-            }
-            return -1;
+        private int findBestConsumableSlot() {
+            return warrior.findBestConsumableSlot(true);
         }
 
         @Override
         public boolean canUse() {
             if (warrior.isTalking() || warrior.isDuelMode()) return false;
-            boolean lowHp = warrior.getHealth() <= (warrior.getMaxHealth() * 0.30F);
-            return (lowHp || warrior.isEmergencyRetreating()) && findFoodSlot() != -1;
+            boolean lowHp = warrior.getHealth() <= (warrior.getMaxHealth() * 0.40F);
+            return (lowHp || warrior.isEmergencyRetreating()) && findBestConsumableSlot() != -1;
         }
 
         @Override
         public boolean canContinueToUse() {
             if (warrior.isTalking() || warrior.isDuelMode()) return false;
-            if (warrior.getHealth() >= (warrior.getMaxHealth() * 0.70F)) return false;
-            return findFoodSlot() != -1;
+            if (warrior.getHealth() >= (warrior.getMaxHealth() * 0.75F)) return false;
+            return findBestConsumableSlot() != -1;
         }
 
         @Override
@@ -1658,7 +1848,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
             if (threat == null || !threat.isAlive()) threat = warrior.getTarget();
             warrior.performEmergencyDodgeRoll(threat != null ? threat.position() : null);
 
-            currentSlot = findFoodSlot();
+            currentSlot = findBestConsumableSlot();
             eatingTicks = 0;
             recalPathTicks = 0;
 
@@ -1672,7 +1862,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
         @Override
         public void tick() {
-            // Garante que o companheiro não trava a mira nem adquire alvos enquanto foge para comer
+            // Garante que o companheiro não trava a mira nem adquire alvos enquanto foge para se curar
             if (warrior.getTarget() != null) {
                 warrior.setTarget(null);
             }
@@ -1680,11 +1870,10 @@ public class WarriorCompanionEntity extends PathfinderMob {
                 warrior.setLastHurtByMob(null);
             }
 
-            // 1. Navegação de fuga / reposicionamento (distância reduzida pela metade: 5 blocos)
+            // 1. Navegação de fuga / reposicionamento (5 blocos)
             if (recalPathTicks <= 0) {
                 recalPathTicks = 12;
                 LivingEntity threat = null;
-                // Procura monstro mais próximo num raio de 8 blocos para calcular a direção oposta
                 var nearbyEnemies = warrior.level().getEntitiesOfClass(
                         net.minecraft.world.entity.monster.Monster.class,
                         warrior.getBoundingBox().inflate(8.0D),
@@ -1712,82 +1901,56 @@ public class WarriorCompanionEntity extends PathfinderMob {
                 }
 
                 warrior.getNavigation().moveTo(targetPos.x, targetPos.y, targetPos.z, 1.25D);
-                // Direciona o olhar para a rota de fuga / mãos (nunca para os monstros)
                 warrior.getLookControl().setLookAt(targetPos.x, warrior.getY() + 0.6D, targetPos.z, 50.0F, 50.0F);
             } else {
                 recalPathTicks--;
             }
 
-            // 2. Lógica de comer
-            currentSlot = findFoodSlot();
+            // 2. Lógica de consumo
+            if (currentSlot == -1 || warrior.getConsumableHealingScore(warrior.getWarriorInventory().getItem(currentSlot), true) < 0) {
+                currentSlot = findBestConsumableSlot();
+            }
+
             if (currentSlot == -1) {
                 stop();
                 return;
             }
 
-            ItemStack foodStack = warrior.getWarriorInventory().getItem(currentSlot);
-            if (foodStack.isEmpty() || !foodStack.isEdible()) {
+            ItemStack consumableStack = warrior.getWarriorInventory().getItem(currentSlot);
+            if (consumableStack.isEmpty()) {
                 stop();
                 return;
             }
 
-            // Garante que o item de comida está na mão e sendo consumido visualmente
+            // Garante que o item está na mão e sendo consumido visualmente
             if (!warrior.isUsingItem()) {
-                warrior.setItemSlot(EquipmentSlot.MAINHAND, foodStack);
+                warrior.setItemSlot(EquipmentSlot.MAINHAND, consumableStack);
                 warrior.startUsingItem(InteractionHand.MAIN_HAND);
             }
 
             eatingTicks++;
 
-            // Partículas saindo da boca e som de mastigação a cada 4 ticks
+            // Partículas e som a cada 4 ticks (diferenciando comer vs beber)
             if (eatingTicks % 4 == 0) {
+                boolean isDrink = consumableStack.getUseAnimation() == UseAnim.DRINK || consumableStack.getItem() instanceof PotionItem;
                 warrior.level().playSound(null, warrior.getX(), warrior.getY(), warrior.getZ(),
-                        SoundEvents.GENERIC_EAT, SoundSource.NEUTRAL, 0.6F, 0.9F + (warrior.getRandom().nextFloat() * 0.2F));
+                        isDrink ? SoundEvents.GENERIC_DRINK : SoundEvents.GENERIC_EAT,
+                        SoundSource.NEUTRAL, 0.6F, 0.9F + (warrior.getRandom().nextFloat() * 0.2F));
 
                 if (warrior.level() instanceof ServerLevel serverLevel) {
-                    serverLevel.sendParticles(new net.minecraft.core.particles.ItemParticleOption(ParticleTypes.ITEM, foodStack),
+                    serverLevel.sendParticles(new net.minecraft.core.particles.ItemParticleOption(ParticleTypes.ITEM, consumableStack),
                             warrior.getX(), warrior.getY() + 1.35D, warrior.getZ(),
                             6, 0.2D, 0.2D, 0.2D, 0.05D);
                 }
             }
 
-            // Conclusão da refeição
-            totalUseDuration = foodStack.getUseDuration() > 0 ? foodStack.getUseDuration() : 32;
+            // Conclusão do consumo
+            totalUseDuration = consumableStack.getUseDuration() > 0 ? consumableStack.getUseDuration() : 32;
             if (eatingTicks >= totalUseDuration) {
                 eatingTicks = 0;
-                var foodProps = foodStack.getItem().getFoodProperties(foodStack, warrior);
-                int nutrition = foodProps != null ? foodProps.getNutrition() : 4;
-                float saturation = foodProps != null ? foodProps.getSaturationModifier() : 0.6F;
-                float healAmount = Math.max(4.0F, nutrition + (saturation * 2.0F));
-
-                warrior.heal(healAmount);
-
-                // Efeitos de comida especial
-                if (foodProps != null) {
-                    for (com.mojang.datafixers.util.Pair<net.minecraft.world.effect.MobEffectInstance, Float> effectPair : foodProps.getEffects()) {
-                        if (effectPair.getFirst() != null && warrior.getRandom().nextFloat() < effectPair.getSecond()) {
-                            warrior.addEffect(new net.minecraft.world.effect.MobEffectInstance(effectPair.getFirst()));
-                        }
-                    }
-                }
-
-                // Partículas de coração
-                if (warrior.level() instanceof ServerLevel serverLevel) {
-                    serverLevel.sendParticles(ParticleTypes.HEART, warrior.getX(), warrior.getY() + 1.2D, warrior.getZ(),
-                            6, 0.3D, 0.3D, 0.3D, 0.05D);
-                }
-
-                // Som de arroto/satisfação ao terminar
-                warrior.level().playSound(null, warrior.getX(), warrior.getY(), warrior.getZ(),
-                        SoundEvents.PLAYER_BURP, SoundSource.NEUTRAL, 0.7F, 1.0F);
-
-                foodStack.shrink(1);
-                if (foodStack.isEmpty()) {
-                    warrior.getWarriorInventory().setItem(currentSlot, ItemStack.EMPTY);
-                }
-
-                warrior.stopUsingItem();
-                warrior.syncEquipmentWithInventory();
+                int slotToConsume = currentSlot;
+                currentSlot = -1;
+                warrior.consumeHealingItem(consumableStack, slotToConsume);
             }
         }
 
@@ -1833,7 +1996,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
     }
 
     /**
-     * Auto Feed Goal: Scans backpack (slots 6-20) for food and eats taking the full standard Minecraft eating duration (32 ticks).
+     * Auto Feed Goal: Scans backpack (slots 6-20) for food and consumes it out of combat taking the standard duration (32 ticks).
      */
     public static class AutoFeedGoal extends Goal {
         private final WarriorCompanionEntity warrior;
@@ -1847,15 +2010,8 @@ public class WarriorCompanionEntity extends PathfinderMob {
             this.setFlags(EnumSet.noneOf(Goal.Flag.class));
         }
 
-        private int findFoodSlot() {
-            WarriorInventory inv = warrior.getWarriorInventory();
-            for (int i = WarriorInventory.SLOT_BACKPACK_START; i <= WarriorInventory.SLOT_BACKPACK_END; i++) {
-                ItemStack stack = inv.getItem(i);
-                if (!stack.isEmpty() && stack.isEdible()) {
-                    return i;
-                }
-            }
-            return -1;
+        private int findConsumableSlot() {
+            return warrior.findBestConsumableSlot(false);
         }
 
         @Override
@@ -1866,7 +2022,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
             }
             if (warrior.getHealth() >= warrior.getMaxHealth()) return false;
             if (warrior.getTarget() != null && warrior.getTarget().isAlive()) return false;
-            return findFoodSlot() != -1;
+            return findConsumableSlot() != -1;
         }
 
         @Override
@@ -1875,12 +2031,12 @@ public class WarriorCompanionEntity extends PathfinderMob {
             if (warrior.getTarget() != null && warrior.getTarget().isAlive()) return false;
             if (currentSlot == -1) return false;
             ItemStack stack = warrior.getWarriorInventory().getItem(currentSlot);
-            return !stack.isEmpty() && stack.isEdible() && eatingTicks < totalUseDuration;
+            return !stack.isEmpty() && warrior.getConsumableHealingScore(stack, false) >= 0 && eatingTicks < totalUseDuration;
         }
 
         @Override
         public void start() {
-            currentSlot = findFoodSlot();
+            currentSlot = findConsumableSlot();
             if (currentSlot != -1) {
                 ItemStack stack = warrior.getWarriorInventory().getItem(currentSlot);
                 totalUseDuration = stack.getUseDuration() > 0 ? stack.getUseDuration() : 32;
@@ -1904,7 +2060,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
             WarriorInventory inv = warrior.getWarriorInventory();
             ItemStack stack = inv.getItem(currentSlot);
-            if (stack.isEmpty() || !stack.isEdible()) {
+            if (stack.isEmpty() || warrior.getConsumableHealingScore(stack, false) < 0) {
                 stop();
                 return;
             }
@@ -1916,10 +2072,12 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
             eatingTicks++;
 
-            // Som de mastigação e partículas a cada 4 ticks (padrão vanilla)
+            // Som de mastigação/bebida e partículas a cada 4 ticks
             if (eatingTicks % 4 == 0) {
+                boolean isDrink = stack.getUseAnimation() == UseAnim.DRINK || stack.getItem() instanceof PotionItem;
                 warrior.level().playSound(null, warrior.getX(), warrior.getY(), warrior.getZ(),
-                        SoundEvents.GENERIC_EAT, SoundSource.NEUTRAL, 0.6F, 0.9F + warrior.getRandom().nextFloat() * 0.2F);
+                        isDrink ? SoundEvents.GENERIC_DRINK : SoundEvents.GENERIC_EAT,
+                        SoundSource.NEUTRAL, 0.6F, 0.9F + warrior.getRandom().nextFloat() * 0.2F);
 
                 if (warrior.level() instanceof ServerLevel serverLevel) {
                     serverLevel.sendParticles(new net.minecraft.core.particles.ItemParticleOption(ParticleTypes.ITEM, stack),
@@ -1928,41 +2086,12 @@ public class WarriorCompanionEntity extends PathfinderMob {
                 }
             }
 
-            // Quando conclui os 32 ticks de mastigação -> consome o alimento e cura
+            // Quando conclui os ticks de mastigação/bebida -> consome o item e cura
             if (eatingTicks >= totalUseDuration) {
-                var foodProps = stack.getItem().getFoodProperties(stack, warrior);
-                int nutrition = foodProps != null ? foodProps.getNutrition() : 4;
-                float saturation = foodProps != null ? foodProps.getSaturationModifier() : 0.6F;
-                float healAmount = Math.max(4.0F, nutrition + (saturation * 2.0F));
-
-                warrior.heal(healAmount);
-
-                // Efeitos de comida especial (ex: maçã dourada)
-                if (foodProps != null) {
-                    for (com.mojang.datafixers.util.Pair<net.minecraft.world.effect.MobEffectInstance, Float> effectPair : foodProps.getEffects()) {
-                        if (effectPair.getFirst() != null && warrior.getRandom().nextFloat() < effectPair.getSecond()) {
-                            warrior.addEffect(new net.minecraft.world.effect.MobEffectInstance(effectPair.getFirst()));
-                        }
-                    }
-                }
-
-                // Partículas de cura
-                if (warrior.level() instanceof ServerLevel serverLevel) {
-                    serverLevel.sendParticles(ParticleTypes.HEART, warrior.getX(), warrior.getY() + 1.2D, warrior.getZ(),
-                            5, 0.3D, 0.3D, 0.3D, 0.05D);
-                }
-
-                // Som de arroto/satisfação ao terminar
-                warrior.level().playSound(null, warrior.getX(), warrior.getY(), warrior.getZ(),
-                        SoundEvents.PLAYER_BURP, SoundSource.NEUTRAL, 0.7F, 1.0F);
-
-                // Consumir 1 unidade do alimento
-                stack.shrink(1);
-                if (stack.isEmpty()) {
-                    warrior.getWarriorInventory().setItem(currentSlot, ItemStack.EMPTY);
-                }
-
-                // Intervalo natural antes de começar o próximo item
+                int slotToConsume = currentSlot;
+                currentSlot = -1;
+                eatingTicks = 0;
+                warrior.consumeHealingItem(stack, slotToConsume);
                 postEatCooldown = 15;
                 stop();
             }
