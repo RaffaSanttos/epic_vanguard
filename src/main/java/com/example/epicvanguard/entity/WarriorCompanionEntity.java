@@ -407,18 +407,46 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
     public void setRecruited(boolean recruited) {
         this.entityData.set(RECRUITED, recruited);
-        if (recruited) {
-            this.setCustomName(Component.literal("§a" + this.getWarriorName()));
-            this.setCustomNameVisible(true);
-        }
+        String name = this.getWarriorName();
+        String prefix = recruited ? "§a" : "§7";
+        super.setCustomName(Component.literal(prefix + name));
+        this.setCustomNameVisible(true);
     }
 
     public String getWarriorName() {
-        return this.entityData.get(WARRIOR_NAME);
+        if (this.hasCustomName()) {
+            Component customComp = this.getCustomName();
+            if (customComp != null) {
+                String raw = customComp.getString();
+                String clean = raw.replaceAll("§[0-9a-fk-or]", "").trim();
+                if (!clean.isEmpty()) {
+                    return clean;
+                }
+            }
+        }
+        String synched = this.entityData.get(WARRIOR_NAME);
+        if (synched != null && !synched.isEmpty()) {
+            return synched;
+        }
+        return "Guerreiro";
     }
 
     public void setWarriorName(String name) {
         this.entityData.set(WARRIOR_NAME, name);
+        String prefix = this.isRecruited() ? "§a" : "§7";
+        super.setCustomName(Component.literal(prefix + name));
+        this.setCustomNameVisible(true);
+    }
+
+    @Override
+    public void setCustomName(@Nullable Component name) {
+        super.setCustomName(name);
+        if (name != null) {
+            String clean = name.getString().replaceAll("§[0-9a-fk-or]", "").trim();
+            if (!clean.isEmpty() && !clean.equals(this.entityData.get(WARRIOR_NAME))) {
+                this.entityData.set(WARRIOR_NAME, clean);
+            }
+        }
     }
 
     public boolean isDuelMode() {
@@ -1414,11 +1442,17 @@ public class WarriorCompanionEntity extends PathfinderMob {
         if (pCompound.contains("CombatMode")) {
             setCombatMode(pCompound.getInt("CombatMode"));
         }
-        if (pCompound.contains("Recruited")) {
-            setRecruited(pCompound.getBoolean("Recruited"));
-        }
         if (pCompound.contains("WarriorName")) {
             setWarriorName(pCompound.getString("WarriorName"));
+        } else if (this.hasCustomName()) {
+            String raw = this.getCustomName() != null ? this.getCustomName().getString() : "";
+            String clean = raw.replaceAll("§[0-9a-fk-or]", "").trim();
+            if (!clean.isEmpty()) {
+                setWarriorName(clean);
+            }
+        }
+        if (pCompound.contains("Recruited")) {
+            setRecruited(pCompound.getBoolean("Recruited"));
         }
         if (pCompound.contains("DuelMode")) {
             setDuelMode(pCompound.getBoolean("DuelMode"));
