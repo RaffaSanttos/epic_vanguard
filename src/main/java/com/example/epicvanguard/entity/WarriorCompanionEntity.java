@@ -59,6 +59,8 @@ import net.minecraft.world.entity.ai.goal.target.TargetGoal;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.monster.AbstractIllager;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
@@ -100,6 +102,10 @@ public class WarriorCompanionEntity extends PathfinderMob {
             SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> COMBAT_MODE =
             SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> TARGET_HOSTILES =
+            SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> TARGET_PASSIVES =
+            SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> RECRUITED =
             SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<String> WARRIOR_NAME =
@@ -248,7 +254,9 @@ public class WarriorCompanionEntity extends PathfinderMob {
         super.defineSynchedData();
         this.entityData.define(OWNER_UUID, Optional.empty());
         this.entityData.define(SKIN_ID, 0);
-        this.entityData.define(COMBAT_MODE, 1); // 1=Defensivo (padrão inicial), 0=Agressivo, 2=Guarda, 3=Base
+        this.entityData.define(COMBAT_MODE, 0); // 0=Seguir (padrão inicial), 1=Guarda, 2=Parado
+        this.entityData.define(TARGET_HOSTILES, true);
+        this.entityData.define(TARGET_PASSIVES, false);
         this.entityData.define(RECRUITED, false);
         this.entityData.define(WARRIOR_NAME, "");
         this.entityData.define(DUEL_MODE, false);
@@ -260,6 +268,22 @@ public class WarriorCompanionEntity extends PathfinderMob {
     }
 
     // ── Getters / Setters ─────────────────────────────────────────────────────
+    public boolean isTargetHostiles() {
+        return this.entityData.get(TARGET_HOSTILES);
+    }
+
+    public void setTargetHostiles(boolean targetHostiles) {
+        this.entityData.set(TARGET_HOSTILES, targetHostiles);
+    }
+
+    public boolean isTargetPassives() {
+        return this.entityData.get(TARGET_PASSIVES);
+    }
+
+    public void setTargetPassives(boolean targetPassives) {
+        this.entityData.set(TARGET_PASSIVES, targetPassives);
+    }
+
     public int getEquipmentTier() {
         return this.entityData.get(EQUIPMENT_TIER);
     }
@@ -304,9 +328,9 @@ public class WarriorCompanionEntity extends PathfinderMob {
     public void setCombatMode(int mode) {
         this.entityData.set(COMBAT_MODE, mode);
         this.clearCombatTarget();
-        if (mode == 2) {
+        if (mode == 1) { // 1 = Guarda
             this.setGuardPos(this.blockPosition());
-        } else if (mode == 3) {
+        } else if (mode == 2) { // 2 = Parado
             this.getNavigation().stop();
             this.setDeltaMovement(0.0D, this.getDeltaMovement().y, 0.0D);
             this.setSpeed(0.0F);
@@ -423,6 +447,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new AggressiveTargetGoal(this));
+        this.targetSelector.addGoal(3, new HuntAnimalGoal(this));
     }
 
     @Override
@@ -557,8 +582,8 @@ public class WarriorCompanionEntity extends PathfinderMob {
             // Sync Warrior Inventory equipment to entity equipment slots for rendering
             syncEquipmentWithInventory();
 
-            // Follow Owner distance safeguard (modes 0 and 1: teleporta ao atingir 15 blocos de distância)
-            if (isRecruited() && getCombatMode() != 2 && getCombatMode() != 3 && !isEmergencyRetreating()) {
+            // Follow Owner distance safeguard (modo 0 = Seguir: teleporta ao atingir 15 blocos de distância)
+            if (isRecruited() && getCombatMode() == 0 && !isEmergencyRetreating()) {
                 Player owner = getOwner();
                 if (owner != null && !owner.isSpectator() && this.distanceToSqr(owner) >= 225.0D) { // >= 15 blocks
                     this.setTarget(null);
@@ -566,8 +591,8 @@ public class WarriorCompanionEntity extends PathfinderMob {
                 }
             }
 
-            // Modo Parado (3): Garante imobilidade absoluta quando sem ameaças
-            if (isRecruited() && getCombatMode() == 3) {
+            // Modo Parado (2): Garante imobilidade absoluta quando sem ameaças
+            if (isRecruited() && getCombatMode() == 2) {
                 if (this.getTarget() == null && this.getLastHurtByMob() == null && !isEmergencyRetreating()) {
                     if (this.getNavigation().isInProgress()) {
                         this.getNavigation().stop();
@@ -640,7 +665,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
     @Override
     public boolean isPushable() {
-        if (this.isRecruited() && this.getCombatMode() == 3) {
+        if (this.isRecruited() && this.getCombatMode() == 2) {
             return false;
         }
         return super.isPushable();
@@ -648,7 +673,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
     @Override
     public void push(Entity pEntity) {
-        if (this.isRecruited() && this.getCombatMode() == 3) {
+        if (this.isRecruited() && this.getCombatMode() == 2) {
             return;
         }
         super.push(pEntity);
@@ -656,7 +681,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
     @Override
     public void aiStep() {
-        if (this.isRecruited() && this.getCombatMode() == 3) {
+        if (this.isRecruited() && this.getCombatMode() == 2) {
             if (this.getTarget() == null && this.getLastHurtByMob() == null && !this.isEmergencyRetreating()) {
                 this.getNavigation().stop();
                 this.xxa = 0.0F;
@@ -669,7 +694,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
     @Override
     public void travel(net.minecraft.world.phys.Vec3 travelVector) {
-        if (this.isRecruited() && this.getCombatMode() == 3) {
+        if (this.isRecruited() && this.getCombatMode() == 2) {
             if (this.getTarget() == null && this.getLastHurtByMob() == null && !this.isEmergencyRetreating()) {
                 if (this.isEffectiveAi()) {
                     this.setDeltaMovement(0.0D, this.getDeltaMovement().y, 0.0D);
@@ -953,6 +978,8 @@ public class WarriorCompanionEntity extends PathfinderMob {
         super.addAdditionalSaveData(pCompound);
         getOwnerUUID().ifPresent(uuid -> pCompound.putUUID("OwnerUUID", uuid));
         pCompound.putInt("SkinId", getSkinId());
+        pCompound.putBoolean("TargetHostiles", isTargetHostiles());
+        pCompound.putBoolean("TargetPassives", isTargetPassives());
         pCompound.putInt("CombatMode", getCombatMode());
         pCompound.putBoolean("Recruited", isRecruited());
         pCompound.putString("WarriorName", getWarriorName());
@@ -982,6 +1009,12 @@ public class WarriorCompanionEntity extends PathfinderMob {
         }
         if (pCompound.contains("SkinId")) {
             setSkinId(pCompound.getInt("SkinId"));
+        }
+        if (pCompound.contains("TargetHostiles")) {
+            setTargetHostiles(pCompound.getBoolean("TargetHostiles"));
+        }
+        if (pCompound.contains("TargetPassives")) {
+            setTargetPassives(pCompound.getBoolean("TargetPassives"));
         }
         if (pCompound.contains("CombatMode")) {
             setCombatMode(pCompound.getInt("CombatMode"));
@@ -1150,7 +1183,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
     /**
      * Follow Owner Goal: Follows owner when distance > 4 blocks.
      * Intelligently teleports if distance > 16 blocks away or if navigation path is blocked.
-     * Respects Guard (2) and Base/Stay (3) modes: NEVER follows or auto-teleports in those modes.
+     * Respects Guard (1) and Stay/Parado (2) modes: NEVER follows or auto-teleports in those modes.
      */
     public static class FollowOwnerGoal extends Goal {
         private final WarriorCompanionEntity warrior;
@@ -1172,7 +1205,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
             if (warrior.isTalking()) return false;
             Player owner = warrior.getOwner();
             if (owner == null || owner.isSpectator() || !warrior.isRecruited()) return false;
-            if (warrior.getCombatMode() == 2 || warrior.getCombatMode() == 3) return false; // Guarda ou Ficar
+            if (warrior.getCombatMode() != 0) return false; // Apenas modo 0 (Seguir)
             if (warrior.getTarget() != null && warrior.getTarget().isAlive()) return false; // Não interrompe combate a não ser por teleport de 15 blocos
             return warrior.distanceToSqr(owner) > (double) (startDist * startDist);
         }
@@ -1182,7 +1215,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
             if (warrior.isTalking()) return false;
             Player owner = warrior.getOwner();
             if (owner == null || !warrior.isRecruited()) return false;
-            if (warrior.getCombatMode() == 2 || warrior.getCombatMode() == 3) return false;
+            if (warrior.getCombatMode() != 0) return false;
             if (warrior.getTarget() != null && warrior.getTarget().isAlive()) return false;
             return warrior.distanceToSqr(owner) > (double) (stopDist * stopDist);
         }
@@ -1191,11 +1224,11 @@ public class WarriorCompanionEntity extends PathfinderMob {
         public void tick() {
             Player owner = warrior.getOwner();
             if (owner == null) return;
-            if (warrior.getCombatMode() == 2 || warrior.getCombatMode() == 3) return;
+            if (warrior.getCombatMode() != 0) return;
 
             warrior.getLookControl().setLookAt(owner, 10.0F, (float) warrior.getMaxHeadXRot());
 
-            // Se o dono mudou de dimensão (e estamos no modo Seguir 0 ou 1 e dono está no chão firme)
+            // Se o dono mudou de dimensão (e estamos no modo Seguir 0 e dono está no chão firme)
             if (owner.level() != warrior.level() && owner.level() instanceof ServerLevel targetLevel) {
                 if (owner.onGround() && owner.getY() >= owner.level().getMinBuildHeight()) {
                     warrior.teleportTo(targetLevel, owner.getX(), owner.getY(), owner.getZ(), null, warrior.getYRot(), warrior.getXRot());
@@ -1242,7 +1275,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
         @Override
         public boolean canUse() {
-            if (!warrior.isRecruited() || warrior.getCombatMode() == 3 || warrior.isEmergencyRetreating() || warrior.isLowHealth()) return false;
+            if (!warrior.isRecruited() || warrior.getCombatMode() == 2 || warrior.isEmergencyRetreating() || warrior.isLowHealth()) return false;
             Player owner = warrior.getOwner();
             if (owner == null) return false;
 
@@ -1264,7 +1297,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
     }
 
     /**
-     * Aggressive Target Goal: Attacks hostile monsters nearby in Aggressive mode.
+     * Aggressive Target Goal: Attacks hostile monsters nearby when targetHostiles is enabled.
      */
     public static class AggressiveTargetGoal extends NearestAttackableTargetGoal<Mob> {
         private final WarriorCompanionEntity warrior;
@@ -1277,7 +1310,33 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
         @Override
         public boolean canUse() {
-            if (!warrior.isRecruited() || warrior.getCombatMode() != 0 || warrior.isEmergencyRetreating() || warrior.isLowHealth()) return false;
+            if (!warrior.isRecruited() || !warrior.isTargetHostiles() || warrior.getCombatMode() == 2 || warrior.isEmergencyRetreating() || warrior.isLowHealth()) return false;
+            return super.canUse();
+        }
+    }
+
+    /**
+     * Hunt Animal Goal: Attacks passive adult food animals when targetPassives is enabled.
+     */
+    public static class HuntAnimalGoal extends NearestAttackableTargetGoal<Animal> {
+        private final WarriorCompanionEntity warrior;
+
+        public HuntAnimalGoal(WarriorCompanionEntity warrior) {
+            super(warrior, Animal.class, 10, true, false,
+                    animal -> animal != null && !animal.isBaby() &&
+                            !(animal instanceof TamableAnimal tamable && tamable.isTame()) &&
+                            (animal instanceof net.minecraft.world.entity.animal.Cow ||
+                             animal instanceof net.minecraft.world.entity.animal.Pig ||
+                             animal instanceof net.minecraft.world.entity.animal.Sheep ||
+                             animal instanceof net.minecraft.world.entity.animal.Chicken ||
+                             animal instanceof net.minecraft.world.entity.animal.Rabbit ||
+                             animal instanceof net.minecraft.world.entity.animal.goat.Goat));
+            this.warrior = warrior;
+        }
+
+        @Override
+        public boolean canUse() {
+            if (!warrior.isRecruited() || !warrior.isTargetPassives() || warrior.getCombatMode() == 2 || warrior.isEmergencyRetreating() || warrior.isLowHealth()) return false;
             return super.canUse();
         }
     }
@@ -1306,11 +1365,11 @@ public class WarriorCompanionEntity extends PathfinderMob {
                     return false;
                 }
             } else {
-                if (warrior.getCombatMode() == 3) { // Base / Ficar
+                if (warrior.getCombatMode() == 2) { // 2 = Parado
                     warrior.clearCombatTarget();
                     return false;
                 }
-                if (warrior.getCombatMode() == 2 && warrior.getGuardPos() != null) {
+                if (warrior.getCombatMode() == 1 && warrior.getGuardPos() != null) { // 1 = Guarda
                     if (warrior.getTarget() != null) {
                         double distToGuard = warrior.getTarget().distanceToSqr(
                                 warrior.getGuardPos().getX() + 0.5D,
@@ -1336,11 +1395,11 @@ public class WarriorCompanionEntity extends PathfinderMob {
             if (warrior.isEmergencyRetreating() || warrior.isLowHealth()) return false;
             if (warrior.isPrisoner()) return false;
             if (warrior.isRecruited()) {
-                if (warrior.getCombatMode() == 3) {
+                if (warrior.getCombatMode() == 2) {
                     warrior.clearCombatTarget();
                     return false;
                 }
-                if (warrior.getCombatMode() == 2 && warrior.getGuardPos() != null) {
+                if (warrior.getCombatMode() == 1 && warrior.getGuardPos() != null) {
                     if (warrior.getTarget() != null) {
                         double distToGuard = warrior.getTarget().distanceToSqr(
                                 warrior.getGuardPos().getX() + 0.5D,
@@ -1758,7 +1817,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
         @Override
         public boolean canUse() {
             if (warrior.isTalking()) return false;
-            return warrior.isRecruited() && warrior.getCombatMode() == 2 && warrior.getGuardPos() != null;
+            return warrior.isRecruited() && warrior.getCombatMode() == 1 && warrior.getGuardPos() != null;
         }
 
         @Override
@@ -1944,7 +2003,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
     }
 
     /**
-     * Warrior Stroll Goal: Random stroll that respects Stay/Base (3) and Guard (2) modes.
+     * Warrior Stroll Goal: Random stroll that respects Stay/Base (2) and Guard (1) modes.
      */
     public static class WarriorStrollGoal extends WaterAvoidingRandomStrollGoal {
         private final WarriorCompanionEntity warrior;
@@ -1956,7 +2015,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
         @Override
         public boolean canUse() {
-            if (warrior.isRecruited() && (warrior.getCombatMode() == 3 || warrior.getCombatMode() == 2)) {
+            if (warrior.isRecruited() && (warrior.getCombatMode() == 2 || warrior.getCombatMode() == 1)) {
                 return false;
             }
             if (warrior.isTalking() || warrior.isDuelMode()) return false;
@@ -1965,7 +2024,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
         @Override
         public boolean canContinueToUse() {
-            if (warrior.isRecruited() && (warrior.getCombatMode() == 3 || warrior.getCombatMode() == 2)) {
+            if (warrior.isRecruited() && (warrior.getCombatMode() == 2 || warrior.getCombatMode() == 1)) {
                 return false;
             }
             return super.canContinueToUse();

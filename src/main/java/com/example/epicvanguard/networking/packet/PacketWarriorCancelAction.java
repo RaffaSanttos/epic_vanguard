@@ -28,8 +28,7 @@ public class PacketWarriorCancelAction {
             if (context.getSender() == null) return;
             Entity entity = context.getSender().serverLevel().getEntity(entityId);
             if (entity instanceof WarriorCompanionEntity warrior) {
-                warrior.setTarget(null);
-                warrior.getNavigation().stop();
+                warrior.clearCombatTarget();
             }
         });
         return true;

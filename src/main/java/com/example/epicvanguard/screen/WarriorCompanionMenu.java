@@ -62,39 +62,39 @@ public class WarriorCompanionMenu extends AbstractContainerMenu {
                 return WarriorInventory.isArmorForSlot(stack, EquipmentSlot.FEET);
             }
         });
-        // Slot 4 – Main Weapon (x=35, y=21)
-        this.addSlot(new Slot(this.warriorInv, WarriorInventory.SLOT_WEAPON_MAIN, 35, 21) {
+        // Slot 4 – Main Weapon (x=33, y=21)
+        this.addSlot(new Slot(this.warriorInv, WarriorInventory.SLOT_WEAPON_MAIN, 33, 21) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return WarriorInventory.isWeaponOrShield(stack);
             }
         });
-        // Slot 5 – Off Weapon / Shield (x=35, y=39)
-        this.addSlot(new Slot(this.warriorInv, WarriorInventory.SLOT_WEAPON_OFF, 35, 39) {
+        // Slot 5 – Off Weapon / Shield (x=33, y=39)
+        this.addSlot(new Slot(this.warriorInv, WarriorInventory.SLOT_WEAPON_OFF, 33, 39) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return WarriorInventory.isWeaponOrShield(stack);
             }
         });
 
-        // ── Backpack slots 6-20 (5 cols x 3 rows, starting x=83, y=21) ────────
+        // ── Backpack slots 6-20 (5 cols x 3 rows, starting x=61, y=21) ────────
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 5; col++) {
                 int slotIndex = WarriorInventory.SLOT_BACKPACK_START + row * 5 + col;
-                this.addSlot(new Slot(this.warriorInv, slotIndex, 83 + col * 18, 21 + row * 18));
+                this.addSlot(new Slot(this.warriorInv, slotIndex, 61 + col * 18, 21 + row * 18));
             }
         }
 
-        // ── Player inventory (9 cols x 3 rows, x=17, y=105) ───────────────────
+        // ── Player inventory (9 cols x 3 rows, x=32, y=109) ───────────────────
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 17 + col * 18, 105 + row * 18));
+                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 32 + col * 18, 109 + row * 18));
             }
         }
 
-        // ── Player hotbar (9 cols x 1 row, x=17, y=163) ───────────────────────
+        // ── Player hotbar (9 cols x 1 row, x=32, y=167) ───────────────────────
         for (int col = 0; col < 9; col++) {
-            this.addSlot(new Slot(playerInv, col, 17 + col * 18, 163));
+            this.addSlot(new Slot(playerInv, col, 32 + col * 18, 167));
         }
     }
 

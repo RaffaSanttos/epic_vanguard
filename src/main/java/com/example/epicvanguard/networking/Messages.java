@@ -53,6 +53,12 @@ public class Messages {
                 .encoder(PacketRecruitWarrior::toBytes)
                 .consumerMainThread(PacketRecruitWarrior::handle)
                 .add();
+
+        net.messageBuilder(com.example.epicvanguard.networking.packet.PacketWarriorTactics.class, id(), NetworkDirection.PLAY_TO_SERVER)
+                .decoder(com.example.epicvanguard.networking.packet.PacketWarriorTactics::new)
+                .encoder(com.example.epicvanguard.networking.packet.PacketWarriorTactics::toBytes)
+                .consumerMainThread(com.example.epicvanguard.networking.packet.PacketWarriorTactics::handle)
+                .add();
     }
 
     public static <MSG> void sendToServer(MSG message) {

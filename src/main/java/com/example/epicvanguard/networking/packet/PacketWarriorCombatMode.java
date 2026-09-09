@@ -11,10 +11,9 @@ public class PacketWarriorCombatMode {
     private final int entityId;
     private final int newMode;
 
-    public static final int MODE_AGGRO   = 0;
-    public static final int MODE_DEFENSE = 1;
-    public static final int MODE_GUARD   = 2;
-    public static final int MODE_STAY    = 3;
+    public static final int MODE_FOLLOW = 0; // Seguir jogador
+    public static final int MODE_GUARD  = 1; // Ficar de guarda (raio de 3 blocos)
+    public static final int MODE_STAY   = 2; // Parado e imóvel
 
     public PacketWarriorCombatMode(int entityId, int newMode) {
         this.entityId = entityId;

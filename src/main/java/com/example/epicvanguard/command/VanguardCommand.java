@@ -202,11 +202,10 @@ public class VanguardCommand {
 
             String modeName;
             switch (currentMode) {
-                case 0 -> modeName = "§c Agressivo";
-                case 1 -> modeName = "§e Defensivo";
-                case 2 -> modeName = "§b Guarda";
-                case 3 -> modeName = "§7 Ficar / Base";
-                default -> modeName = "§f Desconhecido";
+                case 0 -> modeName = "§a Seguir";
+                case 1 -> modeName = "§e Guarda";
+                case 2 -> modeName = "§7 Parado";
+                default -> modeName = "§a Seguir";
             }
 
             String distText = "";

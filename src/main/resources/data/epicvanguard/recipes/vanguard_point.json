@@ -5,11 +5,9 @@
     {
       "item": "minecraft:barrel"
     },
-    [
-      { "item": "epicvanguard:gold_coin" },
-      { "item": "minecraft:iron_ingot" },
-      { "item": "minecraft:gold_ingot" }
-    ],
+    {
+      "item": "epicvanguard:gold_coin"
+    },
     {
       "tag": "minecraft:planks"
     },
