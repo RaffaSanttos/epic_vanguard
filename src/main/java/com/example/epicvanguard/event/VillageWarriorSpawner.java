@@ -231,8 +231,19 @@ public class VillageWarriorSpawner {
         return findDirectPointSpawnPos(level, poiPos);
     }
 
+    private static WarriorCompanionEntity createRandomSpecializedCompanion(ServerLevel level) {
+        int roll = level.random.nextInt(3);
+        if (roll == 0) {
+            return ModEntityTypes.BERSERKER_COMPANION.get().create(level);
+        } else if (roll == 1) {
+            return ModEntityTypes.GUARDIAN_COMPANION.get().create(level);
+        } else {
+            return ModEntityTypes.DUELIST_COMPANION.get().create(level);
+        }
+    }
+
     private static void spawnTavernMercenary(ServerLevel level, BlockPos spawnPos, ServerPlayer player, BlockPos poiPos, boolean playerIsNear) {
-        WarriorCompanionEntity warrior = ModEntityTypes.WARRIOR_COMPANION.get().create(level);
+        WarriorCompanionEntity warrior = createRandomSpecializedCompanion(level);
         if (warrior != null) {
             warrior.moveTo(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D,
                     level.random.nextFloat() * 360.0F, 0.0F);
@@ -310,7 +321,7 @@ public class VillageWarriorSpawner {
 
         // Spawna o Prisioneiro exatamente no interior da cela (espaço 2x2)
         BlockPos insidePos = cagePos.offset(1, 1, 1);
-        WarriorCompanionEntity prisoner = ModEntityTypes.WARRIOR_COMPANION.get().create(level);
+        WarriorCompanionEntity prisoner = createRandomSpecializedCompanion(level);
         if (prisoner != null) {
             prisoner.moveTo(insidePos.getX() + 0.5D, insidePos.getY(), insidePos.getZ() + 0.5D,
                     level.random.nextFloat() * 360.0F, 0.0F);
@@ -373,7 +384,7 @@ public class VillageWarriorSpawner {
             spawnPos = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(centerX, 0, centerZ));
         }
 
-        WarriorCompanionEntity warrior = ModEntityTypes.WARRIOR_COMPANION.get().create(level);
+        WarriorCompanionEntity warrior = createRandomSpecializedCompanion(level);
         if (warrior != null) {
             warrior.moveTo(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D,
                     level.random.nextFloat() * 360.0F, 0.0F);

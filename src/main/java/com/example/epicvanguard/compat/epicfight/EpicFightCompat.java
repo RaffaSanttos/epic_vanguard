@@ -16,21 +16,36 @@ import yesman.epicfight.client.renderer.patched.entity.PCustomHumanoidEntityRend
 import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.world.capabilities.provider.EntityPatchProvider;
 
+import java.util.List;
+
 @Mod.EventBusSubscriber(modid = EpicVanguardMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class EpicFightCompat {
+
+    private static List<net.minecraft.world.entity.EntityType<?>> getCompanionTypes() {
+        return List.of(
+                ModEntityTypes.WARRIOR_COMPANION.get(),
+                ModEntityTypes.BERSERKER_COMPANION.get(),
+                ModEntityTypes.GUARDIAN_COMPANION.get(),
+                ModEntityTypes.DUELIST_COMPANION.get()
+        );
+    }
 
     @SubscribeEvent
     public static void onCommonSetup(FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
-            EntityPatchProvider.putCustomEntityPatch(ModEntityTypes.WARRIOR_COMPANION.get(), entity -> () -> new WarriorCompanionPatch());
-            Armatures.registerEntityTypeArmature(ModEntityTypes.WARRIOR_COMPANION.get(), Armatures.BIPED);
+            for (var type : getCompanionTypes()) {
+                EntityPatchProvider.putCustomEntityPatch(type, entity -> () -> new WarriorCompanionPatch());
+                Armatures.registerEntityTypeArmature(type, Armatures.BIPED);
+            }
         });
     }
 
     @SubscribeEvent
     public static void registerEntityPatch(EntityPatchRegistryEvent event) {
-        Armatures.registerEntityTypeArmature(ModEntityTypes.WARRIOR_COMPANION.get(), Armatures.BIPED);
-        event.getTypeEntry().put(ModEntityTypes.WARRIOR_COMPANION.get(), entity -> () -> new WarriorCompanionPatch());
+        for (var type : getCompanionTypes()) {
+            Armatures.registerEntityTypeArmature(type, Armatures.BIPED);
+            event.getTypeEntry().put(type, entity -> () -> new WarriorCompanionPatch());
+        }
     }
 
     @SubscribeEvent
@@ -56,16 +71,20 @@ public class EpicFightCompat {
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event) {
             event.enqueueWork(() -> {
-                EntityPatchProvider.putCustomEntityPatch(ModEntityTypes.WARRIOR_COMPANION.get(), entity -> () -> new WarriorCompanionPatch());
-                Armatures.registerEntityTypeArmature(ModEntityTypes.WARRIOR_COMPANION.get(), Armatures.BIPED);
+                for (var type : getCompanionTypes()) {
+                    EntityPatchProvider.putCustomEntityPatch(type, entity -> () -> new WarriorCompanionPatch());
+                    Armatures.registerEntityTypeArmature(type, Armatures.BIPED);
+                }
             });
         }
 
         @SubscribeEvent
         public static void registerPatchedRenderers(PatchedRenderersEvent.Add event) {
-            Armatures.registerEntityTypeArmature(ModEntityTypes.WARRIOR_COMPANION.get(), Armatures.BIPED);
-            event.addPatchedEntityRenderer(ModEntityTypes.WARRIOR_COMPANION.get(),
-                    type -> new PCustomHumanoidEntityRenderer(Meshes.BIPED_OUTLAYER, event.getContext(), type));
+            for (var type : getCompanionTypes()) {
+                Armatures.registerEntityTypeArmature(type, Armatures.BIPED);
+                event.addPatchedEntityRenderer(type,
+                        entityType -> new PCustomHumanoidEntityRenderer(Meshes.BIPED_OUTLAYER, event.getContext(), entityType));
+            }
         }
     }
 }

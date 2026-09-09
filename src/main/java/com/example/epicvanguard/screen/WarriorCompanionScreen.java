@@ -37,6 +37,8 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
     private Button cancelButton;
     private Button hostilesButton;
     private Button passivesButton;
+    private Button tabMochilaButton;
+    private Button tabHabilidadesButton;
 
     public WarriorCompanionScreen(WarriorCompanionMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
@@ -107,6 +109,26 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
                 .tooltip(Tooltip.create(Component.literal("Caçar Comida: ON / OFF (Abater animais adultos para alimento)")))
                 .build();
 
+        // Abas superiores de navegação
+        tabMochilaButton = Button.builder(
+                Component.literal("§6🎒 Mochila"),
+                btn -> {})
+                .bounds(leftPos + 8, topPos - 18, 70, 18)
+                .tooltip(Tooltip.create(Component.literal("Inventário e Equipamentos do Guerreiro")))
+                .build();
+        tabMochilaButton.active = false; // Já estamos nesta tela
+
+        tabHabilidadesButton = Button.builder(
+                Component.literal("§7🌳 Talentos"),
+                btn -> {
+                    Minecraft.getInstance().setScreen(new WarriorSkillTreeScreen(this.menu.getEntityId()));
+                })
+                .bounds(leftPos + 80, topPos - 18, 90, 18)
+                .tooltip(Tooltip.create(Component.literal("Abrir Árvore de Talentos da Vanguarda")))
+                .build();
+
+        this.addRenderableWidget(tabMochilaButton);
+        this.addRenderableWidget(tabHabilidadesButton);
         this.addRenderableWidget(modeButton);
         this.addRenderableWidget(cancelButton);
         this.addRenderableWidget(hostilesButton);

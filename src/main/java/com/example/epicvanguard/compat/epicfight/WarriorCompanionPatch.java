@@ -17,11 +17,33 @@ public class WarriorCompanionPatch extends HumanoidMobPatch<WarriorCompanionEnti
     }
 
     public static void initAttributes(EntityAttributeModificationEvent event) {
+        // Guerreiro Padrão
         event.add(com.example.epicvanguard.init.ModEntityTypes.WARRIOR_COMPANION.get(), EpicFightAttributes.IMPACT.get(), 0.5D);
         event.add(com.example.epicvanguard.init.ModEntityTypes.WARRIOR_COMPANION.get(), EpicFightAttributes.WEIGHT.get(), 20.0D);
         event.add(com.example.epicvanguard.init.ModEntityTypes.WARRIOR_COMPANION.get(), EpicFightAttributes.STUN_ARMOR.get(), 0.0D);
         event.add(com.example.epicvanguard.init.ModEntityTypes.WARRIOR_COMPANION.get(), EpicFightAttributes.MAX_STAMINA.get(), 15.0D);
         event.add(com.example.epicvanguard.init.ModEntityTypes.WARRIOR_COMPANION.get(), EpicFightAttributes.STAMINA_REGEN.get(), 1.0D);
+
+        // Berserker: Alto impacto e força bruta
+        event.add(com.example.epicvanguard.init.ModEntityTypes.BERSERKER_COMPANION.get(), EpicFightAttributes.IMPACT.get(), 1.0D);
+        event.add(com.example.epicvanguard.init.ModEntityTypes.BERSERKER_COMPANION.get(), EpicFightAttributes.WEIGHT.get(), 22.0D);
+        event.add(com.example.epicvanguard.init.ModEntityTypes.BERSERKER_COMPANION.get(), EpicFightAttributes.STUN_ARMOR.get(), 1.0D);
+        event.add(com.example.epicvanguard.init.ModEntityTypes.BERSERKER_COMPANION.get(), EpicFightAttributes.MAX_STAMINA.get(), 18.0D);
+        event.add(com.example.epicvanguard.init.ModEntityTypes.BERSERKER_COMPANION.get(), EpicFightAttributes.STAMINA_REGEN.get(), 1.2D);
+
+        // Guardião: Alta blindagem, peso e resistência extrema a atordoamento
+        event.add(com.example.epicvanguard.init.ModEntityTypes.GUARDIAN_COMPANION.get(), EpicFightAttributes.IMPACT.get(), 0.6D);
+        event.add(com.example.epicvanguard.init.ModEntityTypes.GUARDIAN_COMPANION.get(), EpicFightAttributes.WEIGHT.get(), 32.0D);
+        event.add(com.example.epicvanguard.init.ModEntityTypes.GUARDIAN_COMPANION.get(), EpicFightAttributes.STUN_ARMOR.get(), 3.0D);
+        event.add(com.example.epicvanguard.init.ModEntityTypes.GUARDIAN_COMPANION.get(), EpicFightAttributes.MAX_STAMINA.get(), 24.0D);
+        event.add(com.example.epicvanguard.init.ModEntityTypes.GUARDIAN_COMPANION.get(), EpicFightAttributes.STAMINA_REGEN.get(), 1.0D);
+
+        // Duelista: Leveza, agilidade e recuperação acelerada de estamina para esquivas
+        event.add(com.example.epicvanguard.init.ModEntityTypes.DUELIST_COMPANION.get(), EpicFightAttributes.IMPACT.get(), 0.7D);
+        event.add(com.example.epicvanguard.init.ModEntityTypes.DUELIST_COMPANION.get(), EpicFightAttributes.WEIGHT.get(), 14.0D);
+        event.add(com.example.epicvanguard.init.ModEntityTypes.DUELIST_COMPANION.get(), EpicFightAttributes.STUN_ARMOR.get(), 0.0D);
+        event.add(com.example.epicvanguard.init.ModEntityTypes.DUELIST_COMPANION.get(), EpicFightAttributes.MAX_STAMINA.get(), 20.0D);
+        event.add(com.example.epicvanguard.init.ModEntityTypes.DUELIST_COMPANION.get(), EpicFightAttributes.STAMINA_REGEN.get(), 1.6D);
     }
 
     @Override

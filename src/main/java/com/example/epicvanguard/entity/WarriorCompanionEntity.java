@@ -61,8 +61,10 @@ import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.world.entity.monster.AbstractIllager;
 import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.ItemStack;
@@ -151,8 +153,6 @@ public class WarriorCompanionEntity extends PathfinderMob {
     private Player talkingPlayer = null;
     private int talkingTicks = 0;
 
-    private int secondRollTimer = 0;
-    private Vec3 secondRollDirection = null;
 
     public boolean isLowHealth() {
         return this.getHealth() <= (this.getMaxHealth() * 0.30F);
@@ -177,7 +177,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
     public void performEmergencyDodgeRoll(@Nullable Vec3 threatPos) {
         if (this.dodgeCooldown > 0) return;
-        this.dodgeCooldown = 60; // Cooldown entre sequências de esquiva
+        this.dodgeCooldown = (this.getSpecialization() == SPEC_DUELIST) ? 30 : 60; // 1.5s para Duelista, 3.0s padrão
         this.emergencyRetreatCooldown = 180; // 9s de recuo prioritário para cura
 
         Vec3 awayDir;
@@ -192,12 +192,8 @@ public class WarriorCompanionEntity extends PathfinderMob {
             awayDir = new Vec3(-Math.sin(Math.toRadians(this.getYRot())), 0.0D, Math.cos(Math.toRadians(this.getYRot())));
         }
 
-        // 1º Rolamento Evasivo Imediato
+        // Rolamento Evasivo Único Imediato (Apenas 1 roll)
         applyRollImpulse(awayDir);
-
-        // Agenda o 2º Rolamento Evasivo para 10 ticks depois (Duplo Rolamento)
-        this.secondRollTimer = 10;
-        this.secondRollDirection = awayDir;
     }
 
     public void applyRollImpulse(Vec3 dir) {
@@ -503,6 +499,46 @@ public class WarriorCompanionEntity extends PathfinderMob {
         this.entityData.set(EXPERIENCE, Math.max(0, exp));
     }
 
+    public void addWarriorExperience(int amount) {
+        if (amount <= 0 || this.level().isClientSide) return;
+        int currentLvl = getWarriorLevel();
+        if (currentLvl >= 20) return;
+
+        int currentExp = getWarriorExperience() + amount;
+        int needed = getXpForNextLevel(currentLvl);
+        boolean leveledUp = false;
+
+        while (currentExp >= needed && currentLvl < 20) {
+            currentExp -= needed;
+            currentLvl++;
+            this.entityData.set(LEVEL, currentLvl);
+            needed = getXpForNextLevel(currentLvl);
+            leveledUp = true;
+        }
+
+        setWarriorExperience(currentLvl >= 20 ? 0 : currentExp);
+
+        if (leveledUp) {
+            recalculateAttributes();
+            this.heal(this.getMaxHealth() * 0.5F); // Cura 50% de bônus ao subir de nível
+            if (this.level() instanceof ServerLevel serverLevel) {
+                serverLevel.sendParticles(ParticleTypes.TOTEM_OF_UNDYING, this.getX(), this.getY() + 1.2D, this.getZ(), 25, 0.4D, 0.6D, 0.4D, 0.2D);
+                serverLevel.sendParticles(ParticleTypes.FIREWORK, this.getX(), this.getY() + 1.0D, this.getZ(), 15, 0.3D, 0.5D, 0.3D, 0.1D);
+                this.level().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1.2F, 1.0F);
+            }
+            Player owner = getOwner();
+            if (owner != null) {
+                owner.sendSystemMessage(Component.literal("§6✦ [Vanguarda] §e§l" + getWarriorName() + " §asubiu para o §e§lNível " + currentLvl + "§a! Seus atributos aumentaram!"));
+            }
+        }
+    }
+
+    public float getCalculatedAttackDamage() {
+        float damage = (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE);
+        float multiplier = (getSpecialization() == SPEC_BERSERKER) ? 0.90F : 0.75F;
+        return Math.max(1.0F, damage * multiplier);
+    }
+
     public int getSpecialization() {
         return this.entityData.get(SPECIALIZATION);
     }
@@ -541,6 +577,128 @@ public class WarriorCompanionEntity extends PathfinderMob {
             case SPEC_DUELIST   -> "§b🗡 Duelista";
             default             -> "§7Guerreiro";
         };
+    }
+
+    public void triggerWarcry() {
+        if (this.level().isClientSide) return;
+        this.setWarcryCooldown(1000); // 50 segundos de recarga
+
+        switch (getSpecialization()) {
+            case SPEC_BERSERKER -> executeBerserkerWarcry();
+            case SPEC_GUARDIAN  -> executeGuardianWarcry();
+            case SPEC_DUELIST   -> executeDuelistWarcry();
+            default             -> executeBaseWarcry();
+        }
+    }
+
+    private void spawnParticleRing(ServerLevel serverLevel, ParticleOptions particle, double radius, int count) {
+        for (int i = 0; i < count; i++) {
+            double angle = (2 * Math.PI / count) * i;
+            double px = this.getX() + Math.cos(angle) * radius;
+            double pz = this.getZ() + Math.sin(angle) * radius;
+            serverLevel.sendParticles(particle, px, this.getY() + 0.2D, pz, 1, 0.0D, 0.1D, 0.0D, 0.02D);
+        }
+    }
+
+    private void executeBerserkerWarcry() {
+        if (!(this.level() instanceof ServerLevel serverLevel)) return;
+        this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                SoundEvents.RAVAGER_ROAR, SoundSource.PLAYERS, 1.5F, 1.2F);
+        spawnParticleRing(serverLevel, ParticleTypes.FLAME, 3.0D, 24);
+        spawnParticleRing(serverLevel, ParticleTypes.ANGRY_VILLAGER, 2.0D, 12);
+
+        // 1. Monstros em 10 blocos ganham Fraqueza I por 10s (200 ticks)
+        List<Monster> enemies = serverLevel.getEntitiesOfClass(Monster.class, this.getBoundingBox().inflate(10.0D), LivingEntity::isAlive);
+        for (Monster enemy : enemies) {
+            enemy.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 200, 0, false, true));
+        }
+
+        // 2. Berserker ganha Força II por 10s
+        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 200, 1, false, true));
+
+        // 3. Jogador e equipe ganham Força I por 10s
+        Player owner = getOwner();
+        if (owner != null && owner.distanceToSqr(this) <= 256.0D) {
+            owner.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 200, 0, false, true));
+            owner.displayClientMessage(
+                    Component.literal("§c⚔ [Berserker] " + this.getWarriorName() + " rugiu em fúria! O Grito Feroz de Sangue ecoa! (Força I concedida)"),
+                    false);
+        }
+    }
+
+    private void executeGuardianWarcry() {
+        if (!(this.level() instanceof ServerLevel serverLevel)) return;
+        this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 1.2F, 0.8F);
+        this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                SoundEvents.RAVAGER_ROAR, SoundSource.PLAYERS, 1.3F, 0.7F);
+        spawnParticleRing(serverLevel, ParticleTypes.FLASH, 4.0D, 16);
+        spawnParticleRing(serverLevel, ParticleTypes.ENCHANTED_HIT, 3.0D, 32);
+
+        // 1. Taunt absoluto (100%) em monstros num raio de 12 blocos
+        List<Monster> enemies = serverLevel.getEntitiesOfClass(Monster.class, this.getBoundingBox().inflate(12.0D), LivingEntity::isAlive);
+        for (Monster enemy : enemies) {
+            enemy.setTarget(this);
+        }
+
+        // 2. Guardião ganha Resistência II por 15s (300 ticks)
+        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 300, 1, false, true));
+
+        // 3. Jogador e equipe ganham Força I e Resistência I por 15s
+        Player owner = getOwner();
+        if (owner != null && owner.distanceToSqr(this) <= 324.0D) {
+            owner.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 300, 0, false, true));
+            owner.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 300, 0, false, true));
+            owner.displayClientMessage(
+                    Component.literal("§9🛡 [Guardião] " + this.getWarriorName() + " bateu seu escudo! O Rugido do Bastião ecoa! (Monstros provocados & Resistência I)"),
+                    false);
+        }
+    }
+
+    private void executeDuelistWarcry() {
+        if (!(this.level() instanceof ServerLevel serverLevel)) return;
+        this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.5F, 0.5F);
+        this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 0.6F, 1.8F);
+        spawnParticleRing(serverLevel, ParticleTypes.SWEEP_ATTACK, 2.5D, 16);
+        spawnParticleRing(serverLevel, ParticleTypes.CLOUD, 3.5D, 24);
+
+        // 1. Desestabiliza inimigos em 6 blocos com quebra de postura breve (Lentidão IV / atordoamento por 1.5s)
+        List<Monster> enemies = serverLevel.getEntitiesOfClass(Monster.class, this.getBoundingBox().inflate(6.0D), LivingEntity::isAlive);
+        for (Monster enemy : enemies) {
+            enemy.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 30, 3, false, true));
+            enemy.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 30, 0, false, true));
+        }
+
+        // 2. Jogador e equipe ganham Força I e Velocidade II (+40%) por 12s (240 ticks)
+        this.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 240, 1, false, true));
+        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 240, 0, false, true));
+
+        Player owner = getOwner();
+        if (owner != null && owner.distanceToSqr(this) <= 256.0D) {
+            owner.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 240, 1, false, true));
+            owner.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 240, 0, false, true));
+            owner.displayClientMessage(
+                    Component.literal("§b🗡 [Duelista] " + this.getWarriorName() + " disparou o Brado da Tempestade! (Velocidade II e Força I)"),
+                    false);
+        }
+    }
+
+    private void executeBaseWarcry() {
+        if (!(this.level() instanceof ServerLevel serverLevel)) return;
+        this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                SoundEvents.RAVAGER_ROAR, SoundSource.PLAYERS, 1.0F, 1.0F);
+        spawnParticleRing(serverLevel, ParticleTypes.CRIT, 2.5D, 16);
+
+        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 160, 0, false, true));
+        Player owner = getOwner();
+        if (owner != null && owner.distanceToSqr(this) <= 256.0D) {
+            owner.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 160, 0, false, true));
+            owner.displayClientMessage(
+                    Component.literal("§7[Guerreiro] " + this.getWarriorName() + " rugiu em batalha! (Força I concedida)"),
+                    false);
+        }
     }
 
     /**
@@ -613,6 +771,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new WarriorWarcryGoal(this));
         this.goalSelector.addGoal(1, new FleeIllagersGoal(this, 12.0F, 1.2D, 1.35D));
         this.goalSelector.addGoal(1, new EmergencyRetreatAndEatGoal(this));
         this.goalSelector.addGoal(2, new DefendOwnerGoal(this));
@@ -770,14 +929,6 @@ public class WarriorCompanionEntity extends PathfinderMob {
                 }
             }
 
-            // Duplo Rolamento Evasivo
-            if (secondRollTimer > 0) {
-                secondRollTimer--;
-                if (secondRollTimer == 0 && secondRollDirection != null) {
-                    applyRollImpulse(secondRollDirection);
-                    secondRollDirection = null;
-                }
-            }
 
             // Sync Warrior Inventory equipment to entity equipment slots for rendering
             syncEquipmentWithInventory();
@@ -971,6 +1122,19 @@ public class WarriorCompanionEntity extends PathfinderMob {
             }
         }
 
+        // Duelist Perfect Dodge: 18% de chance de esquivar de 100% do dano com fumaça e som de vento
+        if (this.getSpecialization() == SPEC_DUELIST && !pSource.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            if (this.random.nextFloat() < 0.18F) {
+                this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                        SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.2F, 1.4F);
+                if (this.level() instanceof ServerLevel serverLevel) {
+                    serverLevel.sendParticles(ParticleTypes.POOF, this.getX(), this.getY() + 1.0D, this.getZ(),
+                            10, 0.4D, 0.5D, 0.4D, 0.05D);
+                }
+                return false;
+            }
+        }
+
         // Shield Block mechanic: 70% chance to block if carrying a shield
         ItemStack offhand = this.getItemBySlot(EquipmentSlot.OFFHAND);
         ItemStack mainhand = this.getItemBySlot(EquipmentSlot.MAINHAND);
@@ -1026,8 +1190,30 @@ public class WarriorCompanionEntity extends PathfinderMob {
         float damage = (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE);
         float multiplier = (getSpecialization() == SPEC_BERSERKER) ? 0.90F : 0.75F;
         damage = Math.max(1.0F, damage * multiplier);
+
+        boolean isCrit = false;
+        // Berserker Passives:
+        if (getSpecialization() == SPEC_BERSERKER) {
+            // 1. Fúria Sangrenta com vida < 40%: +20% dano extra
+            if (this.getHealth() < (this.getMaxHealth() * 0.40F)) {
+                damage *= 1.20F;
+            }
+            // 2. Acertos Críticos: 20% de chance de causar 1.5x de dano
+            if (this.random.nextFloat() < 0.20F) {
+                damage *= 1.50F;
+                isCrit = true;
+            }
+        }
+
         DamageSource source = this.damageSources().mobAttack(this);
-        return target.hurt(source, damage);
+        boolean success = target.hurt(source, damage);
+        if (success && isCrit && this.level() instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + 0.8D, target.getZ(),
+                    12, 0.3D, 0.4D, 0.3D, 0.15D);
+            this.level().playSound(null, target.getX(), target.getY(), target.getZ(),
+                    SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 1.2F, 1.1F);
+        }
+        return success;
     }
 
     @Override
@@ -1403,6 +1589,67 @@ public class WarriorCompanionEntity extends PathfinderMob {
     // ══════════════════════════════════════════════════════════════════════════
 
     /**
+     * Warcry Goal: Aciona o grito de batalha tático de forma autônoma a cada 45-60s
+     * quando a vida do jogador ou companheiro estiver em perigo ou contra bandos de monstros.
+     */
+    public static class WarriorWarcryGoal extends Goal {
+        private final WarriorCompanionEntity warrior;
+        private int roarTicks = 0;
+
+        public WarriorWarcryGoal(WarriorCompanionEntity warrior) {
+            this.warrior = warrior;
+            this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
+        }
+
+        @Override
+        public boolean canUse() {
+            if (warrior.isTalking() || warrior.isInventoryOpen() || !warrior.isAlive() || warrior.isEmergencyRetreating()) return false;
+            if (warrior.getWarriorLevel() < 5) return false;
+            if (warrior.getWarcryCooldown() > 0) return false;
+
+            LivingEntity target = warrior.getTarget();
+            boolean inCombat = (target != null && target.isAlive()) || warrior.getLastHurtByMob() != null;
+            Player owner = warrior.getOwner();
+            if (!inCombat && owner != null) {
+                inCombat = (owner.getLastHurtByMob() != null && owner.distanceToSqr(warrior) < 256.0D);
+            }
+            if (!inCombat) return false;
+
+            // Gatilho 1: Vida do jogador < 40%
+            if (owner != null && owner.getHealth() < (owner.getMaxHealth() * 0.40F)) {
+                return true;
+            }
+            // Gatilho 2: Vida do guerreiro < 40%
+            if (warrior.getHealth() < (warrior.getMaxHealth() * 0.40F)) {
+                return true;
+            }
+            // Gatilho 3: Aglomeração de inimigos (>= 2 monstros em 10 blocos)
+            List<Monster> monsters = warrior.level().getEntitiesOfClass(Monster.class, warrior.getBoundingBox().inflate(10.0D), LivingEntity::isAlive);
+            return monsters.size() >= 2;
+        }
+
+        @Override
+        public void start() {
+            this.roarTicks = 20; // 1 segundo de pose e brado
+            warrior.getNavigation().stop();
+            warrior.triggerWarcry();
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return this.roarTicks > 0;
+        }
+
+        @Override
+        public void tick() {
+            if (this.roarTicks > 0) {
+                this.roarTicks--;
+                warrior.getNavigation().stop();
+            }
+        }
+    }
+
+    /**
      * Follow Owner Goal: Follows owner when distance > 4 blocks.
      * Intelligently teleports if distance > 16 blocks away or if navigation path is blocked.
      * Respects Guard (1) and Stay/Parado (2) modes: NEVER follows or auto-teleports in those modes.
@@ -1513,6 +1760,16 @@ public class WarriorCompanionEntity extends PathfinderMob {
             Player owner = warrior.getOwner();
             if (owner != null) {
                 this.timestamp = owner.getLastHurtByMobTimestamp();
+            }
+            // Guardian Passive Taunt: 70% de chance de forçar o monstro a focar no Guardião
+            if (warrior.getSpecialization() == SPEC_GUARDIAN && this.ownerLastHurtBy instanceof Mob attackingMob) {
+                if (warrior.random.nextFloat() < 0.70F) {
+                    attackingMob.setTarget(warrior);
+                    if (warrior.level() instanceof ServerLevel serverLevel) {
+                        serverLevel.sendParticles(ParticleTypes.ENCHANTED_HIT, warrior.getX(), warrior.getY() + 1.2D, warrior.getZ(),
+                                6, 0.3D, 0.3D, 0.3D, 0.05D);
+                    }
+                }
             }
             super.start();
         }
@@ -1867,8 +2124,9 @@ public class WarriorCompanionEntity extends PathfinderMob {
     public int getConsumableHealingScore(ItemStack stack, boolean inEmergency) {
         if (stack.isEmpty()) return -1;
 
-        // 1. Poção de Cura / Regeneração
+        // 1. Poção de Cura / Regeneração (requer Nível >= 3 do guerreiro)
         if (stack.getItem() instanceof PotionItem) {
+            if (this.getWarriorLevel() < 3) return -1;
             List<MobEffectInstance> effects = PotionUtils.getMobEffects(stack);
             for (MobEffectInstance effect : effects) {
                 if (effect.getEffect() == MobEffects.HEAL) {

@@ -27,5 +27,8 @@ public class ClientEvents {
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModEntityTypes.WARRIOR_COMPANION.get(), WarriorCompanionRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.BERSERKER_COMPANION.get(), WarriorCompanionRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.GUARDIAN_COMPANION.get(), WarriorCompanionRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.DUELIST_COMPANION.get(), WarriorCompanionRenderer::new);
     }
 }

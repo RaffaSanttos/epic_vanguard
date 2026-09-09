@@ -19,7 +19,9 @@ public class ModCreativeModeTabs {
                     .displayItems((parameters, output) -> {
                         output.accept(ModItems.GOLD_COIN.get());
                         output.accept(ModItems.VANGUARD_POINT.get());
-                        output.accept(ModItems.WARRIOR_SPAWN_EGG.get());
+                        output.accept(ModItems.BERSERKER_SPAWN_EGG.get());
+                        output.accept(ModItems.GUARDIAN_SPAWN_EGG.get());
+                        output.accept(ModItems.DUELIST_SPAWN_EGG.get());
                     })
                     .build());
 }

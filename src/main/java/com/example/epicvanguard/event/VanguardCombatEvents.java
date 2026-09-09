@@ -31,6 +31,9 @@ public class VanguardCombatEvents {
         @SubscribeEvent
         public static void entityAttributeEvent(EntityAttributeCreationEvent event) {
             event.put(ModEntityTypes.WARRIOR_COMPANION.get(), WarriorCompanionEntity.createAttributes().build());
+            event.put(ModEntityTypes.BERSERKER_COMPANION.get(), WarriorCompanionEntity.createAttributes().build());
+            event.put(ModEntityTypes.GUARDIAN_COMPANION.get(), WarriorCompanionEntity.createAttributes().build());
+            event.put(ModEntityTypes.DUELIST_COMPANION.get(), WarriorCompanionEntity.createAttributes().build());
         }
     }
 
@@ -71,12 +74,29 @@ public class VanguardCombatEvents {
                 attacker = event.getSource().getDirectEntity();
             }
 
+            int xp = calculateMobExperience(victim);
+            if (xp <= 0) xp = 5;
+
+            // 1. Golpe fatal pelo guerreiro companheiro
             if (attacker instanceof WarriorCompanionEntity warrior && !(victim instanceof Player) && !(victim instanceof WarriorCompanionEntity)) {
+                warrior.addWarriorExperience(Math.max(15, xp * 2));
                 if (serverLevel.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_DOMOBLOOT)) {
-                    int xp = calculateMobExperience(victim);
-                    if (xp > 0) {
-                        net.minecraft.world.entity.ExperienceOrb.award(serverLevel, victim.position(), xp);
-                    }
+                    net.minecraft.world.entity.ExperienceOrb.award(serverLevel, victim.position(), xp);
+                }
+            }
+            // 2. Assistência de combate pelo guerreiro (se ele infligiu dano recente ao monstro)
+            else if (victim.getLastHurtByMob() instanceof WarriorCompanionEntity assistWarrior && !(victim instanceof Player) && !(victim instanceof WarriorCompanionEntity)) {
+                assistWarrior.addWarriorExperience(Math.max(10, xp));
+            }
+            // 3. Jogador abateu monstro: companheiros recrutados próximos (raio de 24 blocos) ganham XP de combate conjunto
+            else if (attacker instanceof Player player && !(victim instanceof Player) && !(victim instanceof WarriorCompanionEntity)) {
+                java.util.List<WarriorCompanionEntity> nearbyCompanions = serverLevel.getEntitiesOfClass(
+                        WarriorCompanionEntity.class,
+                        player.getBoundingBox().inflate(24.0D),
+                        c -> c.isAlive() && c.isRecruited() && c.isOwner(player)
+                );
+                for (WarriorCompanionEntity companion : nearbyCompanions) {
+                    companion.addWarriorExperience(Math.max(10, xp));
                 }
             }
         }
