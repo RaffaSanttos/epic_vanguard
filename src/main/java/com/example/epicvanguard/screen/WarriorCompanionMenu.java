@@ -29,6 +29,9 @@ public class WarriorCompanionMenu extends AbstractContainerMenu {
         Entity entity = player.level().getEntity(entityId);
         if (entity instanceof WarriorCompanionEntity warrior) {
             this.warriorInv = warrior.getWarriorInventory();
+            if (!player.level().isClientSide) {
+                warrior.setInventoryOpenPlayer(player);
+            }
         } else {
             this.warriorInv = new WarriorInventory();
         }
@@ -160,7 +163,24 @@ public class WarriorCompanionMenu extends AbstractContainerMenu {
     @Override
     public boolean stillValid(Player player) {
         Entity entity = player.level().getEntity(entityId);
-        return entity instanceof WarriorCompanionEntity warrior && warrior.isAlive() && warrior.distanceTo(player) < 8.0F;
+        if (entity instanceof WarriorCompanionEntity warrior && warrior.isAlive() && warrior.distanceTo(player) < 8.0F) {
+            if (!player.level().isClientSide) {
+                warrior.setInventoryOpenPlayer(player);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void removed(Player player) {
+        super.removed(player);
+        if (!player.level().isClientSide) {
+            Entity entity = player.level().getEntity(entityId);
+            if (entity instanceof WarriorCompanionEntity warrior) {
+                warrior.setInventoryOpenPlayer(null);
+            }
+        }
     }
 
     public int getEntityId() {

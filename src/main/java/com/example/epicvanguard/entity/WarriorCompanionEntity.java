@@ -124,6 +124,20 @@ public class WarriorCompanionEntity extends PathfinderMob {
             SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> PRISONER =
             SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> LEVEL =
+            SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> EXPERIENCE =
+            SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> SPECIALIZATION =
+            SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> WARCRY_COOLDOWN =
+            SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.INT);
+
+    // ── Constantes de Especialização ──────────────────────────────────────────
+    public static final int SPEC_NONE = 0;
+    public static final int SPEC_BERSERKER = 1;
+    public static final int SPEC_GUARDIAN = 2;
+    public static final int SPEC_DUELIST = 3;
 
     private final WarriorInventory warriorInventory = new WarriorInventory();
     private int stamina = 100;
@@ -206,6 +220,41 @@ public class WarriorCompanionEntity extends PathfinderMob {
         com.example.epicvanguard.compat.epicfight.EpicFightCompat.playDodgeRollAnimation(this);
     }
 
+    private Player inventoryOpenPlayer = null;
+
+    public void setInventoryOpenPlayer(@Nullable Player player) {
+        this.inventoryOpenPlayer = player;
+        if (player != null) {
+            this.getNavigation().stop();
+            this.setDeltaMovement(0.0D, this.getDeltaMovement().y, 0.0D);
+            lookAtPlayerDirectly(player);
+        }
+    }
+
+    public boolean isInventoryOpen() {
+        return this.inventoryOpenPlayer != null && this.inventoryOpenPlayer.isAlive() && this.distanceToSqr(this.inventoryOpenPlayer) < 64.0D;
+    }
+
+    @Nullable
+    public Player getInventoryOpenPlayer() {
+        return isInventoryOpen() ? this.inventoryOpenPlayer : null;
+    }
+
+    public void lookAtPlayerDirectly(Player player) {
+        double dx = player.getX() - this.getX();
+        double dz = player.getZ() - this.getZ();
+        double dy = (player.getY() + player.getEyeHeight()) - (this.getY() + this.getEyeHeight());
+        double distXZ = Math.sqrt(dx * dx + dz * dz);
+        float targetYRot = (float) (Mth.atan2(dz, dx) * (180.0D / Math.PI)) - 90.0F;
+        float targetXRot = (float) (-(Mth.atan2(dy, distXZ) * (180.0D / Math.PI)));
+
+        this.getLookControl().setLookAt(player, 100.0F, 100.0F);
+        this.setYRot(targetYRot);
+        this.setXRot(targetXRot);
+        this.setYHeadRot(targetYRot);
+        this.setYBodyRot(targetYRot);
+    }
+
     public void startTalkingWith(Player player, int durationTicks) {
         this.talkingPlayer = player;
         this.talkingTicks = durationTicks;
@@ -214,7 +263,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
     }
 
     public boolean isTalking() {
-        return this.talkingTicks > 0 && this.talkingPlayer != null && this.talkingPlayer.isAlive();
+        return isInventoryOpen() || (this.talkingTicks > 0 && this.talkingPlayer != null && this.talkingPlayer.isAlive());
     }
 
     public WarriorCompanionEntity(EntityType<? extends PathfinderMob> pEntityType, Level pLevel) {
@@ -245,6 +294,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0D) // 10 corações (padrão humanoide / jogador)
                 .add(Attributes.ARMOR, 0.0D) // Sem armadura base embutida (depende de armaduras equipadas)
+                .add(Attributes.ARMOR_TOUGHNESS, 0.0D) // Dureza de armadura escalonável
                 .add(Attributes.ATTACK_DAMAGE, 1.0D) // Dano de soco básico 1.0 (o dano vem da arma equipada)
                 .add(Attributes.MOVEMENT_SPEED, 0.28D) // Velocidade de caminhada balanceada
                 .add(Attributes.FOLLOW_RANGE, 32.0D)
@@ -267,6 +317,10 @@ public class WarriorCompanionEntity extends PathfinderMob {
         this.entityData.define(RECRUIT_COST, 40);
         this.entityData.define(EQUIPMENT_TIER, 0);
         this.entityData.define(PRISONER, false);
+        this.entityData.define(LEVEL, 1);
+        this.entityData.define(EXPERIENCE, 0);
+        this.entityData.define(SPECIALIZATION, SPEC_NONE);
+        this.entityData.define(WARCRY_COOLDOWN, 0);
     }
 
     // ── Getters / Setters ─────────────────────────────────────────────────────
@@ -431,6 +485,130 @@ public class WarriorCompanionEntity extends PathfinderMob {
         return this.warriorInventory;
     }
 
+    // ── RPG Progression & Leveling (Fase 1) ───────────────────────────────────
+    public int getWarriorLevel() {
+        return this.entityData.get(LEVEL);
+    }
+
+    public void setWarriorLevel(int level) {
+        this.entityData.set(LEVEL, Math.max(1, Math.min(20, level)));
+        recalculateAttributes();
+    }
+
+    public int getWarriorExperience() {
+        return this.entityData.get(EXPERIENCE);
+    }
+
+    public void setWarriorExperience(int exp) {
+        this.entityData.set(EXPERIENCE, Math.max(0, exp));
+    }
+
+    public int getSpecialization() {
+        return this.entityData.get(SPECIALIZATION);
+    }
+
+    public void setSpecialization(int spec) {
+        this.entityData.set(SPECIALIZATION, spec);
+        recalculateAttributes();
+    }
+
+    public int getWarcryCooldown() {
+        return this.entityData.get(WARCRY_COOLDOWN);
+    }
+
+    public void setWarcryCooldown(int ticks) {
+        this.entityData.set(WARCRY_COOLDOWN, Math.max(0, ticks));
+    }
+
+    public static int getXpForNextLevel(int lvl) {
+        if (lvl >= 20) return 0; // Nível máximo
+        return 50 + (lvl - 1) * 30 + (int) (Math.pow(lvl - 1, 1.6) * 8.0);
+    }
+
+    public String getSpecializationName() {
+        return switch (getSpecialization()) {
+            case SPEC_BERSERKER -> "Berserker";
+            case SPEC_GUARDIAN  -> "Guardião";
+            case SPEC_DUELIST   -> "Duelista";
+            default             -> "Guerreiro";
+        };
+    }
+
+    public String getFormattedSpecializationTitle() {
+        return switch (getSpecialization()) {
+            case SPEC_BERSERKER -> "§c⚔ Berserker";
+            case SPEC_GUARDIAN  -> "§9🛡 Guardião";
+            case SPEC_DUELIST   -> "§b🗡 Duelista";
+            default             -> "§7Guerreiro";
+        };
+    }
+
+    /**
+     * Recalcula dinamicamente todos os atributos escalonáveis com base no Nível e Especialização.
+     */
+    public void recalculateAttributes() {
+        int lvl = getWarriorLevel();
+        int spec = getSpecialization();
+
+        // 1. Vida Máxima: 20.0 HP base + 1.5 HP por nível (+30% se Guardião)
+        double baseMaxHealth = 20.0D + (lvl - 1) * 1.5D;
+        if (spec == SPEC_GUARDIAN) {
+            baseMaxHealth *= 1.30D;
+        }
+        var attrHealth = this.getAttribute(Attributes.MAX_HEALTH);
+        if (attrHealth != null) {
+            double oldMax = attrHealth.getBaseValue();
+            attrHealth.setBaseValue(baseMaxHealth);
+            if (baseMaxHealth > oldMax && this.isAlive()) {
+                this.heal((float)(baseMaxHealth - oldMax));
+            }
+        }
+
+        // 2. Dano de Ataque Físico Base: 1.0D + 0.25D por nível
+        double baseAttack = 1.0D + (lvl - 1) * 0.25D;
+        var attrAttack = this.getAttribute(Attributes.ATTACK_DAMAGE);
+        if (attrAttack != null) {
+            attrAttack.setBaseValue(baseAttack);
+        }
+
+        // 3. Armadura Natural: 0.0 + 0.5 por nível (+6 se Guardião)
+        double naturalArmor = (lvl - 1) * 0.5D;
+        if (spec == SPEC_GUARDIAN) {
+            naturalArmor += 6.0D;
+        }
+        var attrArmor = this.getAttribute(Attributes.ARMOR);
+        if (attrArmor != null) {
+            attrArmor.setBaseValue(naturalArmor);
+        }
+
+        // 4. Dureza de Armadura: 0.0 + 0.15 por nível (+2 se Guardião)
+        double toughness = (lvl - 1) * 0.15D;
+        if (spec == SPEC_GUARDIAN) {
+            toughness += 2.0D;
+        }
+        var attrToughness = this.getAttribute(Attributes.ARMOR_TOUGHNESS);
+        if (attrToughness != null) {
+            attrToughness.setBaseValue(toughness);
+        }
+
+        // 5. Velocidade de Movimento: 0.28D + 0.002D por nível (+15% se Duelista)
+        double speed = 0.28D + (lvl - 1) * 0.002D;
+        if (spec == SPEC_DUELIST) {
+            speed *= 1.15D;
+        }
+        var attrSpeed = this.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (attrSpeed != null) {
+            attrSpeed.setBaseValue(speed);
+        }
+
+        // 6. Resistência a Repulsão: 0.0 (0.40D se Guardião)
+        double knockbackRes = (spec == SPEC_GUARDIAN) ? 0.40D : 0.0D;
+        var attrKnockback = this.getAttribute(Attributes.KNOCKBACK_RESISTANCE);
+        if (attrKnockback != null) {
+            attrKnockback.setBaseValue(knockbackRes);
+        }
+    }
+
     // ── AI Goals ──────────────────────────────────────────────────────────────
     @Override
     protected void registerGoals() {
@@ -466,6 +644,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
         this.setEquipmentTier(tier);
         if (tier == -1) {
             this.setPrisoner(true);
+            this.setWarriorLevel(1);
             this.setHealth(3.0F);
             this.setRecruitCost(0);
             this.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 999999, 1, false, false));
@@ -473,12 +652,14 @@ public class WarriorCompanionEntity extends PathfinderMob {
                 warriorInventory.setItem(i, ItemStack.EMPTY);
             }
             this.syncEquipmentWithInventory();
+            this.recalculateAttributes();
             return;
         }
 
         this.setPrisoner(false);
         switch (tier) {
-            case 0: // 60% Couro / Madeira
+            case 0: // 60% Couro / Madeira -> Nível 1
+                this.setWarriorLevel(1);
                 warriorInventory.setItem(WarriorInventory.SLOT_HELMET, new ItemStack(Items.LEATHER_HELMET));
                 warriorInventory.setItem(WarriorInventory.SLOT_CHEST, new ItemStack(Items.LEATHER_CHESTPLATE));
                 warriorInventory.setItem(WarriorInventory.SLOT_LEGS, new ItemStack(Items.LEATHER_LEGGINGS));
@@ -486,7 +667,8 @@ public class WarriorCompanionEntity extends PathfinderMob {
                 warriorInventory.setItem(WarriorInventory.SLOT_WEAPON_MAIN, new ItemStack(this.random.nextBoolean() ? Items.WOODEN_SWORD : Items.WOODEN_AXE));
                 this.setRecruitCost(20 + this.random.nextInt(11)); // 20 a 30 moedas
                 break;
-            case 1: // 30% Cota de Malha / Pedra
+            case 1: // 30% Cota de Malha / Pedra -> Nível 2
+                this.setWarriorLevel(2);
                 warriorInventory.setItem(WarriorInventory.SLOT_HELMET, new ItemStack(Items.CHAINMAIL_HELMET));
                 warriorInventory.setItem(WarriorInventory.SLOT_CHEST, new ItemStack(Items.CHAINMAIL_CHESTPLATE));
                 warriorInventory.setItem(WarriorInventory.SLOT_LEGS, new ItemStack(Items.CHAINMAIL_LEGGINGS));
@@ -495,8 +677,9 @@ public class WarriorCompanionEntity extends PathfinderMob {
                 warriorInventory.setItem(WarriorInventory.SLOT_WEAPON_OFF, new ItemStack(Items.SHIELD));
                 this.setRecruitCost(40 + this.random.nextInt(11)); // 40 a 50 moedas
                 break;
-            case 2: // 10% Ferro
+            case 2: // 10% Ferro -> Nível 3
             default:
+                this.setWarriorLevel(3);
                 warriorInventory.setItem(WarriorInventory.SLOT_HELMET, new ItemStack(Items.IRON_HELMET));
                 warriorInventory.setItem(WarriorInventory.SLOT_CHEST, new ItemStack(Items.IRON_CHESTPLATE));
                 warriorInventory.setItem(WarriorInventory.SLOT_LEGS, new ItemStack(Items.IRON_LEGGINGS));
@@ -507,6 +690,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
                 break;
         }
         this.syncEquipmentWithInventory();
+        this.recalculateAttributes();
     }
 
     public static int rollRandomTier(net.minecraft.util.RandomSource random) {
@@ -522,14 +706,28 @@ public class WarriorCompanionEntity extends PathfinderMob {
         super.tick();
 
         if (!this.level().isClientSide) {
-            // Talking & Looking at Player Logic
-            if (talkingTicks > 0) {
-                talkingTicks--;
-                if (talkingPlayer != null && talkingPlayer.isAlive() && this.distanceToSqr(talkingPlayer) < 64.0D) {
-                    this.getNavigation().stop();
-                    this.getLookControl().setLookAt(talkingPlayer, 30.0F, 30.0F);
-                } else {
-                    talkingPlayer = null;
+            int wcCd = getWarcryCooldown();
+            if (wcCd > 0) {
+                setWarcryCooldown(wcCd - 1);
+            }
+
+            // Inventory Open & Talking & Looking at Player Logic
+            if (isInventoryOpen()) {
+                this.getNavigation().stop();
+                this.setDeltaMovement(0.0D, this.getDeltaMovement().y, 0.0D);
+                lookAtPlayerDirectly(this.inventoryOpenPlayer);
+            } else {
+                if (this.inventoryOpenPlayer != null) {
+                    this.inventoryOpenPlayer = null;
+                }
+                if (talkingTicks > 0) {
+                    talkingTicks--;
+                    if (talkingPlayer != null && talkingPlayer.isAlive() && this.distanceToSqr(talkingPlayer) < 64.0D) {
+                        this.getNavigation().stop();
+                        this.getLookControl().setLookAt(talkingPlayer, 30.0F, 30.0F);
+                    } else {
+                        talkingPlayer = null;
+                    }
                 }
             }
 
@@ -617,7 +815,9 @@ public class WarriorCompanionEntity extends PathfinderMob {
                         this.blockPosition(),
                         this.getCombatMode(),
                         this.getHealth(),
-                        this.getMaxHealth()
+                        this.getMaxHealth(),
+                        this.getWarriorLevel(),
+                        this.getSpecialization()
                 );
             }
         }
@@ -667,7 +867,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
     @Override
     public boolean isPushable() {
-        if (this.isRecruited() && this.getCombatMode() == 2) {
+        if (this.isInventoryOpen() || (this.isRecruited() && this.getCombatMode() == 2)) {
             return false;
         }
         return super.isPushable();
@@ -675,7 +875,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
     @Override
     public void push(Entity pEntity) {
-        if (this.isRecruited() && this.getCombatMode() == 2) {
+        if (this.isInventoryOpen() || (this.isRecruited() && this.getCombatMode() == 2)) {
             return;
         }
         super.push(pEntity);
@@ -683,8 +883,8 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
     @Override
     public void aiStep() {
-        if (this.isRecruited() && this.getCombatMode() == 2) {
-            if (this.getTarget() == null && this.getLastHurtByMob() == null && !this.isEmergencyRetreating()) {
+        if (this.isInventoryOpen() || (this.isRecruited() && this.getCombatMode() == 2)) {
+            if (this.isInventoryOpen() || (this.getTarget() == null && this.getLastHurtByMob() == null && !this.isEmergencyRetreating())) {
                 this.getNavigation().stop();
                 this.xxa = 0.0F;
                 this.zza = 0.0F;
@@ -696,8 +896,8 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
     @Override
     public void travel(net.minecraft.world.phys.Vec3 travelVector) {
-        if (this.isRecruited() && this.getCombatMode() == 2) {
-            if (this.getTarget() == null && this.getLastHurtByMob() == null && !this.isEmergencyRetreating()) {
+        if (this.isInventoryOpen() || (this.isRecruited() && this.getCombatMode() == 2)) {
+            if (this.isInventoryOpen() || (this.getTarget() == null && this.getLastHurtByMob() == null && !this.isEmergencyRetreating())) {
                 if (this.isEffectiveAi()) {
                     this.setDeltaMovement(0.0D, this.getDeltaMovement().y, 0.0D);
                     super.travel(new net.minecraft.world.phys.Vec3(0.0D, travelVector.y, 0.0D));
@@ -824,7 +1024,8 @@ public class WarriorCompanionEntity extends PathfinderMob {
     @Override
     public boolean doHurtTarget(Entity target) {
         float damage = (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE);
-        damage = Math.max(1.0F, damage * 0.75F);
+        float multiplier = (getSpecialization() == SPEC_BERSERKER) ? 0.90F : 0.75F;
+        damage = Math.max(1.0F, damage * multiplier);
         DamageSource source = this.damageSources().mobAttack(this);
         return target.hurt(source, damage);
     }
@@ -954,6 +1155,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
         if (!isRecruited()) {
             // Abre a tela do Contrato de Honra para contratação manual pelo botão
+            this.setInventoryOpenPlayer(serverPlayer);
             NetworkHooks.openScreen(serverPlayer, new SimpleMenuProvider(
                     (id, inv, p) -> new HonorContractMenu(id, inv, this.getId()),
                     Component.literal("Contrato de Honra")
@@ -963,6 +1165,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
             // Check if player is the owner
             if (this.isOwner(pPlayer)) {
                 // Open Warrior Companion Menu directly on click
+                this.setInventoryOpenPlayer(serverPlayer);
                 NetworkHooks.openScreen(serverPlayer, new SimpleMenuProvider(
                         (id, inv, p) -> new WarriorCompanionMenu(id, inv, this.getId()),
                         Component.literal("Companheiro - " + this.getWarriorName())
@@ -991,6 +1194,10 @@ public class WarriorCompanionEntity extends PathfinderMob {
         pCompound.putInt("RecruitCost", getRecruitCost());
         pCompound.putInt("EquipmentTier", getEquipmentTier());
         pCompound.putBoolean("Prisoner", isPrisoner());
+        pCompound.putInt("Level", getWarriorLevel());
+        pCompound.putInt("Experience", getWarriorExperience());
+        pCompound.putInt("Specialization", getSpecialization());
+        pCompound.putInt("WarcryCooldown", getWarcryCooldown());
 
         if (guardPos != null) {
             pCompound.putInt("GuardX", guardPos.getX());
@@ -1039,6 +1246,19 @@ public class WarriorCompanionEntity extends PathfinderMob {
         if (pCompound.contains("Prisoner")) {
             setPrisoner(pCompound.getBoolean("Prisoner"));
         }
+        if (pCompound.contains("Level")) {
+            setWarriorLevel(pCompound.getInt("Level"));
+        }
+        if (pCompound.contains("Experience")) {
+            setWarriorExperience(pCompound.getInt("Experience"));
+        }
+        if (pCompound.contains("Specialization")) {
+            setSpecialization(pCompound.getInt("Specialization"));
+        }
+        if (pCompound.contains("WarcryCooldown")) {
+            setWarcryCooldown(pCompound.getInt("WarcryCooldown"));
+        }
+        recalculateAttributes();
         if (pCompound.contains("QuestStarted")) {
             setQuestStarted(pCompound.getBoolean("QuestStarted"));
         }
@@ -1358,7 +1578,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
         @Override
         public boolean canUse() {
-            if (warrior.inStaminaRegen || warrior.isDuelMode() || warrior.isEmergencyRetreating() || warrior.isLowHealth()) return false;
+            if (warrior.isTalking() || warrior.isInventoryOpen() || warrior.inStaminaRegen || warrior.isDuelMode() || warrior.isEmergencyRetreating() || warrior.isLowHealth()) return false;
             if (warrior.isPrisoner()) return false;
 
             if (!warrior.isRecruited()) {

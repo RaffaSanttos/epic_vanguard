@@ -57,8 +57,10 @@ public class CompanionSavedData extends SavedData {
         public int combatMode; // 0: Agressivo, 1: Defensivo, 2: Guarda, 3: Ficar
         public float health;
         public float maxHealth;
+        public int level;
+        public int specialization;
 
-        public CompanionInfo(UUID companionUUID, UUID ownerUUID, String name, String dimension, BlockPos pos, int combatMode, float health, float maxHealth) {
+        public CompanionInfo(UUID companionUUID, UUID ownerUUID, String name, String dimension, BlockPos pos, int combatMode, float health, float maxHealth, int level, int specialization) {
             this.companionUUID = companionUUID;
             this.ownerUUID = ownerUUID;
             this.name = name != null && !name.isEmpty() ? name : "Guerreiro";
@@ -67,6 +69,21 @@ public class CompanionSavedData extends SavedData {
             this.combatMode = combatMode;
             this.health = health;
             this.maxHealth = maxHealth;
+            this.level = Math.max(1, level);
+            this.specialization = specialization;
+        }
+
+        public CompanionInfo(UUID companionUUID, UUID ownerUUID, String name, String dimension, BlockPos pos, int combatMode, float health, float maxHealth) {
+            this(companionUUID, ownerUUID, name, dimension, pos, combatMode, health, maxHealth, 1, 0);
+        }
+
+        public String getFormattedSpecializationTitle() {
+            return switch (specialization) {
+                case 1 -> "§c⚔ Berserker";
+                case 2 -> "§9🛡 Guardião";
+                case 3 -> "§b🗡 Duelista";
+                default -> "§7Guerreiro";
+            };
         }
 
         public CompoundTag save() {
@@ -79,6 +96,8 @@ public class CompanionSavedData extends SavedData {
             tag.putInt("mode", combatMode);
             tag.putFloat("health", health);
             tag.putFloat("maxHealth", maxHealth);
+            tag.putInt("level", level);
+            tag.putInt("spec", specialization);
             return tag;
         }
 
@@ -91,7 +110,9 @@ public class CompanionSavedData extends SavedData {
             int mode = tag.getInt("mode");
             float health = tag.getFloat("health");
             float maxHealth = tag.contains("maxHealth") ? tag.getFloat("maxHealth") : 20.0F;
-            return new CompanionInfo(companionUUID, ownerUUID, name, dim, pos, mode, health, maxHealth);
+            int level = tag.contains("level") ? tag.getInt("level") : 1;
+            int spec = tag.contains("spec") ? tag.getInt("spec") : 0;
+            return new CompanionInfo(companionUUID, ownerUUID, name, dim, pos, mode, health, maxHealth, level, spec);
         }
     }
 
@@ -103,10 +124,23 @@ public class CompanionSavedData extends SavedData {
         return overworld.getDataStorage().computeIfAbsent(CompanionSavedData::load, CompanionSavedData::new, DATA_NAME);
     }
 
-    public void registerOrUpdate(UUID companionUUID, UUID ownerUUID, String name, String dimension, BlockPos pos, int mode, float health, float maxHealth) {
+    public void registerOrUpdate(UUID companionUUID, UUID ownerUUID, String name, String dimension, BlockPos pos, int mode, float health, float maxHealth, int level, int specialization) {
         if (companionUUID == null) return;
-        companions.put(companionUUID, new CompanionInfo(companionUUID, ownerUUID, name, dimension, pos, mode, health, maxHealth));
+        companions.put(companionUUID, new CompanionInfo(companionUUID, ownerUUID, name, dimension, pos, mode, health, maxHealth, level, specialization));
         setDirty();
+    }
+
+    public void registerOrUpdate(UUID companionUUID, UUID ownerUUID, String name, String dimension, BlockPos pos, int mode, float health, float maxHealth) {
+        registerOrUpdate(companionUUID, ownerUUID, name, dimension, pos, mode, health, maxHealth, 1, 0);
+    }
+
+    public void updateLevelAndSpecialization(UUID companionUUID, int level, int specialization) {
+        CompanionInfo info = companions.get(companionUUID);
+        if (info != null) {
+            info.level = level;
+            info.specialization = specialization;
+            setDirty();
+        }
     }
 
     public void updatePosition(UUID companionUUID, String dimension, BlockPos pos) {

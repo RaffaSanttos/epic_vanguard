@@ -18,6 +18,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompanionMenu> {
     private static final ResourceLocation TEXTURE =
             new ResourceLocation(EpicVanguardMod.MOD_ID, "textures/gui/warrior_hud.png");
@@ -117,9 +120,9 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
         RenderSystem.setShaderTexture(0, TEXTURE);
         guiGraphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
 
-        // Renderiza a barra de vida da companhia no painel direito
         WarriorCompanionEntity warrior = getCompanion();
         if (warrior != null) {
+            // 1. Barra de Vida (Painel Direito)
             float hp = Math.max(0.0F, warrior.getHealth());
             float maxHp = Math.max(1.0F, warrior.getMaxHealth());
             float pct = Math.min(1.0F, hp / maxHp);
@@ -129,14 +132,45 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
             int barW = 44;
             int barH = 5;
 
-            // Fundo escuro da barra
+            // Fundo escuro da barra de vida
             guiGraphics.fill(barX, barY, barX + barW, barY + barH, 0xFF350505);
 
-            // Preenchimento com cor dinâmica (verde -> laranja -> vermelho)
+            // Preenchimento dinâmico
             int filled = (int) (pct * barW);
             if (filled > 0) {
                 int fillColor = pct > 0.5F ? 0xFF2ECC71 : (pct > 0.25F ? 0xFFF39C12 : 0xFFE74C3C);
                 guiGraphics.fill(barX, barY, barX + filled, barY + barH, fillColor);
+            }
+
+            // 2. Barra de Experiência e Nível (Abaixo da Mochila)
+            int lvl = warrior.getWarriorLevel();
+            int currentXp = warrior.getWarriorExperience();
+            int nextXp = WarriorCompanionEntity.getXpForNextLevel(lvl);
+            float xpPct = (lvl >= 20) ? 1.0F : (nextXp > 0 ? Math.min(1.0F, (float) currentXp / nextXp) : 0.0F);
+
+            int xpBarX = leftPos + 61;
+            int xpBarY = topPos + 85;
+            int xpBarW = 88;
+            int xpBarH = 5;
+
+            // Borda externa escura com relevo
+            guiGraphics.fill(xpBarX - 1, xpBarY - 1, xpBarX + xpBarW + 1, xpBarY + xpBarH + 1, 0xFF373737);
+            // Fundo escuro interno
+            guiGraphics.fill(xpBarX, xpBarY, xpBarX + xpBarW, xpBarY + xpBarH, 0xFF141A14);
+
+            // Preenchimento de XP
+            int fillW = (int) (xpPct * xpBarW);
+            if (fillW > 0) {
+                if (lvl >= 20) {
+                    // Dourado reluzente para nível máximo
+                    guiGraphics.fill(xpBarX, xpBarY, xpBarX + fillW, xpBarY + xpBarH, 0xFFFFD700);
+                    guiGraphics.fill(xpBarX, xpBarY, xpBarX + fillW, xpBarY + 1, 0xFFFFF2A3);
+                } else {
+                    // Verde esmeralda de XP Minecraft com brilho superior e sombra inferior
+                    guiGraphics.fill(xpBarX, xpBarY, xpBarX + fillW, xpBarY + xpBarH, 0xFF00D836);
+                    guiGraphics.fill(xpBarX, xpBarY, xpBarX + fillW, xpBarY + 1, 0xFF80FF80);
+                    guiGraphics.fill(xpBarX, xpBarY + xpBarH - 1, xpBarX + fillW, xpBarY + xpBarH, 0xFF009922);
+                }
             }
         }
     }
@@ -157,6 +191,29 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
             String hpStr = curHp + "/" + maxHp;
             int textW = this.font.width(hpStr);
             guiGraphics.drawString(this.font, hpStr, 186 - (textW / 2), 18, 0x202020, false);
+
+            // Indicador de Nível e Classe acima da barra de XP (centralizado sob a Mochila: x=105)
+            int lvl = warrior.getWarriorLevel();
+            int currentXp = warrior.getWarriorExperience();
+            int nextXp = WarriorCompanionEntity.getXpForNextLevel(lvl);
+            float xpPct = (lvl >= 20) ? 1.0F : (nextXp > 0 ? Math.min(1.0F, (float) currentXp / nextXp) : 0.0F);
+
+            String title = warrior.getFormattedSpecializationTitle();
+            String levelText = "§2Nv. §l" + lvl + "§r §8• " + title;
+            int lvlW = this.font.width(levelText);
+            int lvlX = 105 - (lvlW / 2);
+            guiGraphics.drawString(this.font, levelText, lvlX, 75, 0x404040, false);
+
+            // Texto numérico de XP abaixo da barra (alinhado à direita para não conflitar com 'Inventory')
+            String xpText;
+            if (lvl >= 20) {
+                xpText = "§6★ Nível Máximo ★";
+            } else {
+                xpText = "§8" + currentXp + "/" + nextXp + " XP §2(" + (int) (xpPct * 100) + "%)";
+            }
+            int xpW = this.font.width(xpText);
+            int xpX = 149 - xpW;
+            guiGraphics.drawString(this.font, xpText, xpX, 93, 0x505050, false);
         }
     }
 
@@ -175,5 +232,31 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
         renderBackground(guiGraphics);
         super.render(guiGraphics, mouseX, mouseY, delta);
         renderTooltip(guiGraphics, mouseX, mouseY);
+
+        // Tooltip rica ao passar o mouse sobre o nível e a barra de XP
+        WarriorCompanionEntity warrior = getCompanion();
+        if (warrior != null) {
+            int xpAreaX = leftPos + 60;
+            int xpAreaY = topPos + 74;
+            if (mouseX >= xpAreaX && mouseX <= xpAreaX + 90 && mouseY >= xpAreaY && mouseY <= topPos + 102) {
+                int lvl = warrior.getWarriorLevel();
+                int currentXp = warrior.getWarriorExperience();
+                int nextXp = WarriorCompanionEntity.getXpForNextLevel(lvl);
+                float xpPct = (lvl >= 20) ? 1.0F : (nextXp > 0 ? Math.min(1.0F, (float) currentXp / nextXp) : 0.0F);
+
+                List<Component> tooltip = new ArrayList<>();
+                tooltip.add(Component.literal("§6§l✦ Experiência de Combate ✦"));
+                tooltip.add(Component.literal("§7Nível Atual: §eNv. " + lvl + " " + warrior.getFormattedSpecializationTitle()));
+                if (lvl >= 20) {
+                    tooltip.add(Component.literal("§6★ Nível Máximo Atingido! ★"));
+                    tooltip.add(Component.literal("§7Este guerreiro atingiu o ápice de seu poder."));
+                } else {
+                    tooltip.add(Component.literal("§7Progresso: §a" + currentXp + " §7/ §f" + nextXp + " XP §7(" + (int) (xpPct * 100) + "%)"));
+                    tooltip.add(Component.literal("§7XP Restante: §e" + (nextXp - currentXp) + " XP"));
+                    tooltip.add(Component.literal("§8Derrote monstros em batalha para evoluir!"));
+                }
+                guiGraphics.renderComponentTooltip(this.font, tooltip, mouseX, mouseY);
+            }
+        }
     }
 }

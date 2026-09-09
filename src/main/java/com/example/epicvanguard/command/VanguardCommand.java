@@ -190,6 +190,8 @@ public class VanguardCommand {
                 info.combatMode = liveEntity.getCombatMode();
                 info.health = liveEntity.getHealth();
                 info.maxHealth = liveEntity.getMaxHealth();
+                info.level = liveEntity.getWarriorLevel();
+                info.specialization = liveEntity.getSpecialization();
                 data.setDirty();
             }
 
@@ -199,6 +201,8 @@ public class VanguardCommand {
             int currentMode = liveEntity != null ? liveEntity.getCombatMode() : info.combatMode;
             float currentHp = liveEntity != null ? liveEntity.getHealth() : info.health;
             float maxHp = liveEntity != null ? liveEntity.getMaxHealth() : info.maxHealth;
+            int companionLvl = liveEntity != null ? liveEntity.getWarriorLevel() : Math.max(1, info.level);
+            String specTitle = liveEntity != null ? liveEntity.getFormattedSpecializationTitle() : info.getFormattedSpecializationTitle();
 
             String modeName;
             switch (currentMode) {
@@ -220,7 +224,7 @@ public class VanguardCommand {
             int posY = currentPos != null ? currentPos.getY() : 0;
             int posZ = currentPos != null ? currentPos.getZ() : 0;
 
-            MutableComponent line = Component.literal("§e[#" + (i + 1) + "] §b§l" + displayName + hpText + "\n")
+            MutableComponent line = Component.literal("§e[#" + (i + 1) + "] " + specTitle + " §b§l" + displayName + " §6(Nv. " + companionLvl + ")" + hpText + "\n")
                     .append(Component.literal("  §7 Coordenadas: §fX: " + posX + ", Y: " + posY + ", Z: " + posZ + " §7(§d" + dimName + "§7)" + distText + "\n"))
                     .append(Component.literal("  §7 Modo:" + modeName + "\n  "));
 
