@@ -1,5 +1,6 @@
 package com.example.epicvanguard;
 
+import com.example.epicvanguard.init.ModBlockEntities;
 import com.example.epicvanguard.init.ModBlocks;
 import com.example.epicvanguard.init.ModCreativeModeTabs;
 import com.example.epicvanguard.init.ModEntityTypes;
@@ -23,6 +24,7 @@ public class EpicVanguardMod {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         ModBlocks.BLOCKS.register(modEventBus);
+        ModBlockEntities.BLOCK_ENTITIES.register(modEventBus);
         ModItems.ITEMS.register(modEventBus);
         ModPoiTypes.POI_TYPES.register(modEventBus);
         ModEntityTypes.ENTITY_TYPES.register(modEventBus);

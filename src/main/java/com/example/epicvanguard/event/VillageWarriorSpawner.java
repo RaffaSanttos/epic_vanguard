@@ -114,8 +114,8 @@ public class VillageWarriorSpawner {
                 }
             }
 
-            // 2. Checa POIs de Vanguard Point para sortear a chegada de companhias a cada 5 a 7 dias
-            checkTavernRespawn(level, player);
+            // 2. POIs de Vanguard Point agora utilizam o sistema de Edital de Contratação interativo (VanguardPointBlockEntity)
+            // checkTavernRespawn(level, player);
         }
     }
 
@@ -166,7 +166,7 @@ public class VillageWarriorSpawner {
         }
     }
 
-    private static BlockPos findDirectPointSpawnPos(ServerLevel level, BlockPos poiPos) {
+    public static BlockPos findDirectPointSpawnPos(ServerLevel level, BlockPos poiPos) {
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
                 BlockPos p = poiPos.offset(dx, 0, dz);
@@ -231,7 +231,7 @@ public class VillageWarriorSpawner {
         return findDirectPointSpawnPos(level, poiPos);
     }
 
-    private static WarriorCompanionEntity createRandomSpecializedCompanion(ServerLevel level) {
+    public static WarriorCompanionEntity createRandomSpecializedCompanion(ServerLevel level) {
         int roll = level.random.nextInt(3);
         if (roll == 0) {
             return ModEntityTypes.BERSERKER_COMPANION.get().create(level);
@@ -271,7 +271,7 @@ public class VillageWarriorSpawner {
         }
     }
 
-    private static void launchArrivalFirework(ServerLevel level, BlockPos spawnPos) {
+    public static void launchArrivalFirework(ServerLevel level, BlockPos spawnPos) {
         ItemStack fireworkStack = new ItemStack(Items.FIREWORK_ROCKET);
         CompoundTag tag = fireworkStack.getOrCreateTagElement("Fireworks");
         tag.putByte("Flight", (byte) 2);

@@ -59,6 +59,12 @@ public class Messages {
                 .encoder(com.example.epicvanguard.networking.packet.PacketWarriorTactics::toBytes)
                 .consumerMainThread(com.example.epicvanguard.networking.packet.PacketWarriorTactics::handle)
                 .add();
+
+        net.messageBuilder(com.example.epicvanguard.networking.packet.PacketPostVanguardContract.class, id(), NetworkDirection.PLAY_TO_SERVER)
+                .decoder(com.example.epicvanguard.networking.packet.PacketPostVanguardContract::new)
+                .encoder(com.example.epicvanguard.networking.packet.PacketPostVanguardContract::toBytes)
+                .consumerMainThread(com.example.epicvanguard.networking.packet.PacketPostVanguardContract::handle)
+                .add();
     }
 
     public static <MSG> void sendToServer(MSG message) {

@@ -2,6 +2,7 @@ package com.example.epicvanguard.event;
 
 import com.example.epicvanguard.EpicVanguardMod;
 import com.example.epicvanguard.command.VanguardCommand;
+import com.example.epicvanguard.dialogue.WarriorSpeechSystem;
 import com.example.epicvanguard.entity.CompanionSavedData;
 import com.example.epicvanguard.entity.WarriorCompanionEntity;
 import com.example.epicvanguard.init.ModEntityTypes;
@@ -55,11 +56,14 @@ public class VanguardCombatEvents {
         Entity attacker = event.getSource().getEntity();
 
         if (attacker instanceof Player player && victim instanceof WarriorCompanionEntity warrior) {
-            if (warrior.isOwner(player) && player.getServer() != null) {
-                CompanionSavedData data = CompanionSavedData.get(player.getServer());
-                CompanionSavedData.FriendlyFireMode ffMode = data.getGlobalFriendlyFireMode();
-                if (ffMode == CompanionSavedData.FriendlyFireMode.DISABLED) {
-                    event.setCanceled(true);
+            if (warrior.isOwner(player)) {
+                WarriorSpeechSystem.onFriendlyFire(warrior, player);
+                if (player.getServer() != null) {
+                    CompanionSavedData data = CompanionSavedData.get(player.getServer());
+                    CompanionSavedData.FriendlyFireMode ffMode = data.getGlobalFriendlyFireMode();
+                    if (ffMode == CompanionSavedData.FriendlyFireMode.DISABLED) {
+                        event.setCanceled(true);
+                    }
                 }
             }
         }
@@ -80,6 +84,7 @@ public class VanguardCombatEvents {
             // 1. Golpe fatal pelo guerreiro companheiro
             if (attacker instanceof WarriorCompanionEntity warrior && !(victim instanceof Player) && !(victim instanceof WarriorCompanionEntity)) {
                 warrior.addWarriorExperience(Math.max(15, xp * 2));
+                WarriorSpeechSystem.onKillTarget(warrior, victim);
                 if (serverLevel.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_DOMOBLOOT)) {
                     net.minecraft.world.entity.ExperienceOrb.award(serverLevel, victim.position(), xp);
                 }

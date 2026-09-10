@@ -5,6 +5,7 @@ import com.example.epicvanguard.client.renderer.WarriorCompanionRenderer;
 import com.example.epicvanguard.init.ModEntityTypes;
 import com.example.epicvanguard.init.ModMenus;
 import com.example.epicvanguard.screen.HonorContractScreen;
+import com.example.epicvanguard.screen.VanguardPointScreen;
 import com.example.epicvanguard.screen.WarriorCompanionScreen;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraftforge.api.distmarker.Dist;
@@ -21,6 +22,7 @@ public class ClientEvents {
         event.enqueueWork(() -> {
             MenuScreens.register(ModMenus.WARRIOR_COMPANION_MENU.get(), WarriorCompanionScreen::new);
             MenuScreens.register(ModMenus.HONOR_CONTRACT_MENU.get(), HonorContractScreen::new);
+            MenuScreens.register(ModMenus.VANGUARD_POINT_MENU.get(), VanguardPointScreen::new);
         });
     }
 

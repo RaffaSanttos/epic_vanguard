@@ -7,6 +7,15 @@ import com.example.epicvanguard.inventory.WarriorInventory;
 import com.example.epicvanguard.networking.Messages;
 import com.example.epicvanguard.networking.packet.PacketOpenWarriorGUI;
 import com.example.epicvanguard.networking.packet.PacketRecruitWarrior;
+import com.example.epicvanguard.dialogue.PersonalityArchetype;
+import com.example.epicvanguard.dialogue.SpeechTrigger;
+import com.example.epicvanguard.dialogue.WarriorSpeechSystem;
+import com.example.epicvanguard.entity.ai.*;
+import com.example.epicvanguard.entity.util.WarriorCombatHelper;
+import com.example.epicvanguard.entity.util.WarriorHealingHelper;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.item.ShieldItem;
 import com.example.epicvanguard.screen.HonorContractMenu;
 import com.example.epicvanguard.screen.WarriorCompanionMenu;
 import net.minecraft.world.entity.ai.village.poi.PoiManager;
@@ -134,6 +143,8 @@ public class WarriorCompanionEntity extends PathfinderMob {
             SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> WARCRY_COOLDOWN =
             SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> PERSONALITY =
+            SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.INT);
 
     // ── Constantes de Especialização ──────────────────────────────────────────
     public static final int SPEC_NONE = 0;
@@ -145,17 +156,48 @@ public class WarriorCompanionEntity extends PathfinderMob {
     private int stamina = 100;
     private int staminaRegenCooldown = 0;
     private boolean inStaminaRegen = false;
-        private int dodgeCooldown = 0;
+    private int dodgeCooldown = 0;
     private int emergencyRetreatCooldown = 0;
     private BlockPos guardPos = null;
     private LivingEntity duelTarget = null;
     private ItemStack[] questItems = new ItemStack[0];
     private Player talkingPlayer = null;
     private int talkingTicks = 0;
+    private int globalSpeechCooldown = 0;
+    private final int[] triggerSpeechCooldowns = new int[SpeechTrigger.values().length];
 
+    public boolean isInStaminaRegen() {
+        return this.inStaminaRegen;
+    }
+
+    public void setInStaminaRegen(boolean inStaminaRegen) {
+        this.inStaminaRegen = inStaminaRegen;
+    }
+
+    public int getStaminaRegenCooldown() {
+        return this.staminaRegenCooldown;
+    }
+
+    public void setStaminaRegenCooldown(int cooldown) {
+        this.staminaRegenCooldown = cooldown;
+    }
+
+    public int getDodgeCooldown() {
+        return this.dodgeCooldown;
+    }
+
+    public void setDodgeCooldown(int cooldown) {
+        this.dodgeCooldown = cooldown;
+    }
 
     public boolean isLowHealth() {
-        return this.getHealth() <= (this.getMaxHealth() * 0.30F);
+        float threshold = switch (this.getSpecialization()) {
+            case SPEC_BERSERKER -> 0.20F; // Berserker luta frenético até 20%
+            case SPEC_GUARDIAN -> 0.30F;  // Guardião segura a linha até 30%
+            case SPEC_DUELIST -> 0.35F;   // Duelista é ágil e preserva integridade física
+            default -> 0.30F;
+        };
+        return this.getHealth() <= (this.getMaxHealth() * threshold);
     }
 
     public boolean isEmergencyRetreating() {
@@ -172,48 +214,138 @@ public class WarriorCompanionEntity extends PathfinderMob {
             super.setTarget(null);
             return;
         }
+        LivingEntity prevTarget = this.getTarget();
         super.setTarget(target);
+        if (target != null && target.isAlive() && prevTarget == null) {
+            WarriorSpeechSystem.onSpotTarget(this, target);
+        }
     }
 
     public void performEmergencyDodgeRoll(@Nullable Vec3 threatPos) {
-        if (this.dodgeCooldown > 0) return;
-        this.dodgeCooldown = (this.getSpecialization() == SPEC_DUELIST) ? 30 : 60; // 1.5s para Duelista, 3.0s padrão
-        this.emergencyRetreatCooldown = 180; // 9s de recuo prioritário para cura
-
-        Vec3 awayDir;
-        if (threatPos != null) {
-            awayDir = this.position().subtract(threatPos).multiply(1.0D, 0.0D, 1.0D);
-            if (awayDir.lengthSqr() < 1.0E-4D) {
-                awayDir = new Vec3(-Math.sin(Math.toRadians(this.getYRot())), 0.0D, Math.cos(Math.toRadians(this.getYRot())));
-            } else {
-                awayDir = awayDir.normalize();
-            }
-        } else {
-            awayDir = new Vec3(-Math.sin(Math.toRadians(this.getYRot())), 0.0D, Math.cos(Math.toRadians(this.getYRot())));
-        }
-
-        // Rolamento Evasivo Único Imediato (Apenas 1 roll)
-        applyRollImpulse(awayDir);
+        WarriorCombatHelper.performEmergencyDodgeRoll(this, threatPos);
     }
 
     public void applyRollImpulse(Vec3 dir) {
-        this.setDeltaMovement(dir.x * 0.42D, 0.16D, dir.z * 0.42D);
-        this.hasImpulse = true;
+        WarriorCombatHelper.applyRollImpulse(this, dir);
+    }
 
-        this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.NEUTRAL, 1.0F, 1.4F);
-        this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                SoundEvents.WOOL_FALL, SoundSource.NEUTRAL, 1.0F, 0.9F);
+    public boolean hasShield() {
+        return this.getItemBySlot(EquipmentSlot.OFFHAND).getItem() instanceof ShieldItem ||
+               this.getItemBySlot(EquipmentSlot.MAINHAND).getItem() instanceof ShieldItem;
+    }
 
-        if (this.level() instanceof ServerLevel serverLevel) {
-            serverLevel.sendParticles(ParticleTypes.POOF, this.getX(), this.getY() + 0.2D, this.getZ(),
-                    10, 0.3D, 0.1D, 0.3D, 0.05D);
-            serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK, this.getX(), this.getY() + 0.4D, this.getZ(),
-                    1, 0.0D, 0.0D, 0.0D, 0.0D);
+    @Nullable
+    public InteractionHand getShieldHand() {
+        if (this.getItemBySlot(EquipmentSlot.OFFHAND).getItem() instanceof ShieldItem) {
+            return InteractionHand.OFF_HAND;
         }
+        if (this.getItemBySlot(EquipmentSlot.MAINHAND).getItem() instanceof ShieldItem) {
+            return InteractionHand.MAIN_HAND;
+        }
+        return null;
+    }
 
-        // Executa animação do Epic Fight
-        com.example.epicvanguard.compat.epicfight.EpicFightCompat.playDodgeRollAnimation(this);
+    public boolean isActivelyBlocking() {
+        return this.isBlocking();
+    }
+
+    public void raiseShield() {
+        InteractionHand hand = getShieldHand();
+        if (hand != null && !this.isUsingItem()) {
+            this.startUsingItem(hand);
+        }
+    }
+
+    public void lowerShield() {
+        if (this.isUsingItem() && this.getUseItem().getItem() instanceof ShieldItem) {
+            this.stopUsingItem();
+        }
+    }
+
+    public void performTacticalStep(Vec3 direction, double strength) {
+        if (this.hasImpulse || this.dodgeCooldown > 0) return;
+        this.setDeltaMovement(direction.x * strength, 0.12D, direction.z * strength);
+        this.hasImpulse = true;
+        this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.NEUTRAL, 0.6F, 1.6F);
+        if (this.level() instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(ParticleTypes.POOF, this.getX(), this.getY() + 0.1D, this.getZ(),
+                    4, 0.15D, 0.05D, 0.15D, 0.02D);
+        }
+    }
+
+    @Nullable
+    public Creeper getImminentCreeperThreat(double radius) {
+        List<Creeper> creepers = this.level().getEntitiesOfClass(
+                Creeper.class,
+                this.getBoundingBox().inflate(radius),
+                c -> c.isAlive() && (c.isIgnited() || c.getSwellDir() > 0)
+        );
+        return creepers.isEmpty() ? null : creepers.get(0);
+    }
+
+    public boolean isThreatenedByProjectiles(double radius) {
+        List<Projectile> projectiles = this.level().getEntitiesOfClass(
+                Projectile.class,
+                this.getBoundingBox().inflate(radius),
+                p -> p.isAlive() && p.getDeltaMovement().lengthSqr() > 0.05D
+        );
+        for (Projectile p : projectiles) {
+            Vec3 projMotion = p.getDeltaMovement().normalize();
+            Vec3 toWarrior = this.position().subtract(p.position()).normalize();
+            if (projMotion.dot(toWarrior) > 0.65D) {
+                return true;
+            }
+            Player owner = getOwner();
+            if (owner != null && this.distanceToSqr(owner) < 64.0D) {
+                Vec3 toOwner = owner.position().subtract(p.position()).normalize();
+                if (projMotion.dot(toOwner) > 0.65D) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Nullable
+    public Entity getIncomingProjectileThreat(double radius) {
+        List<Projectile> projectiles = this.level().getEntitiesOfClass(
+                Projectile.class,
+                this.getBoundingBox().inflate(radius),
+                p -> p.isAlive() && p.getDeltaMovement().lengthSqr() > 0.05D
+        );
+        for (Projectile p : projectiles) {
+            Vec3 projMotion = p.getDeltaMovement().normalize();
+            Vec3 toWarrior = this.position().subtract(p.position()).normalize();
+            if (projMotion.dot(toWarrior) > 0.65D) {
+                return p;
+            }
+        }
+        return null;
+    }
+
+    public boolean isOwnerInCriticalDanger() {
+        if (!isRecruited() || getCombatMode() == 2) return false;
+        Player owner = getOwner();
+        if (owner == null || !owner.isAlive() || owner.isCreative() || owner.isSpectator()) return false;
+        if (this.distanceToSqr(owner) > 256.0D) return false;
+        return owner.getHealth() <= 6.0F;
+    }
+
+    @Nullable
+    public LivingEntity getOwnerAttacker() {
+        Player owner = getOwner();
+        if (owner == null) return null;
+        LivingEntity lastHurt = owner.getLastHurtByMob();
+        if (lastHurt != null && lastHurt.isAlive() && lastHurt != this && lastHurt != owner) {
+            return lastHurt;
+        }
+        List<Mob> nearbyThreats = this.level().getEntitiesOfClass(
+                Mob.class,
+                owner.getBoundingBox().inflate(8.0D),
+                m -> m.isAlive() && m.getTarget() == owner
+        );
+        return nearbyThreats.isEmpty() ? null : nearbyThreats.get(0);
     }
 
     private Player inventoryOpenPlayer = null;
@@ -280,6 +412,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
             String name = WARRIOR_NAMES[this.random.nextInt(WARRIOR_NAMES.length)];
             this.setWarriorName(name);
             this.setSkinId(this.random.nextInt(SKIN_COUNT));
+            this.setPersonalityId(this.random.nextInt(PersonalityArchetype.values().length));
             this.setRecruitCost(35 + this.random.nextInt(11)); // 35 a 45 Peças de Ouro (Média ~40)
             this.setCustomName(Component.literal("§7" + name));
             this.setCustomNameVisible(true);
@@ -317,6 +450,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
         this.entityData.define(EXPERIENCE, 0);
         this.entityData.define(SPECIALIZATION, SPEC_NONE);
         this.entityData.define(WARCRY_COOLDOWN, 0);
+        this.entityData.define(PERSONALITY, 0);
     }
 
     // ── Getters / Setters ─────────────────────────────────────────────────────
@@ -507,6 +641,39 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
     public WarriorInventory getWarriorInventory() {
         return this.warriorInventory;
+    }
+
+    // ── Personalidade & Diálogos (Fase 4) ─────────────────────────────────────
+    public int getPersonalityId() {
+        return this.entityData.get(PERSONALITY);
+    }
+
+    public void setPersonalityId(int id) {
+        this.entityData.set(PERSONALITY, id);
+    }
+
+    public PersonalityArchetype getPersonality() {
+        return PersonalityArchetype.byId(getPersonalityId());
+    }
+
+    public void setPersonality(PersonalityArchetype archetype) {
+        this.setPersonalityId(archetype.getId());
+    }
+
+    public int getGlobalSpeechCooldown() {
+        return globalSpeechCooldown;
+    }
+
+    public void setGlobalSpeechCooldown(int ticks) {
+        this.globalSpeechCooldown = ticks;
+    }
+
+    public int getTriggerSpeechCooldown(SpeechTrigger trigger) {
+        return triggerSpeechCooldowns[trigger.ordinal()];
+    }
+
+    public void setTriggerSpeechCooldown(SpeechTrigger trigger, int ticks) {
+        this.triggerSpeechCooldowns[trigger.ordinal()] = ticks;
     }
 
     // ── RPG Progression & Leveling (Fase 1) ───────────────────────────────────
@@ -795,18 +962,21 @@ public class WarriorCompanionEntity extends PathfinderMob {
         }
     }
 
-    // ── AI Goals ──────────────────────────────────────────────────────────────
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new HeroicInterveneGoal(this));
         this.goalSelector.addGoal(1, new WarriorWarcryGoal(this));
         this.goalSelector.addGoal(1, new FleeIllagersGoal(this, 12.0F, 1.2D, 1.35D));
         this.goalSelector.addGoal(1, new EmergencyRetreatAndEatGoal(this));
+        this.goalSelector.addGoal(2, new ActiveShieldDefenseGoal(this));
         this.goalSelector.addGoal(2, new DefendOwnerGoal(this));
-        this.goalSelector.addGoal(3, new WarriorCombatGoal(this, 1.2D, false));
+        this.goalSelector.addGoal(3, new WarriorTacticalCombatGoal(this, 1.25D));
         this.goalSelector.addGoal(3, new FollowOwnerGoal(this, 1.15D, 5.0F, 2.0F));
         this.goalSelector.addGoal(4, new GuardRadiusGoal(this, 1.1D));
         this.goalSelector.addGoal(5, new AutoFeedGoal(this));
+        this.goalSelector.addGoal(6, new CampfireRelaxGoal(this));
+        this.goalSelector.addGoal(6, new VanguardBasePatrolGoal(this));
         this.goalSelector.addGoal(6, new TavernRelaxGoal(this, 0.9D));
         this.goalSelector.addGoal(7, new WarriorStrollGoal(this, 0.8D));
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
@@ -958,6 +1128,16 @@ public class WarriorCompanionEntity extends PathfinderMob {
             }
 
 
+            // Speech Cooldowns
+            if (globalSpeechCooldown > 0) {
+                globalSpeechCooldown--;
+            }
+            for (int i = 0; i < triggerSpeechCooldowns.length; i++) {
+                if (triggerSpeechCooldowns[i] > 0) {
+                    triggerSpeechCooldowns[i]--;
+                }
+            }
+
             // Sync Warrior Inventory equipment to entity equipment slots for rendering
             syncEquipmentWithInventory();
 
@@ -970,14 +1150,19 @@ public class WarriorCompanionEntity extends PathfinderMob {
                 }
             }
 
-            // Modo Parado (2): Garante imobilidade absoluta quando sem ameaças
+            // Modo Parado (2): Garante imobilidade quando sem ameaças, permitindo relaxar na fogueira ou patrulhar no Ponto de Vanguarda
             if (isRecruited() && getCombatMode() == 2) {
                 if (this.getTarget() == null && this.getLastHurtByMob() == null && !isEmergencyRetreating()) {
-                    if (this.getNavigation().isInProgress()) {
-                        this.getNavigation().stop();
+                    boolean isRelaxingOrPatrolling = this.getPose() == Pose.SITTING || this.goalSelector.getAvailableGoals().stream().anyMatch(
+                            g -> g.isRunning() && (g.getGoal() instanceof CampfireRelaxGoal || g.getGoal() instanceof VanguardBasePatrolGoal)
+                    );
+                    if (!isRelaxingOrPatrolling) {
+                        if (this.getNavigation().isInProgress()) {
+                            this.getNavigation().stop();
+                        }
+                        this.setDeltaMovement(0.0D, this.getDeltaMovement().y, 0.0D);
+                        this.setSpeed(0.0F);
                     }
-                    this.setDeltaMovement(0.0D, this.getDeltaMovement().y, 0.0D);
-                    this.setSpeed(0.0F);
                 }
             }
 
@@ -1100,83 +1285,17 @@ public class WarriorCompanionEntity extends PathfinderMob {
         return false;
     }
 
+    @Override
     public boolean hurt(DamageSource pSource, float pAmount) {
-        // Friendly Fire Check & Immunity
-        if (isRecruited() && !isDuelMode() && getOwnerUUID().isPresent()) {
-            UUID ownerId = getOwnerUUID().get();
-            Entity attacker = pSource.getEntity();
-            Entity direct = pSource.getDirectEntity();
-
-            // 1. Companheiras do mesmo dono NUNCA se acertam entre si
-            if (attacker instanceof WarriorCompanionEntity otherWarrior && otherWarrior.isRecruited() && otherWarrior.getOwnerUUID().isPresent()) {
-                if (otherWarrior.getOwnerUUID().get().equals(ownerId)) {
-                    return false;
-                }
-            }
-            if (direct instanceof WarriorCompanionEntity otherWarriorDirect && otherWarriorDirect.isRecruited() && otherWarriorDirect.getOwnerUUID().isPresent()) {
-                if (otherWarriorDirect.getOwnerUUID().get().equals(ownerId)) {
-                    return false;
-                }
-            }
-
-            // 2. Ataques originados do Dono
-            boolean isFromOwner = (attacker != null && attacker.getUUID().equals(ownerId)) ||
-                                  (direct != null && direct.getUUID().equals(ownerId));
-
-            if (isFromOwner && this.getServer() != null) {
-                CompanionSavedData.FriendlyFireMode ffMode = CompanionSavedData.get(this.getServer()).getGlobalFriendlyFireMode();
-                boolean isMagic = isSpellOrMagicDamage(pSource);
-
-                switch (ffMode) {
-                    case DISABLED:
-                        // Totalmente livre de fogo amigo: Dono NUNCA causa dano
-                        return false;
-                    case SPELLS_ONLY:
-                        // Apenas magias do dono causam dano (golpes corporais/Epic Fight bloqueados)
-                        if (!isMagic) {
-                            return false;
-                        }
-                        break;
-                    case MELEE_ONLY:
-                        // Apenas golpes fisicos / Epic Fight causam dano (magias bloqueadas)
-                        if (isMagic) {
-                            return false;
-                        }
-                        break;
-                    case ALL:
-                        // Totalmente habilitado: tanto magias quanto golpes acertam
-                        break;
-                }
-            }
+        if (!WarriorCombatHelper.checkFriendlyFire(this, pSource)) {
+            return false;
         }
 
-        // Duelist Perfect Dodge: 18% de chance de esquivar de 100% do dano com fumaça e som de vento
-        if (this.getSpecialization() == SPEC_DUELIST && !pSource.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
-            if (this.random.nextFloat() < 0.18F) {
-                this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                        SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.2F, 1.4F);
-                if (this.level() instanceof ServerLevel serverLevel) {
-                    serverLevel.sendParticles(ParticleTypes.POOF, this.getX(), this.getY() + 1.0D, this.getZ(),
-                            10, 0.4D, 0.5D, 0.4D, 0.05D);
-                }
-                return false;
-            }
+        if (WarriorCombatHelper.checkDuelistDodge(this, pSource)) {
+            return false;
         }
 
-        // Shield Block mechanic: 70% chance to block if carrying a shield
-        ItemStack offhand = this.getItemBySlot(EquipmentSlot.OFFHAND);
-        ItemStack mainhand = this.getItemBySlot(EquipmentSlot.MAINHAND);
-        if (offhand.getItem() instanceof ShieldItem || mainhand.getItem() instanceof ShieldItem) {
-            if (this.random.nextFloat() < 0.70F) {
-                this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                        SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, 1.0F, 1.0F);
-                if (this.level() instanceof ServerLevel serverLevel) {
-                    serverLevel.sendParticles(ParticleTypes.CRIT, this.getX(), this.getY() + 1.0D, this.getZ(),
-                            8, 0.3D, 0.3D, 0.3D, 0.1D);
-                }
-                pAmount *= 0.2F; // 80% damage reduction
-            }
-        }
+        pAmount = WarriorCombatHelper.applyShieldBlock(this, pSource, pAmount);
 
         // Duel Mode mechanic: If damage would drop HP to <= 0 in duel
         if (isDuelMode()) {
@@ -1412,6 +1531,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
         pCompound.putInt("Experience", getWarriorExperience());
         pCompound.putInt("Specialization", getSpecialization());
         pCompound.putInt("WarcryCooldown", getWarcryCooldown());
+        pCompound.putInt("Personality", getPersonalityId());
 
         if (guardPos != null) {
             pCompound.putInt("GuardX", guardPos.getX());
@@ -1477,6 +1597,9 @@ public class WarriorCompanionEntity extends PathfinderMob {
         }
         if (pCompound.contains("WarcryCooldown")) {
             setWarcryCooldown(pCompound.getInt("WarcryCooldown"));
+        }
+        if (pCompound.contains("Personality")) {
+            setPersonalityId(pCompound.getInt("Personality"));
         }
         recalculateAttributes();
         if (pCompound.contains("QuestStarted")) {
@@ -1618,1057 +1741,22 @@ public class WarriorCompanionEntity extends PathfinderMob {
         }
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // INNER AI GOALS
-    // ══════════════════════════════════════════════════════════════════════════
-
-    /**
-     * Warcry Goal: Aciona o grito de batalha tático de forma autônoma a cada 45-60s
-     * quando a vida do jogador ou companheiro estiver em perigo ou contra bandos de monstros.
-     */
-    public static class WarriorWarcryGoal extends Goal {
-        private final WarriorCompanionEntity warrior;
-        private int roarTicks = 0;
-
-        public WarriorWarcryGoal(WarriorCompanionEntity warrior) {
-            this.warrior = warrior;
-            this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
-        }
-
-        @Override
-        public boolean canUse() {
-            if (warrior.isTalking() || warrior.isInventoryOpen() || !warrior.isAlive() || warrior.isEmergencyRetreating()) return false;
-            if (warrior.getWarriorLevel() < 5) return false;
-            if (warrior.getWarcryCooldown() > 0) return false;
-
-            LivingEntity target = warrior.getTarget();
-            boolean inCombat = (target != null && target.isAlive()) || warrior.getLastHurtByMob() != null;
-            Player owner = warrior.getOwner();
-            if (!inCombat && owner != null) {
-                inCombat = (owner.getLastHurtByMob() != null && owner.distanceToSqr(warrior) < 256.0D);
-            }
-            if (!inCombat) return false;
-
-            // Gatilho 1: Vida do jogador < 40%
-            if (owner != null && owner.getHealth() < (owner.getMaxHealth() * 0.40F)) {
-                return true;
-            }
-            // Gatilho 2: Vida do guerreiro < 40%
-            if (warrior.getHealth() < (warrior.getMaxHealth() * 0.40F)) {
-                return true;
-            }
-            // Gatilho 3: Aglomeração de inimigos (>= 2 monstros em 10 blocos)
-            List<Monster> monsters = warrior.level().getEntitiesOfClass(Monster.class, warrior.getBoundingBox().inflate(10.0D), LivingEntity::isAlive);
-            return monsters.size() >= 2;
-        }
-
-        @Override
-        public void start() {
-            this.roarTicks = 20; // 1 segundo de pose e brado
-            warrior.getNavigation().stop();
-            warrior.triggerWarcry();
-        }
-
-        @Override
-        public boolean canContinueToUse() {
-            return this.roarTicks > 0;
-        }
-
-        @Override
-        public void tick() {
-            if (this.roarTicks > 0) {
-                this.roarTicks--;
-                warrior.getNavigation().stop();
-            }
-        }
-    }
-
-    /**
-     * Follow Owner Goal: Follows owner when distance > 4 blocks.
-     * Intelligently teleports if distance > 16 blocks away or if navigation path is blocked.
-     * Respects Guard (1) and Stay/Parado (2) modes: NEVER follows or auto-teleports in those modes.
-     */
-    public static class FollowOwnerGoal extends Goal {
-        private final WarriorCompanionEntity warrior;
-        private final double speedModifier;
-        private final float stopDist;
-        private final float startDist;
-        private int timeToRecalcPath;
-
-        public FollowOwnerGoal(WarriorCompanionEntity warrior, double speedModifier, float startDist, float stopDist) {
-            this.warrior = warrior;
-            this.speedModifier = speedModifier;
-            this.startDist = startDist;
-            this.stopDist = stopDist;
-            this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
-        }
-
-        @Override
-        public boolean canUse() {
-            if (warrior.isTalking()) return false;
-            Player owner = warrior.getOwner();
-            if (owner == null || owner.isSpectator() || !warrior.isRecruited()) return false;
-            if (warrior.getCombatMode() != 0) return false; // Apenas modo 0 (Seguir)
-            if (warrior.getTarget() != null && warrior.getTarget().isAlive()) return false; // Não interrompe combate a não ser por teleport de 15 blocos
-            return warrior.distanceToSqr(owner) > (double) (startDist * startDist);
-        }
-
-        @Override
-        public boolean canContinueToUse() {
-            if (warrior.isTalking()) return false;
-            Player owner = warrior.getOwner();
-            if (owner == null || !warrior.isRecruited()) return false;
-            if (warrior.getCombatMode() != 0) return false;
-            if (warrior.getTarget() != null && warrior.getTarget().isAlive()) return false;
-            return warrior.distanceToSqr(owner) > (double) (stopDist * stopDist);
-        }
-
-        @Override
-        public void tick() {
-            Player owner = warrior.getOwner();
-            if (owner == null) return;
-            if (warrior.getCombatMode() != 0) return;
-
-            warrior.getLookControl().setLookAt(owner, 10.0F, (float) warrior.getMaxHeadXRot());
-
-            // Se o dono mudou de dimensão (e estamos no modo Seguir 0 e dono está no chão firme)
-            if (owner.level() != warrior.level() && owner.level() instanceof ServerLevel targetLevel) {
-                if (owner.onGround() && owner.getY() >= owner.level().getMinBuildHeight()) {
-                    warrior.teleportTo(targetLevel, owner.getX(), owner.getY(), owner.getZ(), null, warrior.getYRot(), warrior.getXRot());
-                    warrior.safeTeleportTo(owner);
-                }
-                return;
-            }
-
-            // Se o dono não estiver no chão firme (voando de Elytra, criativo ou caindo), NÃO teletransporta
-            if (!owner.onGround() || owner.isFallFlying() || owner.getAbilities().flying) {
-                return;
-            }
-
-            double distSq = warrior.distanceToSqr(owner);
-            if (distSq >= 225.0D) { // >= 15 blocks
-                warrior.safeTeleportTo(owner);
-                return;
-            }
-
-            if (--timeToRecalcPath <= 0) {
-                timeToRecalcPath = 10;
-                if (!warrior.getNavigation().moveTo(owner, speedModifier)) {
-                    if (distSq > 64.0D) { // > 8 blocks sem caminho terrestre
-                        warrior.safeTeleportTo(owner);
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Defend Owner Goal: Prioritizes attacking whoever attacked the owner first.
-     */
-    public static class DefendOwnerGoal extends TargetGoal {
-        private final WarriorCompanionEntity warrior;
-        private LivingEntity ownerLastHurtBy;
-        private int timestamp;
-
-        public DefendOwnerGoal(WarriorCompanionEntity warrior) {
-            super(warrior, false);
-            this.warrior = warrior;
-            this.setFlags(EnumSet.of(Goal.Flag.TARGET));
-        }
-
-        @Override
-        public boolean canUse() {
-            if (!warrior.isRecruited() || warrior.getCombatMode() == 2 || warrior.isEmergencyRetreating() || warrior.isLowHealth()) return false;
-            Player owner = warrior.getOwner();
-            if (owner == null) return false;
-
-            this.ownerLastHurtBy = owner.getLastHurtByMob();
-            int i = owner.getLastHurtByMobTimestamp();
-            return i != this.timestamp && this.canAttack(this.ownerLastHurtBy, TargetingConditions.DEFAULT) &&
-                    this.ownerLastHurtBy != warrior && this.ownerLastHurtBy != owner;
-        }
-
-        @Override
-        public void start() {
-            this.mob.setTarget(this.ownerLastHurtBy);
-            Player owner = warrior.getOwner();
-            if (owner != null) {
-                this.timestamp = owner.getLastHurtByMobTimestamp();
-            }
-            // Guardian Passive Taunt: 70% de chance de forçar o monstro a focar no Guardião
-            if (warrior.getSpecialization() == SPEC_GUARDIAN && this.ownerLastHurtBy instanceof Mob attackingMob) {
-                if (warrior.random.nextFloat() < 0.70F) {
-                    attackingMob.setTarget(warrior);
-                    if (warrior.level() instanceof ServerLevel serverLevel) {
-                        serverLevel.sendParticles(ParticleTypes.ENCHANTED_HIT, warrior.getX(), warrior.getY() + 1.2D, warrior.getZ(),
-                                6, 0.3D, 0.3D, 0.3D, 0.05D);
-                    }
-                }
-            }
-            super.start();
-        }
-    }
-
-    /**
-     * Aggressive Target Goal: Attacks hostile monsters nearby when targetHostiles is enabled.
-     */
-    public static class AggressiveTargetGoal extends NearestAttackableTargetGoal<Mob> {
-        private final WarriorCompanionEntity warrior;
-
-        public AggressiveTargetGoal(WarriorCompanionEntity warrior) {
-            super(warrior, Mob.class, 10, true, false,
-                    entity -> entity instanceof Enemy && !(entity instanceof WarriorCompanionEntity));
-            this.warrior = warrior;
-        }
-
-        @Override
-        public boolean canUse() {
-            if (!warrior.isRecruited() || !warrior.isTargetHostiles() || warrior.getCombatMode() == 2 || warrior.isEmergencyRetreating() || warrior.isLowHealth()) return false;
-            return super.canUse();
-        }
-    }
-
-    /**
-     * Hunt Animal Goal: Attacks passive adult food animals when targetPassives is enabled.
-     */
-    public static class HuntAnimalGoal extends NearestAttackableTargetGoal<Animal> {
-        private final WarriorCompanionEntity warrior;
-
-        public HuntAnimalGoal(WarriorCompanionEntity warrior) {
-            super(warrior, Animal.class, 10, true, false,
-                    animal -> animal != null && !animal.isBaby() &&
-                            !(animal instanceof TamableAnimal tamable && tamable.isTame()) &&
-                            (animal instanceof net.minecraft.world.entity.animal.Cow ||
-                             animal instanceof net.minecraft.world.entity.animal.Pig ||
-                             animal instanceof net.minecraft.world.entity.animal.Sheep ||
-                             animal instanceof net.minecraft.world.entity.animal.Chicken ||
-                             animal instanceof net.minecraft.world.entity.animal.Rabbit ||
-                             animal instanceof net.minecraft.world.entity.animal.goat.Goat));
-            this.warrior = warrior;
-        }
-
-        @Override
-        public boolean canUse() {
-            if (!warrior.isRecruited() || !warrior.isTargetPassives() || warrior.getCombatMode() == 2 || warrior.isEmergencyRetreating() || warrior.isLowHealth()) return false;
-            return super.canUse();
-        }
-    }
-
-    /**
-     * Warrior Combat Goal: 1-4 combo hits, then backs up for 2s (stamina recovery).
-     */
-    public static class WarriorCombatGoal extends MeleeAttackGoal {
-        private final WarriorCompanionEntity warrior;
-        private int comboCount = 0;
-        private int maxCombo = 3;
-
-        public WarriorCombatGoal(WarriorCompanionEntity pMob, double pSpeedModifier, boolean pFollowingTargetEvenIfNotSeen) {
-            super(pMob, pSpeedModifier, pFollowingTargetEvenIfNotSeen);
-            this.warrior = pMob;
-        }
-
-        @Override
-        public boolean canUse() {
-            if (warrior.isTalking() || warrior.isInventoryOpen() || warrior.inStaminaRegen || warrior.isDuelMode() || warrior.isEmergencyRetreating() || warrior.isLowHealth()) return false;
-            if (warrior.isPrisoner()) return false;
-
-            if (!warrior.isRecruited()) {
-                // Mercenários não recrutados em tavernas só atacam se forem atacados primeiro (defesa própria)
-                if (warrior.getLastHurtByMob() == null && warrior.getTarget() == null) {
-                    return false;
-                }
-            } else {
-                if (warrior.getCombatMode() == 2) { // 2 = Parado
-                    warrior.clearCombatTarget();
-                    return false;
-                }
-                if (warrior.getCombatMode() == 1 && warrior.getGuardPos() != null) { // 1 = Guarda
-                    if (warrior.getTarget() != null) {
-                        double distToGuard = warrior.getTarget().distanceToSqr(
-                                warrior.getGuardPos().getX() + 0.5D,
-                                warrior.getGuardPos().getY(),
-                                warrior.getGuardPos().getZ() + 0.5D
-                        );
-                        if (distToGuard > 64.0D) { // > 8 blocos do ponto de guarda
-                            warrior.clearCombatTarget();
-                            return false;
-                        }
-                    }
-                }
-                if (warrior.getTarget() != null && warrior.getTarget() == warrior.getOwner()) {
-                    warrior.setTarget(null);
-                    return false;
-                }
-            }
-            return super.canUse();
-        }
-
-        @Override
-        public boolean canContinueToUse() {
-            if (warrior.isEmergencyRetreating() || warrior.isLowHealth()) return false;
-            if (warrior.isPrisoner()) return false;
-            if (warrior.isRecruited()) {
-                if (warrior.getCombatMode() == 2) {
-                    warrior.clearCombatTarget();
-                    return false;
-                }
-                if (warrior.getCombatMode() == 1 && warrior.getGuardPos() != null) {
-                    if (warrior.getTarget() != null) {
-                        double distToGuard = warrior.getTarget().distanceToSqr(
-                                warrior.getGuardPos().getX() + 0.5D,
-                                warrior.getGuardPos().getY(),
-                                warrior.getGuardPos().getZ() + 0.5D
-                        );
-                        if (distToGuard > 64.0D) {
-                            warrior.clearCombatTarget();
-                            return false;
-                        }
-                    }
-                }
-            }
-            return super.canContinueToUse();
-        }
-
-        @Override
-        public void start() {
-            super.start();
-            comboCount = 0;
-            maxCombo = 2 + warrior.random.nextInt(3); // 2 to 4 hits
-        }
-
-        @Override
-        protected void checkAndPerformAttack(LivingEntity pEnemy, double pDistToEnemySqr) {
-            if (warrior.isRecruited() && pEnemy == warrior.getOwner()) {
-                warrior.setTarget(null);
-                return;
-            }
-            double attackReach = this.getAttackReachSqr(pEnemy);
-            if (pDistToEnemySqr <= attackReach && this.isTimeToAttack()) {
-                this.resetAttackCooldown();
-                this.mob.swing(InteractionHand.MAIN_HAND);
-                this.mob.doHurtTarget(pEnemy);
-                comboCount++;
-
-                if (comboCount >= maxCombo) {
-                    // Trigger stamina regen retreat
-                    warrior.inStaminaRegen = true;
-                    warrior.staminaRegenCooldown = 40; // 2 seconds
-
-                    // Push back slightly (roll/evade simulation)
-                    Vec3 dir = warrior.position().subtract(pEnemy.position()).normalize().scale(0.6D);
-                    warrior.setDeltaMovement(dir.x, 0.25D, dir.z);
-                    comboCount = 0;
-                }
-            }
-        }
-    }
-
-    /**
-     * Flee Illagers Goal: Flee from Pillagers, Vindicators, Evokers, etc. when captive.
-     */
-    public static class FleeIllagersGoal extends AvoidEntityGoal<AbstractIllager> {
-        private final WarriorCompanionEntity warrior;
-
-        public FleeIllagersGoal(WarriorCompanionEntity warrior, float maxDist, double walkSpeed, double sprintSpeed) {
-            super(warrior, AbstractIllager.class, maxDist, walkSpeed, sprintSpeed);
-            this.warrior = warrior;
-        }
-
-        @Override
-        public boolean canUse() {
-            return warrior.isPrisoner() && super.canUse();
-        }
-
-        @Override
-        public boolean canContinueToUse() {
-            return warrior.isPrisoner() && super.canContinueToUse();
-        }
-    }
-
-    /**
-     * Tavern Relax & Patrol Goal:
-     * Unrecruited mercenaries stay near the Vanguard Point (within 8 blocks),
-     * walking around naturally, looking at players/surroundings, and occasionally resting.
-     */
-    public static class TavernRelaxGoal extends Goal {
-        private final WarriorCompanionEntity warrior;
-        private final double speed;
-        private BlockPos tavernPointPos = null;
-        private int wanderCooldown = 0;
-        private int consumeTimer = 0;
-        private int sitTimer = 0;
-
-        public TavernRelaxGoal(WarriorCompanionEntity warrior, double speed) {
-            this.warrior = warrior;
-            this.speed = speed;
-            this.setFlags(EnumSet.of(Goal.Flag.MOVE));
-        }
-
-        @Override
-        public boolean canUse() {
-            if (warrior.isRecruited() || warrior.isPrisoner() || warrior.isDuelMode() || warrior.isTalking() || warrior.getTarget() != null) {
-                return false;
-            }
-            if (tavernPointPos == null || !warrior.level().getBlockState(tavernPointPos).is(ModBlocks.VANGUARD_POINT.get())) {
-                findTavernPoint();
-            }
-            return tavernPointPos != null;
-        }
-
-        private void findTavernPoint() {
-            if (warrior.level() instanceof ServerLevel serverLevel) {
-                var poiManager = serverLevel.getPoiManager();
-                var opt = poiManager.getInRange(
-                        holder -> holder.is(ModPoiTypes.VANGUARD_POI.getKey()),
-                        warrior.blockPosition(),
-                        48,
-                        PoiManager.Occupancy.ANY
-                ).map(PoiRecord::getPos).findFirst();
-
-                if (opt.isPresent()) {
-                    tavernPointPos = opt.get();
-                    return;
-                }
-            }
-
-            BlockPos origin = warrior.blockPosition();
-            BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
-            for (int dx = -32; dx <= 32; dx += 2) {
-                for (int dy = -10; dy <= 10; dy++) {
-                    for (int dz = -32; dz <= 32; dz += 2) {
-                        mut.set(origin.getX() + dx, origin.getY() + dy, origin.getZ() + dz);
-                        if (warrior.level().getBlockState(mut).is(ModBlocks.VANGUARD_POINT.get())) {
-                            tavernPointPos = mut.immutable();
-                            return;
-                        }
-                    }
-                }
-            }
-        }
-
-        @Override
-        public void tick() {
-            if (tavernPointPos == null) return;
-
-            double distSq = warrior.distanceToSqr(tavernPointPos.getX() + 0.5D, tavernPointPos.getY(), tavernPointPos.getZ() + 0.5D);
-
-            // 1. Se estiver muito longe do Vanguard Point (> 8 blocos), caminha de volta para a área
-            if (distSq > 64.0D) {
-                if (warrior.getPose() == Pose.SITTING) {
-                    warrior.setPose(Pose.STANDING);
-                }
-                if (warrior.getNavigation().isDone() || warrior.tickCount % 40 == 0) {
-                    warrior.getNavigation().moveTo(tavernPointPos.getX() + 0.5D, tavernPointPos.getY(), tavernPointPos.getZ() + 0.5D, this.speed);
-                }
-                return;
-            }
-
-            // 2. Dentro do raio do mural (<= 8 blocos): anda naturalmente pelas redondezas
-            if (wanderCooldown > 0) {
-                wanderCooldown--;
-            }
-
-            if (warrior.getNavigation().isDone() && wanderCooldown <= 0) {
-                wanderCooldown = 60 + warrior.getRandom().nextInt(100); // 3 a 8 segundos
-
-                // 45% de chance de caminhar para um ponto aleatório perto do mural
-                if (warrior.getRandom().nextFloat() < 0.45F) {
-                    if (warrior.getPose() == Pose.SITTING) {
-                        warrior.setPose(Pose.STANDING);
-                    }
-                    int rx = tavernPointPos.getX() + warrior.getRandom().nextInt(11) - 5;
-                    int rz = tavernPointPos.getZ() + warrior.getRandom().nextInt(11) - 5;
-                    BlockPos target = warrior.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(rx, 0, rz));
-                    if (warrior.level().getBlockState(target.below()).isSolidRender(warrior.level(), target.below())) {
-                        warrior.getNavigation().moveTo(target.getX() + 0.5D, target.getY(), target.getZ() + 0.5D, this.speed * 0.75D);
-                    }
-                } else if (warrior.getRandom().nextFloat() < 0.25F) {
-                    // Ocasionalmente senta para descansar
-                    sitTimer = 80 + warrior.getRandom().nextInt(80);
-                    warrior.setPose(Pose.SITTING);
-                }
-            }
-
-            if (sitTimer > 0) {
-                sitTimer--;
-                if (sitTimer == 0) {
-                    warrior.setPose(Pose.STANDING);
-                }
-            }
-
-            // Animação e som de consumo de bebida ocasional
-            consumeTimer++;
-            if (consumeTimer >= 220) {
-                consumeTimer = 0;
-                if (warrior.level() instanceof ServerLevel serverLevel && warrior.getRandom().nextFloat() < 0.35F) {
-                    serverLevel.playSound(null, warrior.blockPosition(), SoundEvents.GENERIC_DRINK, SoundSource.NEUTRAL, 0.8F, 1.0F);
-                    serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, warrior.getX(), warrior.getY() + 1.2D, warrior.getZ(), 4, 0.2D, 0.2D, 0.2D, 0.02D);
-                }
-            }
-        }
-
-        @Override
-        public void stop() {
-            warrior.setPose(Pose.STANDING);
-            super.stop();
-        }
-    }
 
     // ── Sobrevivência Autônoma & Consumíveis ───────────────────────────────────
-
-    /**
-     * Verifica se um item é uma poção benéfica de cura ou regeneração.
-     */
     public static boolean isHealingPotion(ItemStack stack) {
-        if (stack.isEmpty() || !(stack.getItem() instanceof PotionItem)) return false;
-        List<MobEffectInstance> effects = PotionUtils.getMobEffects(stack);
-        for (MobEffectInstance effect : effects) {
-            if (effect.getEffect() == MobEffects.HEAL || effect.getEffect() == MobEffects.REGENERATION) {
-                return true;
-            }
-        }
-        return false;
+        return WarriorHealingHelper.isHealingPotion(stack);
     }
 
-    /**
-     * Encontra o melhor item de cura na mochila (slots 6 a 20).
-     */
     public int findBestConsumableSlot(boolean inEmergency) {
-        WarriorInventory inv = this.getWarriorInventory();
-        int bestSlot = -1;
-        int highestScore = -1;
-
-        for (int i = WarriorInventory.SLOT_BACKPACK_START; i <= WarriorInventory.SLOT_BACKPACK_END; i++) {
-            ItemStack stack = inv.getItem(i);
-            if (!stack.isEmpty()) {
-                int score = this.getConsumableHealingScore(stack, inEmergency);
-                if (score > highestScore) {
-                    highestScore = score;
-                    bestSlot = i;
-                }
-            }
-        }
-        return bestSlot;
+        return WarriorHealingHelper.findBestConsumableSlot(this, inEmergency);
     }
 
-    /**
-     * Calcula a pontuação de utilidade de um consumível de cura (quanto maior, mais prioritário).
-     * Retorna -1 se o item não for adequado para cura.
-     */
     public int getConsumableHealingScore(ItemStack stack, boolean inEmergency) {
-        if (stack.isEmpty()) return -1;
-
-        // 1. Poção de Cura / Regeneração (requer Nível >= 3 do guerreiro)
-        if (stack.getItem() instanceof PotionItem) {
-            if (this.getWarriorLevel() < 3) return -1;
-            List<MobEffectInstance> effects = PotionUtils.getMobEffects(stack);
-            for (MobEffectInstance effect : effects) {
-                if (effect.getEffect() == MobEffects.HEAL) {
-                    // Cura instantânea: prioridade absoluta em emergência (< 40% HP)
-                    return inEmergency ? 1000 + (effect.getAmplifier() * 100) : 100;
-                }
-                if (effect.getEffect() == MobEffects.REGENERATION) {
-                    boolean hasRegen = this.hasEffect(MobEffects.REGENERATION);
-                    if (hasRegen) {
-                        return inEmergency ? 350 : 50;
-                    }
-                    return inEmergency ? 800 + (effect.getAmplifier() * 50) : 150;
-                }
-            }
-            return -1;
-        }
-
-        // 2. Alimentos especiais lendários (Maçã Dourada / Encantada)
-        if (stack.is(Items.ENCHANTED_GOLDEN_APPLE)) {
-            return inEmergency ? 950 : 200;
-        }
-        if (stack.is(Items.GOLDEN_APPLE)) {
-            return inEmergency ? 900 : 180;
-        }
-
-        // 3. Alimentos comuns
-        if (stack.isEdible()) {
-            var foodProps = stack.getItem().getFoodProperties(stack, this);
-            if (foodProps != null) {
-                // Evita alimentos com efeitos negativos (Veneno, Wither, Dano Instantâneo)
-                for (var effectPair : foodProps.getEffects()) {
-                    var effect = effectPair.getFirst().getEffect();
-                    if (effect == MobEffects.POISON || effect == MobEffects.WITHER || effect == MobEffects.HARM) {
-                        return -1;
-                    }
-                }
-                int nutrition = foodProps.getNutrition();
-                float saturation = foodProps.getSaturationModifier();
-                // Fora de emergência, comida normal é a prioridade para poupar poções caras
-                int baseScore = inEmergency ? 400 : 500;
-                return baseScore + (nutrition * 10) + (int) (saturation * 10);
-            }
-        }
-
-        return -1;
+        return WarriorHealingHelper.getConsumableHealingScore(this, stack, inEmergency);
     }
 
-    /**
-     * Aplica o consumo de um item (comida ou poção), executando a cura, efeitos,
-     * partículas completas de regeneração e som de término, além de gerenciar frasco vazio ou tigela.
-     */
     public void consumeHealingItem(ItemStack stack, int slotIndex) {
-        if (stack.isEmpty()) return;
-
-        boolean isDrink = stack.getUseAnimation() == UseAnim.DRINK || stack.getItem() instanceof PotionItem;
-
-        if (stack.getItem() instanceof PotionItem) {
-            // 1. Aplica efeitos da poção
-            List<MobEffectInstance> effects = PotionUtils.getMobEffects(stack);
-            for (MobEffectInstance effect : effects) {
-                if (effect.getEffect() == MobEffects.HEAL) {
-                    this.heal(4.0F * (effect.getAmplifier() + 1));
-                } else if (effect.getEffect().isInstantenous()) {
-                    effect.getEffect().applyInstantenousEffect(this, this, this, effect.getAmplifier(), 1.0D);
-                } else {
-                    this.addEffect(new MobEffectInstance(effect));
-                }
-            }
-
-            // Som de beber poção
-            this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                    SoundEvents.GENERIC_DRINK, SoundSource.NEUTRAL, 0.8F, 0.9F + (this.getRandom().nextFloat() * 0.1F));
-
-            // Partículas de poção e regeneração sobre a companhia
-            if (this.level() instanceof ServerLevel serverLevel) {
-                serverLevel.sendParticles(ParticleTypes.HEART, this.getX(), this.getY() + 1.2D, this.getZ(),
-                        8, 0.35D, 0.35D, 0.35D, 0.05D);
-                serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 1.0D, this.getZ(),
-                        12, 0.4D, 0.5D, 0.4D, 0.05D);
-                serverLevel.sendParticles(ParticleTypes.ENTITY_EFFECT, this.getX(), this.getY() + 1.0D, this.getZ(),
-                        10, 0.3D, 0.5D, 0.3D, 1.0D);
-            }
-
-            // Consumo da poção e devolução do frasco de vidro
-            stack.shrink(1);
-            if (stack.isEmpty()) {
-                this.getWarriorInventory().setItem(slotIndex, new ItemStack(Items.GLASS_BOTTLE));
-            } else {
-                ItemStack bottle = new ItemStack(Items.GLASS_BOTTLE);
-                ItemStack remaining = this.getWarriorInventory().addItemToBackpack(bottle);
-                if (!remaining.isEmpty()) {
-                    this.spawnAtLocation(remaining);
-                }
-            }
-        } else if (stack.isEdible()) {
-            // 2. Alimento comum ou especial (Maçã Dourada)
-            var foodProps = stack.getItem().getFoodProperties(stack, this);
-            int nutrition = foodProps != null ? foodProps.getNutrition() : 4;
-            float saturation = foodProps != null ? foodProps.getSaturationModifier() : 0.6F;
-            float healAmount = Math.max(4.0F, nutrition + (saturation * 2.0F));
-
-            this.heal(healAmount);
-
-            // Efeitos de comida especial
-            if (foodProps != null) {
-                for (var effectPair : foodProps.getEffects()) {
-                    if (effectPair.getFirst() != null && this.getRandom().nextFloat() < effectPair.getSecond()) {
-                        this.addEffect(new MobEffectInstance(effectPair.getFirst()));
-                    }
-                }
-            }
-
-            // Som de satisfação / arroto
-            this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                    isDrink ? SoundEvents.GENERIC_DRINK : SoundEvents.PLAYER_BURP, SoundSource.NEUTRAL, 0.7F, 1.0F);
-
-            // Partículas de cura e corações
-            if (this.level() instanceof ServerLevel serverLevel) {
-                serverLevel.sendParticles(ParticleTypes.HEART, this.getX(), this.getY() + 1.2D, this.getZ(),
-                        6, 0.3D, 0.3D, 0.3D, 0.05D);
-                serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 1.0D, this.getZ(),
-                        8, 0.3D, 0.4D, 0.3D, 0.05D);
-            }
-
-            // Devolução de tigela (sopas/ensopados) ou frasco de mel
-            ItemStack containerItem = ItemStack.EMPTY;
-            if (stack.is(Items.HONEY_BOTTLE)) {
-                containerItem = new ItemStack(Items.GLASS_BOTTLE);
-            } else if (stack.is(Items.MUSHROOM_STEW) || stack.is(Items.RABBIT_STEW) || stack.is(Items.BEETROOT_SOUP) || stack.is(Items.SUSPICIOUS_STEW)) {
-                containerItem = new ItemStack(Items.BOWL);
-            } else if (stack.hasCraftingRemainingItem()) {
-                containerItem = stack.getCraftingRemainingItem();
-            }
-
-            stack.shrink(1);
-            if (stack.isEmpty()) {
-                this.getWarriorInventory().setItem(slotIndex, containerItem.isEmpty() ? ItemStack.EMPTY : containerItem);
-            } else if (!containerItem.isEmpty()) {
-                ItemStack remaining = this.getWarriorInventory().addItemToBackpack(containerItem);
-                if (!remaining.isEmpty()) {
-                    this.spawnAtLocation(remaining);
-                }
-            }
-        }
-
-        this.stopUsingItem();
-        this.syncEquipmentWithInventory();
+        WarriorHealingHelper.consumeHealingItem(this, stack, slotIndex);
     }
 
-    /**
-     * Emergency Retreat & Eat/Drink Goal:
-     * When health is <= 40% and healing consumables (food or potions) exist in the backpack:
-     * 1. Performs an immediate evasion roll away from danger.
-     * 2. Clears combat target and runs away at high speed (1.25x).
-     * 3. Equips healing item in main hand and performs full eating/drinking animation with sound and particles.
-     * 4. Consumes item, heals HP, returns empty containers, and repeats until health >= 75% or consumables run out.
-     */
-    public static class EmergencyRetreatAndEatGoal extends Goal {
-        private final WarriorCompanionEntity warrior;
-        private int currentSlot = -1;
-        private int eatingTicks = 0;
-        private int totalUseDuration = 32;
-        private int recalPathTicks = 0;
-
-        public EmergencyRetreatAndEatGoal(WarriorCompanionEntity warrior) {
-            this.warrior = warrior;
-            this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
-        }
-
-        private int findBestConsumableSlot() {
-            return warrior.findBestConsumableSlot(true);
-        }
-
-        @Override
-        public boolean canUse() {
-            if (warrior.isTalking() || warrior.isDuelMode()) return false;
-            boolean lowHp = warrior.getHealth() <= (warrior.getMaxHealth() * 0.40F);
-            return (lowHp || warrior.isEmergencyRetreating()) && findBestConsumableSlot() != -1;
-        }
-
-        @Override
-        public boolean canContinueToUse() {
-            if (warrior.isTalking() || warrior.isDuelMode()) return false;
-            if (warrior.getHealth() >= (warrior.getMaxHealth() * 0.75F)) return false;
-            return findBestConsumableSlot() != -1;
-        }
-
-        @Override
-        public void start() {
-            warrior.setTarget(null);
-            warrior.setLastHurtByMob(null);
-            warrior.clearCombatTarget();
-            warrior.setEmergencyRetreatCooldown(180); // 9s de recuo prioritário
-
-            // Executa o rolamento evasivo de emergência
-            LivingEntity threat = warrior.getLastHurtByMob();
-            if (threat == null || !threat.isAlive()) threat = warrior.getTarget();
-            warrior.performEmergencyDodgeRoll(threat != null ? threat.position() : null);
-
-            currentSlot = findBestConsumableSlot();
-            eatingTicks = 0;
-            recalPathTicks = 0;
-
-            if (currentSlot != -1) {
-                ItemStack stack = warrior.getWarriorInventory().getItem(currentSlot);
-                totalUseDuration = stack.getUseDuration() > 0 ? stack.getUseDuration() : 32;
-                warrior.setItemSlot(EquipmentSlot.MAINHAND, stack);
-                warrior.startUsingItem(InteractionHand.MAIN_HAND);
-            }
-        }
-
-        @Override
-        public void tick() {
-            // Garante que o companheiro não trava a mira nem adquire alvos enquanto foge para se curar
-            if (warrior.getTarget() != null) {
-                warrior.setTarget(null);
-            }
-            if (warrior.getLastHurtByMob() != null) {
-                warrior.setLastHurtByMob(null);
-            }
-
-            // 1. Navegação de fuga / reposicionamento (5 blocos)
-            if (recalPathTicks <= 0) {
-                recalPathTicks = 12;
-                LivingEntity threat = null;
-                var nearbyEnemies = warrior.level().getEntitiesOfClass(
-                        net.minecraft.world.entity.monster.Monster.class,
-                        warrior.getBoundingBox().inflate(8.0D),
-                        net.minecraft.world.entity.EntitySelector.NO_CREATIVE_OR_SPECTATOR
-                );
-                if (!nearbyEnemies.isEmpty()) {
-                    threat = nearbyEnemies.get(0);
-                }
-
-                Vec3 targetPos;
-                if (threat != null) {
-                    Vec3 awayDir = warrior.position().subtract(threat.position()).multiply(1.0D, 0.0D, 1.0D).normalize().scale(5.0D);
-                    targetPos = warrior.position().add(awayDir);
-                } else {
-                    Player owner = warrior.getOwner();
-                    if (owner != null && warrior.distanceToSqr(owner) > 16.0D) {
-                        targetPos = owner.position();
-                    } else {
-                        targetPos = warrior.position().add(
-                                -Math.sin(Math.toRadians(warrior.getYRot())) * 4.0D,
-                                0.0D,
-                                Math.cos(Math.toRadians(warrior.getYRot())) * 4.0D
-                        );
-                    }
-                }
-
-                warrior.getNavigation().moveTo(targetPos.x, targetPos.y, targetPos.z, 1.25D);
-                warrior.getLookControl().setLookAt(targetPos.x, warrior.getY() + 0.6D, targetPos.z, 50.0F, 50.0F);
-            } else {
-                recalPathTicks--;
-            }
-
-            // 2. Lógica de consumo
-            if (currentSlot == -1 || warrior.getConsumableHealingScore(warrior.getWarriorInventory().getItem(currentSlot), true) < 0) {
-                currentSlot = findBestConsumableSlot();
-            }
-
-            if (currentSlot == -1) {
-                stop();
-                return;
-            }
-
-            ItemStack consumableStack = warrior.getWarriorInventory().getItem(currentSlot);
-            if (consumableStack.isEmpty()) {
-                stop();
-                return;
-            }
-
-            // Garante que o item está na mão e sendo consumido visualmente
-            if (!warrior.isUsingItem()) {
-                warrior.setItemSlot(EquipmentSlot.MAINHAND, consumableStack);
-                warrior.startUsingItem(InteractionHand.MAIN_HAND);
-            }
-
-            eatingTicks++;
-
-            // Partículas e som a cada 4 ticks (diferenciando comer vs beber)
-            if (eatingTicks % 4 == 0) {
-                boolean isDrink = consumableStack.getUseAnimation() == UseAnim.DRINK || consumableStack.getItem() instanceof PotionItem;
-                warrior.level().playSound(null, warrior.getX(), warrior.getY(), warrior.getZ(),
-                        isDrink ? SoundEvents.GENERIC_DRINK : SoundEvents.GENERIC_EAT,
-                        SoundSource.NEUTRAL, 0.6F, 0.9F + (warrior.getRandom().nextFloat() * 0.2F));
-
-                if (warrior.level() instanceof ServerLevel serverLevel) {
-                    serverLevel.sendParticles(new net.minecraft.core.particles.ItemParticleOption(ParticleTypes.ITEM, consumableStack),
-                            warrior.getX(), warrior.getY() + 1.35D, warrior.getZ(),
-                            6, 0.2D, 0.2D, 0.2D, 0.05D);
-                }
-            }
-
-            // Conclusão do consumo
-            totalUseDuration = consumableStack.getUseDuration() > 0 ? consumableStack.getUseDuration() : 32;
-            if (eatingTicks >= totalUseDuration) {
-                eatingTicks = 0;
-                int slotToConsume = currentSlot;
-                currentSlot = -1;
-                warrior.consumeHealingItem(consumableStack, slotToConsume);
-            }
-        }
-
-        @Override
-        public void stop() {
-            eatingTicks = 0;
-            currentSlot = -1;
-            warrior.stopUsingItem();
-            warrior.syncEquipmentWithInventory();
-            warrior.setEmergencyRetreatCooldown(0);
-        }
-    }
-
-    /**
-     * Guard Radius Goal: Patrolled area of 5 blocks around guardPos.
-     */
-    public static class GuardRadiusGoal extends Goal {
-        private final WarriorCompanionEntity warrior;
-        private final double speedModifier;
-
-        public GuardRadiusGoal(WarriorCompanionEntity warrior, double speedModifier) {
-            this.warrior = warrior;
-            this.speedModifier = speedModifier;
-            this.setFlags(EnumSet.of(Goal.Flag.MOVE));
-        }
-
-        @Override
-        public boolean canUse() {
-            if (warrior.isTalking()) return false;
-            return warrior.isRecruited() && warrior.getCombatMode() == 1 && warrior.getGuardPos() != null;
-        }
-
-        @Override
-        public void tick() {
-            BlockPos gPos = warrior.getGuardPos();
-            if (gPos == null) return;
-
-            double distSq = warrior.distanceToSqr(gPos.getX() + 0.5D, gPos.getY(), gPos.getZ() + 0.5D);
-            if (distSq > 36.0D) { // > 6 blocks from guard point
-                warrior.getNavigation().moveTo(gPos.getX() + 0.5D, gPos.getY(), gPos.getZ() + 0.5D, speedModifier);
-            }
-        }
-    }
-
-    /**
-     * Auto Feed Goal: Scans backpack (slots 6-20) for food and consumes it out of combat taking the standard duration (32 ticks).
-     */
-    public static class AutoFeedGoal extends Goal {
-        private final WarriorCompanionEntity warrior;
-        private int currentSlot = -1;
-        private int eatingTicks = 0;
-        private int totalUseDuration = 32;
-        private int postEatCooldown = 0;
-
-        public AutoFeedGoal(WarriorCompanionEntity warrior) {
-            this.warrior = warrior;
-            this.setFlags(EnumSet.noneOf(Goal.Flag.class));
-        }
-
-        private int findConsumableSlot() {
-            return warrior.findBestConsumableSlot(false);
-        }
-
-        @Override
-        public boolean canUse() {
-            if (postEatCooldown > 0) {
-                postEatCooldown--;
-                return false;
-            }
-            if (warrior.getHealth() >= warrior.getMaxHealth()) return false;
-            if (warrior.getTarget() != null && warrior.getTarget().isAlive()) return false;
-            return findConsumableSlot() != -1;
-        }
-
-        @Override
-        public boolean canContinueToUse() {
-            if (warrior.getHealth() >= warrior.getMaxHealth()) return false;
-            if (warrior.getTarget() != null && warrior.getTarget().isAlive()) return false;
-            if (currentSlot == -1) return false;
-            ItemStack stack = warrior.getWarriorInventory().getItem(currentSlot);
-            return !stack.isEmpty() && warrior.getConsumableHealingScore(stack, false) >= 0 && eatingTicks < totalUseDuration;
-        }
-
-        @Override
-        public void start() {
-            currentSlot = findConsumableSlot();
-            if (currentSlot != -1) {
-                ItemStack stack = warrior.getWarriorInventory().getItem(currentSlot);
-                totalUseDuration = stack.getUseDuration() > 0 ? stack.getUseDuration() : 32;
-                eatingTicks = 0;
-                warrior.setItemSlot(EquipmentSlot.MAINHAND, stack);
-                warrior.startUsingItem(InteractionHand.MAIN_HAND);
-            }
-        }
-
-        @Override
-        public void stop() {
-            currentSlot = -1;
-            eatingTicks = 0;
-            warrior.stopUsingItem();
-            warrior.syncEquipmentWithInventory();
-        }
-
-        @Override
-        public void tick() {
-            if (currentSlot == -1) return;
-
-            WarriorInventory inv = warrior.getWarriorInventory();
-            ItemStack stack = inv.getItem(currentSlot);
-            if (stack.isEmpty() || warrior.getConsumableHealingScore(stack, false) < 0) {
-                stop();
-                return;
-            }
-
-            if (!warrior.isUsingItem()) {
-                warrior.setItemSlot(EquipmentSlot.MAINHAND, stack);
-                warrior.startUsingItem(InteractionHand.MAIN_HAND);
-            }
-
-            eatingTicks++;
-
-            // Som de mastigação/bebida e partículas a cada 4 ticks
-            if (eatingTicks % 4 == 0) {
-                boolean isDrink = stack.getUseAnimation() == UseAnim.DRINK || stack.getItem() instanceof PotionItem;
-                warrior.level().playSound(null, warrior.getX(), warrior.getY(), warrior.getZ(),
-                        isDrink ? SoundEvents.GENERIC_DRINK : SoundEvents.GENERIC_EAT,
-                        SoundSource.NEUTRAL, 0.6F, 0.9F + warrior.getRandom().nextFloat() * 0.2F);
-
-                if (warrior.level() instanceof ServerLevel serverLevel) {
-                    serverLevel.sendParticles(new net.minecraft.core.particles.ItemParticleOption(ParticleTypes.ITEM, stack),
-                            warrior.getX(), warrior.getY() + 1.35D, warrior.getZ(),
-                            5, 0.18D, 0.18D, 0.18D, 0.05D);
-                }
-            }
-
-            // Quando conclui os ticks de mastigação/bebida -> consome o item e cura
-            if (eatingTicks >= totalUseDuration) {
-                int slotToConsume = currentSlot;
-                currentSlot = -1;
-                eatingTicks = 0;
-                warrior.consumeHealingItem(stack, slotToConsume);
-                postEatCooldown = 15;
-                stop();
-            }
-        }
-    }
-
-    /**
-     * Duel Goal: Non-lethal duel goal during recruitment Quest Type 2.
-     */
-    public static class DuelGoal extends MeleeAttackGoal {
-        private final WarriorCompanionEntity warrior;
-
-        public DuelGoal(WarriorCompanionEntity warrior, double speed) {
-            super(warrior, speed, true);
-            this.warrior = warrior;
-        }
-
-        @Override
-        public boolean canUse() {
-            return warrior.isDuelMode() && warrior.getDuelTarget() != null && warrior.getDuelTarget().isAlive();
-        }
-
-        @Override
-        protected void checkAndPerformAttack(LivingEntity pEnemy, double pDistToEnemySqr) {
-            double attackReach = this.getAttackReachSqr(pEnemy);
-            if (pDistToEnemySqr <= attackReach && this.isTimeToAttack()) {
-                this.resetAttackCooldown();
-                this.mob.swing(InteractionHand.MAIN_HAND);
-
-                // Non-lethal hit: caps damage if player would die
-                if (pEnemy.getHealth() <= 4.0F) {
-                    pEnemy.hurt(warrior.damageSources().mobAttack(warrior), 1.0F);
-                } else {
-                    this.mob.doHurtTarget(pEnemy);
-                }
-            }
-        }
-    }
-
-    /**
-     * Warrior Stroll Goal: Random stroll that respects Stay/Base (2) and Guard (1) modes.
-     */
-    public static class WarriorStrollGoal extends WaterAvoidingRandomStrollGoal {
-        private final WarriorCompanionEntity warrior;
-
-        public WarriorStrollGoal(WarriorCompanionEntity warrior, double speed) {
-            super(warrior, speed);
-            this.warrior = warrior;
-        }
-
-        @Override
-        public boolean canUse() {
-            if (warrior.isRecruited() && (warrior.getCombatMode() == 2 || warrior.getCombatMode() == 1)) {
-                return false;
-            }
-            if (warrior.isTalking() || warrior.isDuelMode()) return false;
-            return super.canUse();
-        }
-
-        @Override
-        public boolean canContinueToUse() {
-            if (warrior.isRecruited() && (warrior.getCombatMode() == 2 || warrior.getCombatMode() == 1)) {
-                return false;
-            }
-            return super.canContinueToUse();
-        }
-    }
 }
