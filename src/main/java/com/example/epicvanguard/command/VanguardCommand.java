@@ -333,6 +333,9 @@ public class VanguardCommand {
         }
 
         WarriorCompanionEntity entity = findOrLoadCompanion(source.getServer(), info);
+        if (entity == null) {
+            entity = com.example.epicvanguard.event.CompanionTeleportHandler.restoreCompanionAtPlayer(player, (ServerLevel) player.level(), info);
+        }
         if (entity != null) {
             if (entity.level() != player.level()) {
                 entity.teleportTo((ServerLevel) player.level(), player.getX(), player.getY(), player.getZ(), null, entity.getYRot(), entity.getXRot());
@@ -485,6 +488,9 @@ public class VanguardCommand {
         int count = 0;
         for (CompanionSavedData.CompanionInfo info : companions) {
             WarriorCompanionEntity entity = findOrLoadCompanion(source.getServer(), info);
+            if (entity == null) {
+                entity = com.example.epicvanguard.event.CompanionTeleportHandler.restoreCompanionAtPlayer(player, (ServerLevel) player.level(), info);
+            }
             if (entity != null) {
                 if (entity.level() != player.level()) {
                     entity.teleportTo((ServerLevel) player.level(), player.getX(), player.getY(), player.getZ(), null, entity.getYRot(), entity.getXRot());

@@ -59,6 +59,7 @@ public class CompanionSavedData extends SavedData {
         public float maxHealth;
         public int level;
         public int specialization;
+        public CompoundTag entityNbt;
 
         public CompanionInfo(UUID companionUUID, UUID ownerUUID, String name, String dimension, BlockPos pos, int combatMode, float health, float maxHealth, int level, int specialization) {
             this.companionUUID = companionUUID;
@@ -71,6 +72,7 @@ public class CompanionSavedData extends SavedData {
             this.maxHealth = maxHealth;
             this.level = Math.max(1, level);
             this.specialization = specialization;
+            this.entityNbt = null;
         }
 
         public CompanionInfo(UUID companionUUID, UUID ownerUUID, String name, String dimension, BlockPos pos, int combatMode, float health, float maxHealth) {
@@ -98,6 +100,9 @@ public class CompanionSavedData extends SavedData {
             tag.putFloat("maxHealth", maxHealth);
             tag.putInt("level", level);
             tag.putInt("spec", specialization);
+            if (entityNbt != null) {
+                tag.put("entityNbt", entityNbt);
+            }
             return tag;
         }
 
@@ -112,7 +117,11 @@ public class CompanionSavedData extends SavedData {
             float maxHealth = tag.contains("maxHealth") ? tag.getFloat("maxHealth") : 20.0F;
             int level = tag.contains("level") ? tag.getInt("level") : 1;
             int spec = tag.contains("spec") ? tag.getInt("spec") : 0;
-            return new CompanionInfo(companionUUID, ownerUUID, name, dim, pos, mode, health, maxHealth, level, spec);
+            CompanionInfo info = new CompanionInfo(companionUUID, ownerUUID, name, dim, pos, mode, health, maxHealth, level, spec);
+            if (tag.contains("entityNbt")) {
+                info.entityNbt = tag.getCompound("entityNbt");
+            }
+            return info;
         }
     }
 
@@ -124,14 +133,35 @@ public class CompanionSavedData extends SavedData {
         return overworld.getDataStorage().computeIfAbsent(CompanionSavedData::load, CompanionSavedData::new, DATA_NAME);
     }
 
-    public void registerOrUpdate(UUID companionUUID, UUID ownerUUID, String name, String dimension, BlockPos pos, int mode, float health, float maxHealth, int level, int specialization) {
+    public void registerOrUpdate(UUID companionUUID, UUID ownerUUID, String name, String dimension, BlockPos pos, int mode, float health, float maxHealth, int level, int specialization, CompoundTag fullNbt) {
         if (companionUUID == null) return;
-        companions.put(companionUUID, new CompanionInfo(companionUUID, ownerUUID, name, dimension, pos, mode, health, maxHealth, level, specialization));
+        CompanionInfo info = companions.get(companionUUID);
+        if (info == null) {
+            info = new CompanionInfo(companionUUID, ownerUUID, name, dimension, pos, mode, health, maxHealth, level, specialization);
+            companions.put(companionUUID, info);
+        } else {
+            info.ownerUUID = ownerUUID;
+            if (name != null && !name.isEmpty()) info.name = name;
+            info.dimension = dimension;
+            info.pos = pos;
+            info.combatMode = mode;
+            info.health = health;
+            info.maxHealth = maxHealth;
+            info.level = level;
+            info.specialization = specialization;
+        }
+        if (fullNbt != null) {
+            info.entityNbt = fullNbt.copy();
+        }
         setDirty();
     }
 
+    public void registerOrUpdate(UUID companionUUID, UUID ownerUUID, String name, String dimension, BlockPos pos, int mode, float health, float maxHealth, int level, int specialization) {
+        registerOrUpdate(companionUUID, ownerUUID, name, dimension, pos, mode, health, maxHealth, level, specialization, null);
+    }
+
     public void registerOrUpdate(UUID companionUUID, UUID ownerUUID, String name, String dimension, BlockPos pos, int mode, float health, float maxHealth) {
-        registerOrUpdate(companionUUID, ownerUUID, name, dimension, pos, mode, health, maxHealth, 1, 0);
+        registerOrUpdate(companionUUID, ownerUUID, name, dimension, pos, mode, health, maxHealth, 1, 0, null);
     }
 
     public void updateLevelAndSpecialization(UUID companionUUID, int level, int specialization) {

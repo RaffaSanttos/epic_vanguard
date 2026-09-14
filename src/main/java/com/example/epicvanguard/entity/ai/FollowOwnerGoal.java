@@ -29,6 +29,7 @@ public class FollowOwnerGoal extends Goal {
         if (owner == null || owner.isSpectator() || !warrior.isRecruited()) return false;
         if (warrior.getCombatMode() != 0) return false; // Apenas modo 0 (Seguir)
         if (warrior.getTarget() != null && warrior.getTarget().isAlive()) return false;
+        if (owner.level() != warrior.level()) return true;
         return warrior.distanceToSqr(owner) > (double) (startDist * startDist);
     }
 
@@ -39,6 +40,7 @@ public class FollowOwnerGoal extends Goal {
         if (owner == null || !warrior.isRecruited()) return false;
         if (warrior.getCombatMode() != 0) return false;
         if (warrior.getTarget() != null && warrior.getTarget().isAlive()) return false;
+        if (owner.level() != warrior.level()) return true;
         return warrior.distanceToSqr(owner) > (double) (stopDist * stopDist);
     }
 
@@ -51,14 +53,14 @@ public class FollowOwnerGoal extends Goal {
 
         // Mudança de dimensão
         if (owner.level() != warrior.level() && owner.level() instanceof ServerLevel targetLevel) {
-            if (owner.onGround() && owner.getY() >= owner.level().getMinBuildHeight()) {
+            if (owner.getY() >= owner.level().getMinBuildHeight() && !owner.isFallFlying() && !owner.getAbilities().flying) {
                 warrior.teleportTo(targetLevel, owner.getX(), owner.getY(), owner.getZ(), null, warrior.getYRot(), warrior.getXRot());
                 warrior.safeTeleportTo(owner);
             }
             return;
         }
 
-        if (!owner.onGround() || owner.isFallFlying() || owner.getAbilities().flying) {
+        if (owner.isFallFlying() || owner.getAbilities().flying) {
             return;
         }
 

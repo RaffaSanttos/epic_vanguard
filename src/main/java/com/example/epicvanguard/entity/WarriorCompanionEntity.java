@@ -496,7 +496,13 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
     @Nullable
     public Player getOwner() {
-        return this.getOwnerUUID().map(this.level()::getPlayerByUUID).orElse(null);
+        return this.getOwnerUUID().map(uuid -> {
+            Player p = this.level().getPlayerByUUID(uuid);
+            if (p == null && this.level().getServer() != null) {
+                p = this.level().getServer().getPlayerList().getPlayer(uuid);
+            }
+            return p;
+        }).orElse(null);
     }
 
     public int getSkinId() {
@@ -521,6 +527,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
             this.setDeltaMovement(0.0D, this.getDeltaMovement().y, 0.0D);
             this.setSpeed(0.0F);
         }
+        this.updateSavedData();
     }
 
     public void clearCombatTarget() {
@@ -1169,21 +1176,31 @@ public class WarriorCompanionEntity extends PathfinderMob {
             // Coleta automática de itens do chão ao passar por cima
             pickUpGroundItems();
 
-            // Update CompanionSavedData periodically
-            if (isRecruited() && this.tickCount % 40 == 0 && this.getServer() != null && getOwnerUUID().isPresent()) {
-                CompanionSavedData.get(this.getServer()).registerOrUpdate(
-                        this.getUUID(),
-                        getOwnerUUID().get(),
-                        this.getWarriorName(),
-                        this.level().dimension().location().toString(),
-                        this.blockPosition(),
-                        this.getCombatMode(),
-                        this.getHealth(),
-                        this.getMaxHealth(),
-                        this.getWarriorLevel(),
-                        this.getSpecialization()
-                );
+            // Update CompanionSavedData periodically (every 20 ticks = 1 second)
+            if (isRecruited() && this.tickCount % 20 == 0) {
+                updateSavedData();
             }
+        }
+    }
+
+    public void updateSavedData() {
+        if (!this.level().isClientSide && isRecruited() && this.isAlive() && this.getServer() != null && getOwnerUUID().isPresent()) {
+            CompoundTag fullNbt = new CompoundTag();
+            this.saveWithoutId(fullNbt);
+            fullNbt.putInt("Specialization", this.getSpecialization());
+            CompanionSavedData.get(this.getServer()).registerOrUpdate(
+                    this.getUUID(),
+                    getOwnerUUID().get(),
+                    this.getWarriorName(),
+                    this.level().dimension().location().toString(),
+                    this.blockPosition(),
+                    this.getCombatMode(),
+                    this.getHealth(),
+                    this.getMaxHealth(),
+                    this.getWarriorLevel(),
+                    this.getSpecialization(),
+                    fullNbt
+            );
         }
     }
 
@@ -1641,29 +1658,32 @@ public class WarriorCompanionEntity extends PathfinderMob {
     // ── Intelligent Safe Teleport ─────────────────────────────────────────────
     public void safeTeleportTo(Entity target) {
         if (target == null) return;
-        if (this.level() != target.level()) return;
+
+        // Se estiver em outra dimensão, transfere primeiro
+        if (this.level() != target.level() && target.level() instanceof ServerLevel targetLevel) {
+            this.teleportTo(targetLevel, target.getX(), target.getY(), target.getZ(), null, this.getYRot(), this.getXRot());
+        }
 
         // 1. Proteção contra o Void: se o alvo estiver no void ou abaixo da altura mínima, NÃO teletransporta
         if (target.getY() < target.level().getMinBuildHeight()) {
             return;
         }
 
-        // 2. Proteção Absoluta contra Voo / Elytra / Queda Livre:
-        // Se o jogador estiver voando, planando, caindo ou NÃO estiver pisando firmemente no chão, NÃO teletransporta!
+        // 2. Proteção contra Voo / Elytra:
+        // Se o jogador estiver voando ativamente ou planando com Elytra, aguarda
         if (target instanceof Player player) {
-            if (!player.onGround() || player.isFallFlying() || player.getAbilities().flying) {
-                return; // Jogador está no ar: guerreiro aguarda com segurança no chão
+            if (player.isFallFlying() || player.getAbilities().flying) {
+                return;
             }
-        } else if (!target.onGround()) {
-            return;
         }
 
         BlockPos targetPos = target.blockPosition();
 
-        // 3. Procura blocos sólidos seguros no mesmo nível do chão do alvo (raio horizontal de 3 blocos, dy entre -1 e +1)
-        for (int dx = -3; dx <= 3; dx++) {
-            for (int dz = -3; dz <= 3; dz++) {
-                for (int dy = 1; dy >= -1; dy--) {
+        // 3. Procura blocos sólidos seguros ao redor do alvo (raio horizontal de 3 blocos, dy entre +2 e -2)
+        for (int dy = 2; dy >= -2; dy--) {
+            for (int dx = -3; dx <= 3; dx++) {
+                for (int dz = -3; dz <= 3; dz++) {
+                    if (dx == 0 && dz == 0 && dy == 0) continue;
                     BlockPos candidate = targetPos.offset(dx, dy, dz);
                     if (isSafeTeleportBlock(candidate)) {
                         doTeleport(candidate.getX() + 0.5D, candidate.getY(), candidate.getZ() + 0.5D);
@@ -1676,17 +1696,23 @@ public class WarriorCompanionEntity extends PathfinderMob {
         // 4. Fallback: se o bloco onde o alvo está pisando for seguro
         if (isSafeTeleportBlock(targetPos)) {
             doTeleport(target.getX(), target.getY(), target.getZ());
+            return;
         }
-        // Caso contrário (sem chão seguro), o guerreiro permanece onde está
+
+        // 5. Fallback secundário: se o jogador estiver em bloco especial (ex: Waystone, slab),
+        // desde que não esteja no void/lava/fogo, teletransporta diretamente para a posição do jogador
+        if (target.getY() >= target.level().getMinBuildHeight() && !target.isInLava()) {
+            doTeleport(target.getX(), target.getY(), target.getZ());
+        }
     }
 
     public void safeTeleportTo(BlockPos targetPos) {
         if (targetPos == null) return;
         if (targetPos.getY() < this.level().getMinBuildHeight()) return;
 
-        for (int dx = -3; dx <= 3; dx++) {
-            for (int dz = -3; dz <= 3; dz++) {
-                for (int dy = 1; dy >= -1; dy--) {
+        for (int dy = 2; dy >= -2; dy--) {
+            for (int dx = -3; dx <= 3; dx++) {
+                for (int dz = -3; dz <= 3; dz++) {
                     BlockPos candidate = targetPos.offset(dx, dy, dz);
                     if (isSafeTeleportBlock(candidate)) {
                         doTeleport(candidate.getX() + 0.5D, candidate.getY(), candidate.getZ() + 0.5D);
@@ -1707,8 +1733,8 @@ public class WarriorCompanionEntity extends PathfinderMob {
         BlockState at = this.level().getBlockState(pos);
         BlockState above = this.level().getBlockState(pos.above());
 
-        // O chão abaixo deve ser sólido e não perigoso (não é void, ar, lava, fogo, cacto)
-        if (!below.isSolid() && !below.isFaceSturdy(this.level(), pos.below(), net.minecraft.core.Direction.UP)) {
+        // O chão abaixo deve ser sólido ou ter colisão resistente para pisar (suporta blocos de mods, waystones, slabs, etc.)
+        if (!below.isSolid() && !below.isFaceSturdy(this.level(), pos.below(), net.minecraft.core.Direction.UP) && below.getCollisionShape(this.level(), pos.below()).isEmpty()) {
             return false;
         }
 
