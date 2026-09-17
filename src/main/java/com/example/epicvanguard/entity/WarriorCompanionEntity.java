@@ -348,6 +348,19 @@ public class WarriorCompanionEntity extends PathfinderMob {
         return nearbyThreats.isEmpty() ? null : nearbyThreats.get(0);
     }
 
+    public boolean isFighting() {
+        LivingEntity target = this.getTarget();
+        if (target != null && target.isAlive() && target != this.getOwner()) {
+            return true;
+        }
+        LivingEntity lastHurt = this.getLastHurtByMob();
+        if (lastHurt != null && lastHurt.isAlive() && lastHurt != this.getOwner()
+                && (this.tickCount - this.getLastHurtByMobTimestamp()) < 60) {
+            return true;
+        }
+        return false;
+    }
+
     private Player inventoryOpenPlayer = null;
 
     public void setInventoryOpenPlayer(@Nullable Player player) {
@@ -977,9 +990,8 @@ public class WarriorCompanionEntity extends PathfinderMob {
         this.goalSelector.addGoal(1, new FleeIllagersGoal(this, 12.0F, 1.2D, 1.35D));
         this.goalSelector.addGoal(1, new EmergencyRetreatAndEatGoal(this));
         this.goalSelector.addGoal(2, new ActiveShieldDefenseGoal(this));
-        this.goalSelector.addGoal(2, new DefendOwnerGoal(this));
         this.goalSelector.addGoal(3, new WarriorTacticalCombatGoal(this, 1.25D));
-        this.goalSelector.addGoal(3, new FollowOwnerGoal(this, 1.15D, 5.0F, 2.0F));
+        this.goalSelector.addGoal(3, new FollowOwnerGoal(this, 1.15D, 8.0F, 3.0F));
         this.goalSelector.addGoal(4, new GuardRadiusGoal(this, 1.1D));
         this.goalSelector.addGoal(5, new AutoFeedGoal(this));
         this.goalSelector.addGoal(6, new CampfireRelaxGoal(this));
@@ -989,9 +1001,10 @@ public class WarriorCompanionEntity extends PathfinderMob {
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
 
-        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(2, new AggressiveTargetGoal(this));
-        this.targetSelector.addGoal(3, new HuntAnimalGoal(this));
+        this.targetSelector.addGoal(1, new DefendOwnerGoal(this));
+        this.targetSelector.addGoal(2, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(3, new AggressiveTargetGoal(this));
+        this.targetSelector.addGoal(4, new HuntAnimalGoal(this));
     }
 
     @Override
@@ -1149,9 +1162,9 @@ public class WarriorCompanionEntity extends PathfinderMob {
             syncEquipmentWithInventory();
 
             // Follow Owner distance safeguard (modo 0 = Seguir: teleporta ao ultrapassar 13 blocos de distância)
-            if (isRecruited() && getCombatMode() == 0 && !isEmergencyRetreating()) {
+            if (isRecruited() && getCombatMode() == 0) {
                 Player owner = getOwner();
-                if (owner != null && !owner.isSpectator() && this.distanceToSqr(owner) > 169.0D) { // > 13 blocks (13^2 = 169)
+                if (owner != null && !owner.isSpectator() && this.distanceToSqr(owner) >= 169.0D) { // >= 13 blocks (13^2 = 169)
                     this.setTarget(null);
                     this.safeTeleportTo(owner);
                 }
