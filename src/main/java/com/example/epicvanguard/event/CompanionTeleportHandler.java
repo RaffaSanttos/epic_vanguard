@@ -188,8 +188,9 @@ public class CompanionTeleportHandler {
             WarriorCompanionEntity warrior = findLoadedCompanion(server, info.companionUUID);
             if (warrior != null) {
                 // Caso 1: A entidade está atualmente carregada em algum chunk/dimensão
-                if (warrior.level() == targetLevel && warrior.distanceToSqr(player) <= 36.0D) {
-                    continue; // Já está acompanhando de perto
+                // SÓ teletransporta se estiver em outra dimensão ou se a distância ultrapassar 13 blocos (> 169.0D)!
+                if (warrior.level() == targetLevel && warrior.distanceToSqr(player) <= 169.0D) {
+                    continue; // Está a 13 blocos ou menos: segue a pé normalmente!
                 }
 
                 warrior.stopRiding();
@@ -210,6 +211,13 @@ public class CompanionTeleportHandler {
                 rescuedCount++;
             } else {
                 // Caso 2: A entidade está em um chunk descarregado (ex: na natureza longe da colônia)!
+                // Se a última posição conhecida na mesma dimensão for <= 13 blocos, não precisa materializar
+                if (info.pos != null && targetLevel.dimension().location().toString().equals(info.dimension)) {
+                    if (player.blockPosition().distSqr(info.pos) <= 169.0D) {
+                        continue;
+                    }
+                }
+
                 // Materializa a companhia diretamente no jogador a partir do banco de dados persistente!
                 WarriorCompanionEntity restored = restoreCompanionAtPlayer(player, targetLevel, info);
                 if (restored != null) {

@@ -1148,10 +1148,10 @@ public class WarriorCompanionEntity extends PathfinderMob {
             // Sync Warrior Inventory equipment to entity equipment slots for rendering
             syncEquipmentWithInventory();
 
-            // Follow Owner distance safeguard (modo 0 = Seguir: teleporta ao atingir 15 blocos de distância)
+            // Follow Owner distance safeguard (modo 0 = Seguir: teleporta ao ultrapassar 13 blocos de distância)
             if (isRecruited() && getCombatMode() == 0 && !isEmergencyRetreating()) {
                 Player owner = getOwner();
-                if (owner != null && !owner.isSpectator() && this.distanceToSqr(owner) >= 225.0D) { // >= 15 blocks
+                if (owner != null && !owner.isSpectator() && this.distanceToSqr(owner) > 169.0D) { // > 13 blocks (13^2 = 169)
                     this.setTarget(null);
                     this.safeTeleportTo(owner);
                 }

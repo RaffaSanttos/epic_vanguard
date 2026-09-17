@@ -28,7 +28,7 @@ public class FollowOwnerGoal extends Goal {
         Player owner = warrior.getOwner();
         if (owner == null || owner.isSpectator() || !warrior.isRecruited()) return false;
         if (warrior.getCombatMode() != 0) return false; // Apenas modo 0 (Seguir)
-        if (warrior.getTarget() != null && warrior.getTarget().isAlive()) return false;
+        if (warrior.isFighting()) return false; // Se estiver lutando, só o teleporte o trará de volta
         if (owner.level() != warrior.level()) return true;
         return warrior.distanceToSqr(owner) > (double) (startDist * startDist);
     }
@@ -39,9 +39,19 @@ public class FollowOwnerGoal extends Goal {
         Player owner = warrior.getOwner();
         if (owner == null || !warrior.isRecruited()) return false;
         if (warrior.getCombatMode() != 0) return false;
-        if (warrior.getTarget() != null && warrior.getTarget().isAlive()) return false;
+        if (warrior.isFighting()) return false; // Se entrar em combate, para de seguir a pé e luta
         if (owner.level() != warrior.level()) return true;
         return warrior.distanceToSqr(owner) > (double) (stopDist * stopDist);
+    }
+
+    @Override
+    public void start() {
+        this.timeToRecalcPath = 0;
+    }
+
+    @Override
+    public void stop() {
+        this.warrior.getNavigation().stop();
     }
 
     @Override
@@ -65,7 +75,7 @@ public class FollowOwnerGoal extends Goal {
         }
 
         double distSq = warrior.distanceToSqr(owner);
-        if (distSq >= 225.0D) { // >= 15 blocks
+        if (distSq >= 169.0D) { // >= 13 blocks (13^2 = 169)
             warrior.safeTeleportTo(owner);
             return;
         }
@@ -73,7 +83,7 @@ public class FollowOwnerGoal extends Goal {
         if (--timeToRecalcPath <= 0) {
             timeToRecalcPath = 10;
             if (!warrior.getNavigation().moveTo(owner, speedModifier)) {
-                if (distSq > 64.0D) {
+                if (distSq >= 169.0D) { // Apenas se ultrapassar 13 blocos de distância
                     warrior.safeTeleportTo(owner);
                 }
             }
