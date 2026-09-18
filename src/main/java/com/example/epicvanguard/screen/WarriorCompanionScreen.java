@@ -138,7 +138,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
         // Botão de lápis ao lado do nome do guerreiro
         WarriorCompanionEntity warrior = getCompanion();
         String warriorName = warrior != null ? warrior.getWarriorName() : "Guerreiro";
-        String mochilaText = "Mochila: §2" + warriorName;
+        String mochilaText = "Mochila: §9" + warriorName;
         int nameW = this.font.width(mochilaText);
         if (nameW > 82) nameW = 82;
         int pencilX = leftPos + 60 + nameW + 3;
@@ -259,7 +259,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
         // Títulos das seções
         guiGraphics.drawString(this.font, "Equip.", 12, 8, 0x404040, false);
 
-        String mochilaText = "Mochila: §2" + warriorName;
+        String mochilaText = "Mochila: §9" + warriorName;
         if (this.font.width(mochilaText) > 82) {
             mochilaText = this.font.plainSubstrByWidth(mochilaText, 72) + "...";
         }
@@ -438,7 +438,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
         if (this.pencilButton == null) return;
         WarriorCompanionEntity warrior = getCompanion();
         String warriorName = warrior != null ? warrior.getWarriorName() : "Guerreiro";
-        String mochilaText = "Mochila: §2" + warriorName;
+        String mochilaText = "Mochila: §9" + warriorName;
         int nameW = this.font.width(mochilaText);
         if (nameW > 82) nameW = 82;
         int pencilX = leftPos + 60 + nameW + 3;

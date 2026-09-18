@@ -98,7 +98,11 @@ public class WarriorHealingHelper {
         return -1;
     }
 
-    public static void consumeHealingItem(WarriorCompanionEntity warrior, ItemStack stack, int slotIndex) {
+    public static void consumeHealingItem(WarriorCompanionEntity warrior, int slotIndex) {
+        WarriorInventory inv = warrior.getWarriorInventory();
+        if (slotIndex < 0 || slotIndex >= inv.getContainerSize()) return;
+
+        ItemStack stack = inv.getItem(slotIndex);
         if (stack.isEmpty()) return;
 
         boolean isDrink = stack.getUseAnimation() == UseAnim.DRINK || stack.getItem() instanceof PotionItem;
@@ -127,16 +131,14 @@ public class WarriorHealingHelper {
                         10, 0.3D, 0.5D, 0.3D, 1.0D);
             }
 
+            // Consome a poção: descarte completo sem deixar frasco vazio ocupando espaço na mochila
             stack.shrink(1);
             if (stack.isEmpty()) {
-                warrior.getWarriorInventory().setItem(slotIndex, new ItemStack(Items.GLASS_BOTTLE));
+                inv.setItem(slotIndex, ItemStack.EMPTY);
             } else {
-                ItemStack bottle = new ItemStack(Items.GLASS_BOTTLE);
-                ItemStack remaining = warrior.getWarriorInventory().addItemToBackpack(bottle);
-                if (!remaining.isEmpty()) {
-                    warrior.spawnAtLocation(remaining);
-                }
+                inv.setItem(slotIndex, stack);
             }
+            inv.setChanged();
         } else if (stack.isEdible()) {
             var foodProps = stack.getItem().getFoodProperties(stack, warrior);
             int nutrition = foodProps != null ? foodProps.getNutrition() : 4;
@@ -163,28 +165,22 @@ public class WarriorHealingHelper {
                         8, 0.3D, 0.4D, 0.3D, 0.05D);
             }
 
-            ItemStack containerItem = ItemStack.EMPTY;
-            if (stack.is(Items.HONEY_BOTTLE)) {
-                containerItem = new ItemStack(Items.GLASS_BOTTLE);
-            } else if (stack.is(Items.MUSHROOM_STEW) || stack.is(Items.RABBIT_STEW) || stack.is(Items.BEETROOT_SOUP) || stack.is(Items.SUSPICIOUS_STEW)) {
-                containerItem = new ItemStack(Items.BOWL);
-            } else if (stack.hasCraftingRemainingItem()) {
-                containerItem = stack.getCraftingRemainingItem();
-            }
-
+            // Consome o alimento/ensopado: descarte completo sem deixar tigelas ou recipientes vazios
             stack.shrink(1);
             if (stack.isEmpty()) {
-                warrior.getWarriorInventory().setItem(slotIndex, containerItem.isEmpty() ? ItemStack.EMPTY : containerItem);
-            } else if (!containerItem.isEmpty()) {
-                ItemStack remaining = warrior.getWarriorInventory().addItemToBackpack(containerItem);
-                if (!remaining.isEmpty()) {
-                    warrior.spawnAtLocation(remaining);
-                }
+                inv.setItem(slotIndex, ItemStack.EMPTY);
+            } else {
+                inv.setItem(slotIndex, stack);
             }
+            inv.setChanged();
         }
 
         warrior.stopUsingItem();
         warrior.syncEquipmentWithInventory();
         WarriorSpeechSystem.onHealed(warrior);
+    }
+
+    public static void consumeHealingItem(WarriorCompanionEntity warrior, ItemStack stack, int slotIndex) {
+        consumeHealingItem(warrior, slotIndex);
     }
 }

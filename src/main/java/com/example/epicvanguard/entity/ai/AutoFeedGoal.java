@@ -49,7 +49,7 @@ public class AutoFeedGoal extends Goal {
         if (warrior.getTarget() != null && warrior.getTarget().isAlive()) return false;
         if (currentSlot == -1) return false;
         ItemStack stack = warrior.getWarriorInventory().getItem(currentSlot);
-        return !stack.isEmpty() && WarriorHealingHelper.getConsumableHealingScore(warrior, stack, false) >= 0 && eatingTicks < totalUseDuration;
+        return !stack.isEmpty() && WarriorHealingHelper.getConsumableHealingScore(warrior, stack, false) >= 0;
     }
 
     @Override
@@ -59,7 +59,9 @@ public class AutoFeedGoal extends Goal {
             ItemStack stack = warrior.getWarriorInventory().getItem(currentSlot);
             totalUseDuration = stack.getUseDuration() > 0 ? stack.getUseDuration() : 32;
             eatingTicks = 0;
-            warrior.setItemSlot(EquipmentSlot.MAINHAND, stack);
+            ItemStack displayStack = stack.copy();
+            displayStack.setCount(1);
+            warrior.setItemSlot(EquipmentSlot.MAINHAND, displayStack);
             warrior.startUsingItem(InteractionHand.MAIN_HAND);
         }
     }
@@ -83,11 +85,6 @@ public class AutoFeedGoal extends Goal {
             return;
         }
 
-        if (!warrior.isUsingItem()) {
-            warrior.setItemSlot(EquipmentSlot.MAINHAND, stack);
-            warrior.startUsingItem(InteractionHand.MAIN_HAND);
-        }
-
         eatingTicks++;
 
         // Som de mastigação/bebida e partículas a cada 4 ticks
@@ -109,7 +106,7 @@ public class AutoFeedGoal extends Goal {
             int slotToConsume = currentSlot;
             currentSlot = -1;
             eatingTicks = 0;
-            WarriorHealingHelper.consumeHealingItem(warrior, stack, slotToConsume);
+            WarriorHealingHelper.consumeHealingItem(warrior, slotToConsume);
             postEatCooldown = 15;
             stop();
         }

@@ -137,7 +137,7 @@ public class WarriorSkillTreeScreen extends Screen {
                 "Uso tático de poções e resistência.",
                 List.of(
                         "§e✦ Poções: Consome Poções de Cura e Regeneração da mochila",
-                        "§7• Devolve os frascos de vidro vazios para a mochila",
+                        "§7• Consome e libera o espaço do inventário sem poluir a mochila",
                         "§f• +1.0 de Armadura natural permanente adicional",
                         "§7A experiência de campo forjada em dezenas de embates."
                 )

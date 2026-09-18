@@ -135,6 +135,14 @@ public class VanguardPointBlockEntity extends BlockEntity implements MenuProvide
 
         if (!player.isCreative()) {
             itemHandler.extractItem(0, REQUIRED_COINS, false);
+            // Devolve imediatamente qualquer moeda excedente (troco) ao jogador!
+            int remaining = itemHandler.getStackInSlot(0).getCount();
+            if (remaining > 0) {
+                ItemStack change = itemHandler.extractItem(0, remaining, false);
+                if (!player.getInventory().add(change)) {
+                    player.drop(change, false);
+                }
+            }
         }
 
         this.contractActive = true;
@@ -163,6 +171,21 @@ public class VanguardPointBlockEntity extends BlockEntity implements MenuProvide
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, VanguardPointBlockEntity entity) {
         if (!entity.contractActive) return;
+
+        // Devolve moedas excedentes presas no bloco automaticamente caso algum jogador esteja próximo
+        if (entity.getStoredCoins() > 0) {
+            Player nearbyPlayer = level.getNearestPlayer(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 8.0D, false);
+            if (nearbyPlayer != null) {
+                int left = entity.getStoredCoins();
+                ItemStack change = entity.getItemHandler().extractItem(0, left, false);
+                if (!change.isEmpty()) {
+                    if (!nearbyPlayer.getInventory().add(change)) {
+                        nearbyPlayer.drop(change, false);
+                    }
+                    entity.setChanged();
+                }
+            }
+        }
 
         // Suporte ao avanço de tempo caso jogadores durmam na cama (skipping night)
         long currentDayTime = level.getDayTime();

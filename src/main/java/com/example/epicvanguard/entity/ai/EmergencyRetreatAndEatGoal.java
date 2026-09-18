@@ -68,7 +68,9 @@ public class EmergencyRetreatAndEatGoal extends Goal {
         if (currentSlot != -1) {
             ItemStack stack = warrior.getWarriorInventory().getItem(currentSlot);
             totalUseDuration = stack.getUseDuration() > 0 ? stack.getUseDuration() : 32;
-            warrior.setItemSlot(EquipmentSlot.MAINHAND, stack);
+            ItemStack displayStack = stack.copy();
+            displayStack.setCount(1);
+            warrior.setItemSlot(EquipmentSlot.MAINHAND, displayStack);
             warrior.startUsingItem(InteractionHand.MAIN_HAND);
         }
     }
@@ -142,12 +144,17 @@ public class EmergencyRetreatAndEatGoal extends Goal {
 
         ItemStack consumableStack = warrior.getWarriorInventory().getItem(currentSlot);
         if (consumableStack.isEmpty()) {
-            stop();
-            return;
-        }
-
-        if (!warrior.isUsingItem()) {
-            warrior.setItemSlot(EquipmentSlot.MAINHAND, consumableStack);
+            currentSlot = findBestConsumableSlot();
+            if (currentSlot == -1) {
+                stop();
+                return;
+            }
+            consumableStack = warrior.getWarriorInventory().getItem(currentSlot);
+            totalUseDuration = consumableStack.getUseDuration() > 0 ? consumableStack.getUseDuration() : 32;
+            eatingTicks = 0;
+            ItemStack displayStack = consumableStack.copy();
+            displayStack.setCount(1);
+            warrior.setItemSlot(EquipmentSlot.MAINHAND, displayStack);
             warrior.startUsingItem(InteractionHand.MAIN_HAND);
         }
 
@@ -171,7 +178,7 @@ public class EmergencyRetreatAndEatGoal extends Goal {
             eatingTicks = 0;
             int slotToConsume = currentSlot;
             currentSlot = -1;
-            WarriorHealingHelper.consumeHealingItem(warrior, consumableStack, slotToConsume);
+            WarriorHealingHelper.consumeHealingItem(warrior, slotToConsume);
         }
     }
 

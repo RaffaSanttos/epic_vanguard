@@ -103,9 +103,11 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
     public static final int SKIN_COUNT = 3;
     public static final String[] WARRIOR_NAMES = {
-            "Aldric", "Bram", "Caelan", "Dorian", "Eudes", "Faolan", "Gareth", "Hadwin",
-            "Jorik", "Kael", "Lyam", "Maren", "Nolann", "Oryn", "Phelan", "Revan",
-            "Sorin", "Theron", "Ulric", "Veron", "Wulf", "Zarek"
+            "Aldric", "Arthur", "Baldwin", "Bram", "Caelan", "Cedric", "Dante", "Dorian",
+            "Elric", "Eudes", "Faolan", "Finnian", "Gareth", "Gawain", "Hadwin", "Hector",
+            "Ivar", "Jorik", "Kael", "Kane", "Leon", "Lyam", "Magnus", "Maren",
+            "Nolann", "Orion", "Oryn", "Percival", "Phelan", "Ragnar", "Revan", "Siegfried",
+            "Sorin", "Theron", "Tristan", "Ulric", "Vane", "Veron", "Wulf", "Yorick", "Zarek", "Zephyr"
     };
 
     // ── Synced Entity Data Accessors ──────────────────────────────────────────
@@ -421,14 +423,12 @@ public class WarriorCompanionEntity extends PathfinderMob {
             groundNav.setCanPassDoors(true);
         }
 
-        if (!pLevel.isClientSide && this.getWarriorName().isEmpty()) {
+        if (!pLevel.isClientSide && this.entityData.get(WARRIOR_NAME).isEmpty()) {
             String name = WARRIOR_NAMES[this.random.nextInt(WARRIOR_NAMES.length)];
             this.setWarriorName(name);
             this.setSkinId(this.random.nextInt(SKIN_COUNT));
             this.setPersonalityId(this.random.nextInt(PersonalityArchetype.values().length));
             this.setRecruitCost(35 + this.random.nextInt(11)); // 35 a 45 Peças de Ouro (Média ~40)
-            this.setCustomName(Component.literal("§7" + name));
-            this.setCustomNameVisible(true);
         }
     }
 
@@ -562,7 +562,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
     public void setRecruited(boolean recruited) {
         this.entityData.set(RECRUITED, recruited);
         String name = this.getWarriorName();
-        String prefix = recruited ? "§a" : "§7";
+        String prefix = recruited ? "§9" : "§7";
         super.setCustomName(Component.literal(prefix + name));
         this.setCustomNameVisible(true);
     }
@@ -594,7 +594,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
             clean = clean.substring(0, 20);
         }
         this.entityData.set(WARRIOR_NAME, clean);
-        String prefix = this.isRecruited() ? "§a" : "§7";
+        String prefix = this.isRecruited() ? "§9" : "§7";
         super.setCustomName(Component.literal(prefix + clean));
         this.setCustomNameVisible(true);
         if (!this.level().isClientSide() && this.getServer() != null) {
@@ -1020,6 +1020,13 @@ public class WarriorCompanionEntity extends PathfinderMob {
     @Override
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor pLevel, DifficultyInstance pDifficulty, MobSpawnType pReason, @Nullable SpawnGroupData pSpawnData, @Nullable CompoundTag pDataTag) {
         SpawnGroupData data = super.finalizeSpawn(pLevel, pDifficulty, pReason, pSpawnData, pDataTag);
+        if (this.entityData.get(WARRIOR_NAME).isEmpty() || "Guerreiro".equals(this.entityData.get(WARRIOR_NAME))) {
+            String name = WARRIOR_NAMES[this.random.nextInt(WARRIOR_NAMES.length)];
+            this.setWarriorName(name);
+            this.setSkinId(this.random.nextInt(SKIN_COUNT));
+            this.setPersonalityId(this.random.nextInt(PersonalityArchetype.values().length));
+            this.setRecruitCost(35 + this.random.nextInt(11));
+        }
         if (!this.isPrisoner() && this.getEquipmentTier() == 0 && this.getWarriorInventory().getItem(WarriorInventory.SLOT_WEAPON_MAIN).isEmpty()) {
             int rolledTier = rollRandomTier(pLevel.getRandom());
             this.applyEquipmentTier(rolledTier);
@@ -1630,6 +1637,12 @@ public class WarriorCompanionEntity extends PathfinderMob {
         }
         if (pCompound.contains("Recruited")) {
             setRecruited(pCompound.getBoolean("Recruited"));
+        } else {
+            setRecruited(false);
+        }
+        if (!this.isRecruited() && ("Guerreiro".equalsIgnoreCase(this.entityData.get(WARRIOR_NAME)) || this.entityData.get(WARRIOR_NAME).isEmpty())) {
+            String name = WARRIOR_NAMES[this.random.nextInt(WARRIOR_NAMES.length)];
+            this.setWarriorName(name);
         }
         if (pCompound.contains("DuelMode")) {
             setDuelMode(pCompound.getBoolean("DuelMode"));
@@ -1821,8 +1834,17 @@ public class WarriorCompanionEntity extends PathfinderMob {
         return WarriorHealingHelper.getConsumableHealingScore(this, stack, inEmergency);
     }
 
-    public void consumeHealingItem(ItemStack stack, int slotIndex) {
-        WarriorHealingHelper.consumeHealingItem(this, stack, slotIndex);
+    @Override
+    protected void completeUsingItem() {
+        this.stopUsingItem();
+        this.syncEquipmentWithInventory();
     }
 
+    public void consumeHealingItem(int slotIndex) {
+        WarriorHealingHelper.consumeHealingItem(this, slotIndex);
+    }
+
+    public void consumeHealingItem(ItemStack stack, int slotIndex) {
+        WarriorHealingHelper.consumeHealingItem(this, slotIndex);
+    }
 }
