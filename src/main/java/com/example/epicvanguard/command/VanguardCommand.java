@@ -120,10 +120,18 @@ public class VanguardCommand {
                         .then(Commands.argument("alvo", StringArgumentType.greedyString())
                                 .suggests(TARGET_SUGGESTIONS)
                                 .executes(context -> removeCompanion(context.getSource(), StringArgumentType.getString(context, "alvo")))))
-                .then(Commands.literal("dismiss")
-                        .then(Commands.argument("alvo", StringArgumentType.greedyString())
+                .then(Commands.literal("renomear")
+                        .then(Commands.argument("alvo", StringArgumentType.string())
                                 .suggests(TARGET_SUGGESTIONS)
-                                .executes(context -> removeCompanion(context.getSource(), StringArgumentType.getString(context, "alvo")))))
+                                .executes(context -> renameSingleCompanion(context.getSource(), StringArgumentType.getString(context, "alvo")))
+                                .then(Commands.argument("novo_nome", StringArgumentType.greedyString())
+                                        .executes(context -> renameCompanion(context.getSource(), StringArgumentType.getString(context, "alvo"), StringArgumentType.getString(context, "novo_nome"))))))
+                .then(Commands.literal("rename")
+                        .then(Commands.argument("alvo", StringArgumentType.string())
+                                .suggests(TARGET_SUGGESTIONS)
+                                .executes(context -> renameSingleCompanion(context.getSource(), StringArgumentType.getString(context, "alvo")))
+                                .then(Commands.argument("novo_nome", StringArgumentType.greedyString())
+                                        .executes(context -> renameCompanion(context.getSource(), StringArgumentType.getString(context, "alvo"), StringArgumentType.getString(context, "novo_nome"))))))
                 .then(Commands.literal("limpar")
                         .executes(context -> cleanInactiveCompanions(context.getSource())))
                 .then(Commands.literal("clean")
@@ -243,13 +251,19 @@ public class VanguardCommand {
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpGoCmd))
                                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("§bClique para se teletransportar até a posição de " + displayName))));
 
+                String renameCmd = "/companhias renomear #" + (i + 1) + " ";
+                MutableComponent btnRename = Component.literal(" §8[§e ✏ Renomear§8]")
+                        .withStyle(style -> style
+                                .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, renameCmd))
+                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("§eClique para renomear " + displayName))));
+
                 String removeCmd = "/companhias dispensar " + uuidStr;
                 MutableComponent btnDismiss = Component.literal(" §8[§c Dispensar§8]")
                         .withStyle(style -> style
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, removeCmd))
                                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("§cClique para dispensar " + displayName + " e remover da lista"))));
 
-                line.append(btnBring).append(btnGo).append(btnDismiss);
+                line.append(btnBring).append(btnGo).append(btnRename).append(btnDismiss);
             }
 
             player.sendSystemMessage(line);
@@ -538,6 +552,71 @@ public class VanguardCommand {
             }
         }
         return null;
+    }
+
+    private static int renameSingleCompanion(CommandSourceStack source, String newName) {
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+            source.sendFailure(Component.literal("§cApenas jogadores podem executar este comando."));
+            return 0;
+        }
+
+        CompanionSavedData data = CompanionSavedData.get(source.getServer());
+        List<CompanionSavedData.CompanionInfo> playerCompanions = data.getPlayerCompanions(player.getUUID());
+
+        if (playerCompanions.isEmpty()) {
+            player.sendSystemMessage(Component.literal("§cVocê não possui nenhum companheiro contratado."));
+            return 0;
+        }
+
+        if (playerCompanions.size() == 1) {
+            return renameCompanion(source, "#1", newName);
+        }
+
+        player.sendSystemMessage(Component.literal("§cVocê possui mais de um companheiro! Especifique qual deseja renomear:\n§e/companhias renomear <alvo> <novo_nome> §7(Ex: §f/companhias renomear #1 " + newName + "§7)"));
+        return 0;
+    }
+
+    private static int renameCompanion(CommandSourceStack source, String targetIdentifier, String newName) {
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+            source.sendFailure(Component.literal("§cApenas jogadores podem executar este comando."));
+            return 0;
+        }
+
+        if (newName == null || newName.trim().isEmpty()) {
+            player.sendSystemMessage(Component.literal("§cO novo nome não pode ser vazio."));
+            return 0;
+        }
+
+        String cleanName = newName.replaceAll("§[0-9a-fk-or]", "").trim();
+        if (cleanName.length() > 20) {
+            cleanName = cleanName.substring(0, 20);
+        }
+
+        CompanionSavedData data = CompanionSavedData.get(source.getServer());
+        CompanionSavedData.CompanionInfo info = findCompanionInfo(data, player, targetIdentifier, source.hasPermission(2));
+
+        if (info == null) {
+            player.sendSystemMessage(Component.literal("§cCompanhia '" + targetIdentifier + "' não encontrada na lista."));
+            return 0;
+        }
+
+        if (!player.getUUID().equals(info.ownerUUID) && !hasAdminAccess(source)) {
+            player.sendSystemMessage(Component.literal("§cVocê não é o dono desta companhia!"));
+            return 0;
+        }
+
+        String oldName = info.name;
+        info.name = cleanName;
+        data.setDirty();
+
+        WarriorCompanionEntity live = findOrLoadCompanion(source.getServer(), info);
+        if (live != null) {
+            live.setWarriorName(cleanName);
+        }
+
+        player.serverLevel().playSound(null, player.blockPosition(), SoundEvents.ANVIL_USE, SoundSource.PLAYERS, 0.8F, 1.2F);
+        player.sendSystemMessage(Component.literal("§6✦ [Vanguarda] §aO companheiro §e" + oldName + " §afoi renomeado para §e§l" + cleanName + "§a com sucesso!"));
+        return 1;
     }
 
     private static String formatDimName(String dim) {

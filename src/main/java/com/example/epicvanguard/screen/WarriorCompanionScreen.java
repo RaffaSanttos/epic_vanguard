@@ -3,6 +3,7 @@ package com.example.epicvanguard.screen;
 import com.example.epicvanguard.EpicVanguardMod;
 import com.example.epicvanguard.entity.WarriorCompanionEntity;
 import com.example.epicvanguard.networking.Messages;
+import com.example.epicvanguard.networking.packet.PacketRenameWarrior;
 import com.example.epicvanguard.networking.packet.PacketWarriorCancelAction;
 import com.example.epicvanguard.networking.packet.PacketWarriorCombatMode;
 import com.example.epicvanguard.networking.packet.PacketWarriorTactics;
@@ -10,6 +11,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.GameRenderer;
@@ -39,6 +41,12 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
     private Button passivesButton;
     private Button tabMochilaButton;
     private Button tabHabilidadesButton;
+    private Button pencilButton;
+
+    private EditBox renameEditBox;
+    private Button renameConfirmButton;
+    private Button renameCancelButton;
+    private boolean isRenaming = false;
 
     public WarriorCompanionScreen(WarriorCompanionMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
@@ -109,7 +117,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
                 .tooltip(Tooltip.create(Component.literal("Caçar Comida: ON / OFF (Abater animais adultos para alimento)")))
                 .build();
 
-        // Abas superiores de navegação
+        // Abas superiores de navegação (somente 2 abas limpas)
         tabMochilaButton = Button.builder(
                 Component.literal("§6🎒 Mochila"),
                 btn -> {})
@@ -127,12 +135,58 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
                 .tooltip(Tooltip.create(Component.literal("Abrir Árvore de Talentos da Vanguarda")))
                 .build();
 
+        // Botão de lápis ao lado do nome do guerreiro
+        WarriorCompanionEntity warrior = getCompanion();
+        String warriorName = warrior != null ? warrior.getWarriorName() : "Guerreiro";
+        String mochilaText = "Mochila: §2" + warriorName;
+        int nameW = this.font.width(mochilaText);
+        if (nameW > 82) nameW = 82;
+        int pencilX = leftPos + 60 + nameW + 3;
+        if (pencilX > leftPos + 146) pencilX = leftPos + 146;
+
+        pencilButton = Button.builder(
+                Component.literal("§e✏"),
+                btn -> openRenameModal())
+                .bounds(pencilX, topPos + 5, 14, 14)
+                .tooltip(Tooltip.create(Component.literal("Renomear este guerreiro da Vanguarda")))
+                .build();
+
+        // Modal de Renomear Companheiro
+        int dialogW = 160;
+        int dialogH = 68;
+        int dialogX = leftPos + (imageWidth - dialogW) / 2;
+        int dialogY = topPos + 40;
+
+        String initialName = warrior != null ? warrior.getWarriorName() : "";
+
+        this.renameEditBox = new EditBox(this.font, dialogX + 15, dialogY + 20, dialogW - 30, 16, Component.literal("Nome da Vanguarda"));
+        this.renameEditBox.setMaxLength(20);
+        this.renameEditBox.setValue(initialName);
+        this.renameEditBox.setVisible(false);
+
+        this.renameConfirmButton = Button.builder(Component.literal("§a✔ Salvar"), btn -> confirmRename())
+                .bounds(dialogX + 15, dialogY + 42, 60, 18)
+                .tooltip(Tooltip.create(Component.literal("Salvar novo nome")))
+                .build();
+        this.renameConfirmButton.visible = false;
+
+        this.renameCancelButton = Button.builder(Component.literal("§c✖ Cancelar"), btn -> closeRenameModal())
+                .bounds(dialogX + dialogW - 75, dialogY + 42, 60, 18)
+                .tooltip(Tooltip.create(Component.literal("Cancelar alteração")))
+                .build();
+        this.renameCancelButton.visible = false;
+
         this.addRenderableWidget(tabMochilaButton);
         this.addRenderableWidget(tabHabilidadesButton);
+        this.addRenderableWidget(pencilButton);
         this.addRenderableWidget(modeButton);
         this.addRenderableWidget(cancelButton);
         this.addRenderableWidget(hostilesButton);
         this.addRenderableWidget(passivesButton);
+
+        this.addRenderableWidget(this.renameEditBox);
+        this.addRenderableWidget(this.renameConfirmButton);
+        this.addRenderableWidget(this.renameCancelButton);
     }
 
     @Override
@@ -199,14 +253,21 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
 
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        WarriorCompanionEntity warrior = getCompanion();
+        String warriorName = warrior != null ? warrior.getWarriorName() : "Guerreiro";
+
         // Títulos das seções
         guiGraphics.drawString(this.font, "Equip.", 12, 8, 0x404040, false);
-        guiGraphics.drawString(this.font, "Mochila", 60, 8, 0x404040, false);
+
+        String mochilaText = "Mochila: §2" + warriorName;
+        if (this.font.width(mochilaText) > 82) {
+            mochilaText = this.font.plainSubstrByWidth(mochilaText, 72) + "...";
+        }
+        guiGraphics.drawString(this.font, mochilaText, 60, 8, 0x404040, false);
         guiGraphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 0x404040, false);
 
         // Painel Direito: Vida Total da Companhia
         guiGraphics.drawString(this.font, "§4❤ §8Vida", 168, 7, 0x404040, false);
-        WarriorCompanionEntity warrior = getCompanion();
         if (warrior != null) {
             int curHp = (int) Math.ceil(warrior.getHealth());
             int maxHp = (int) warrior.getMaxHealth();
@@ -255,30 +316,197 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
         super.render(guiGraphics, mouseX, mouseY, delta);
         renderTooltip(guiGraphics, mouseX, mouseY);
 
-        // Tooltip rica ao passar o mouse sobre o nível e a barra de XP
-        WarriorCompanionEntity warrior = getCompanion();
-        if (warrior != null) {
-            int xpAreaX = leftPos + 60;
-            int xpAreaY = topPos + 74;
-            if (mouseX >= xpAreaX && mouseX <= xpAreaX + 90 && mouseY >= xpAreaY && mouseY <= topPos + 102) {
-                int lvl = warrior.getWarriorLevel();
-                int currentXp = warrior.getWarriorExperience();
-                int nextXp = WarriorCompanionEntity.getXpForNextLevel(lvl);
-                float xpPct = (lvl >= 20) ? 1.0F : (nextXp > 0 ? Math.min(1.0F, (float) currentXp / nextXp) : 0.0F);
+        if (isRenaming) {
+            int dialogW = 160;
+            int dialogH = 68;
+            int dialogX = leftPos + (imageWidth - dialogW) / 2;
+            int dialogY = topPos + 40;
 
-                List<Component> tooltip = new ArrayList<>();
-                tooltip.add(Component.literal("§6§l✦ Experiência de Combate ✦"));
-                tooltip.add(Component.literal("§7Nível Atual: §eNv. " + lvl + " " + warrior.getFormattedSpecializationTitle()));
-                if (lvl >= 20) {
-                    tooltip.add(Component.literal("§6★ Nível Máximo Atingido! ★"));
-                    tooltip.add(Component.literal("§7Este guerreiro atingiu o ápice de seu poder."));
-                } else {
-                    tooltip.add(Component.literal("§7Progresso: §a" + currentXp + " §7/ §f" + nextXp + " XP §7(" + (int) (xpPct * 100) + "%)"));
-                    tooltip.add(Component.literal("§7XP Restante: §e" + (nextXp - currentXp) + " XP"));
-                    tooltip.add(Component.literal("§8Derrote monstros em batalha para evoluir!"));
+            // Desativa teste de profundidade para que NENHUM slot ou botão transpasse o modal
+            RenderSystem.disableDepthTest();
+
+            // Fundo escurecido semi-transparente cobrindo toda a tela
+            guiGraphics.fill(0, 0, this.width, this.height, 0x88000000);
+
+            // Janela modal sólida (borda em relevo e interior escuro opaco)
+            guiGraphics.fill(dialogX - 2, dialogY - 2, dialogX + dialogW + 2, dialogY + dialogH + 2, 0xFF101010);
+            guiGraphics.fill(dialogX - 1, dialogY - 1, dialogX + dialogW + 1, dialogY + dialogH + 1, 0xFF555555);
+            guiGraphics.fill(dialogX, dialogY, dialogX + dialogW, dialogY + dialogH, 0xFF242424);
+
+            // Título do modal
+            String modalTitle = "§6§lRenomear Companheiro";
+            int titleW = this.font.width(modalTitle);
+            guiGraphics.drawString(this.font, modalTitle, dialogX + (dialogW - titleW) / 2, dialogY + 6, 0xFFFFFF, false);
+
+            // Renderizar componentes do modal
+            this.renameEditBox.render(guiGraphics, mouseX, mouseY, delta);
+            this.renameConfirmButton.render(guiGraphics, mouseX, mouseY, delta);
+            this.renameCancelButton.render(guiGraphics, mouseX, mouseY, delta);
+
+            RenderSystem.enableDepthTest();
+        } else {
+            // Tooltip rica ao passar o mouse sobre o nível e a barra de XP
+            WarriorCompanionEntity warrior = getCompanion();
+            if (warrior != null) {
+                int xpAreaX = leftPos + 60;
+                int xpAreaY = topPos + 74;
+                if (mouseX >= xpAreaX && mouseX <= xpAreaX + 90 && mouseY >= xpAreaY && mouseY <= topPos + 102) {
+                    int lvl = warrior.getWarriorLevel();
+                    int currentXp = warrior.getWarriorExperience();
+                    int nextXp = WarriorCompanionEntity.getXpForNextLevel(lvl);
+                    float xpPct = (lvl >= 20) ? 1.0F : (nextXp > 0 ? Math.min(1.0F, (float) currentXp / nextXp) : 0.0F);
+
+                    List<Component> tooltip = new ArrayList<>();
+                    tooltip.add(Component.literal("§6§l✦ Experiência de Combate ✦"));
+                    tooltip.add(Component.literal("§7Nível Atual: §eNv. " + lvl + " " + warrior.getFormattedSpecializationTitle()));
+                    if (lvl >= 20) {
+                        tooltip.add(Component.literal("§6★ Nível Máximo Atingido! ★"));
+                        tooltip.add(Component.literal("§7Este guerreiro atingiu o ápice de seu poder."));
+                    } else {
+                        tooltip.add(Component.literal("§7Progresso: §a" + currentXp + " §7/ §f" + nextXp + " XP §7(" + (int) (xpPct * 100) + "%)"));
+                        tooltip.add(Component.literal("§7XP Restante: §e" + (nextXp - currentXp) + " XP"));
+                        tooltip.add(Component.literal("§8Derrote monstros em batalha para evoluir!"));
+                    }
+                    guiGraphics.renderComponentTooltip(this.font, tooltip, mouseX, mouseY);
                 }
-                guiGraphics.renderComponentTooltip(this.font, tooltip, mouseX, mouseY);
             }
         }
+    }
+
+    private void openRenameModal() {
+        this.isRenaming = true;
+        WarriorCompanionEntity warrior = getCompanion();
+        String curName = warrior != null ? warrior.getWarriorName() : "";
+        this.renameEditBox.setValue(curName);
+        this.renameEditBox.moveCursorToEnd();
+        this.renameEditBox.setVisible(true);
+        this.renameConfirmButton.visible = true;
+        this.renameCancelButton.visible = true;
+
+        // Oculta botões de fundo para que o mouse não atravesse e não clique neles
+        this.modeButton.visible = false;
+        this.cancelButton.visible = false;
+        this.hostilesButton.visible = false;
+        this.passivesButton.visible = false;
+        if (this.pencilButton != null) this.pencilButton.visible = false;
+        if (this.tabMochilaButton != null) this.tabMochilaButton.visible = false;
+        if (this.tabHabilidadesButton != null) this.tabHabilidadesButton.visible = false;
+
+        this.setFocused(this.renameEditBox);
+        this.renameEditBox.setFocused(true);
+        this.renameEditBox.setCanLoseFocus(false);
+    }
+
+    private void closeRenameModal() {
+        this.isRenaming = false;
+        this.renameEditBox.setVisible(false);
+        this.renameConfirmButton.visible = false;
+        this.renameCancelButton.visible = false;
+        this.renameEditBox.setFocused(false);
+        this.renameEditBox.setCanLoseFocus(true);
+        this.setFocused(null);
+
+        // Restaura visibilidade de todos os botões do fundo
+        this.modeButton.visible = true;
+        this.cancelButton.visible = true;
+        this.hostilesButton.visible = true;
+        this.passivesButton.visible = true;
+        if (this.pencilButton != null) {
+            this.pencilButton.visible = true;
+            updatePencilPosition();
+        }
+        if (this.tabMochilaButton != null) this.tabMochilaButton.visible = true;
+        if (this.tabHabilidadesButton != null) this.tabHabilidadesButton.visible = true;
+    }
+
+    private void confirmRename() {
+        String newName = this.renameEditBox.getValue().trim();
+        if (!newName.isEmpty()) {
+            if (newName.length() > 20) {
+                newName = newName.substring(0, 20);
+            }
+            Messages.sendToServer(new PacketRenameWarrior(menu.getEntityId(), newName));
+            WarriorCompanionEntity warrior = getCompanion();
+            if (warrior != null) {
+                warrior.setWarriorName(newName);
+            }
+        }
+        closeRenameModal();
+    }
+
+    private void updatePencilPosition() {
+        if (this.pencilButton == null) return;
+        WarriorCompanionEntity warrior = getCompanion();
+        String warriorName = warrior != null ? warrior.getWarriorName() : "Guerreiro";
+        String mochilaText = "Mochila: §2" + warriorName;
+        int nameW = this.font.width(mochilaText);
+        if (nameW > 82) nameW = 82;
+        int pencilX = leftPos + 60 + nameW + 3;
+        if (pencilX > leftPos + 146) pencilX = leftPos + 146;
+        this.pencilButton.setX(pencilX);
+        this.pencilButton.setY(topPos + 5);
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (isRenaming) {
+            if (this.renameConfirmButton.mouseClicked(mouseX, mouseY, button)) return true;
+            if (this.renameCancelButton.mouseClicked(mouseX, mouseY, button)) return true;
+            if (this.renameEditBox.mouseClicked(mouseX, mouseY, button)) {
+                this.setFocused(this.renameEditBox);
+                this.renameEditBox.setFocused(true);
+                return true;
+            }
+            return true; // Bloqueia 100% de qualquer clique fora do modal
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (isRenaming) {
+            if (this.renameConfirmButton.mouseReleased(mouseX, mouseY, button)) return true;
+            if (this.renameCancelButton.mouseReleased(mouseX, mouseY, button)) return true;
+            return true;
+        }
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        if (isRenaming) {
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (isRenaming) {
+            if (keyCode == 257 || keyCode == 335) { // Enter / Numpad Enter
+                confirmRename();
+                return true;
+            }
+            if (keyCode == 256) { // Escape
+                closeRenameModal();
+                return true;
+            }
+            if (this.renameEditBox.keyPressed(keyCode, scanCode, modifiers)) {
+                return true;
+            }
+            return true; // Previne que tecla de inventário ('E') feche a tela
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
+    public boolean charTyped(char codePoint, int modifiers) {
+        if (isRenaming) {
+            if (this.renameEditBox.charTyped(codePoint, modifiers)) {
+                return true;
+            }
+            return true;
+        }
+        return super.charTyped(codePoint, modifiers);
     }
 }

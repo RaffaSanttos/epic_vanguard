@@ -586,10 +586,20 @@ public class WarriorCompanionEntity extends PathfinderMob {
     }
 
     public void setWarriorName(String name) {
-        this.entityData.set(WARRIOR_NAME, name);
+        if (name == null || name.trim().isEmpty()) {
+            name = "Guerreiro";
+        }
+        String clean = name.replaceAll("§[0-9a-fk-or]", "").trim();
+        if (clean.length() > 20) {
+            clean = clean.substring(0, 20);
+        }
+        this.entityData.set(WARRIOR_NAME, clean);
         String prefix = this.isRecruited() ? "§a" : "§7";
-        super.setCustomName(Component.literal(prefix + name));
+        super.setCustomName(Component.literal(prefix + clean));
         this.setCustomNameVisible(true);
+        if (!this.level().isClientSide() && this.getServer() != null) {
+            CompanionSavedData.get(this.getServer()).updateName(this.getUUID(), clean);
+        }
     }
 
     @Override
@@ -598,7 +608,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
         if (name != null) {
             String clean = name.getString().replaceAll("§[0-9a-fk-or]", "").trim();
             if (!clean.isEmpty() && !clean.equals(this.entityData.get(WARRIOR_NAME))) {
-                this.entityData.set(WARRIOR_NAME, clean);
+                setWarriorName(clean);
             }
         }
     }
@@ -1527,6 +1537,23 @@ public class WarriorCompanionEntity extends PathfinderMob {
         } else {
             // Check if player is the owner
             if (this.isOwner(pPlayer)) {
+                ItemStack heldItem = pPlayer.getItemInHand(pHand);
+                if (heldItem.getItem() instanceof net.minecraft.world.item.NameTagItem && heldItem.hasCustomHoverName()) {
+                    String raw = heldItem.getHoverName().getString();
+                    String clean = raw.replaceAll("§[0-9a-fk-or]", "").trim();
+                    if (!clean.isEmpty()) {
+                        this.setWarriorName(clean);
+                        if (!pPlayer.isCreative()) {
+                            heldItem.shrink(1);
+                        }
+                        if (this.level() instanceof ServerLevel serverLevel) {
+                            serverLevel.playSound(null, this.blockPosition(), SoundEvents.ANVIL_USE, SoundSource.PLAYERS, 0.8F, 1.2F);
+                        }
+                        pPlayer.sendSystemMessage(Component.literal("§6✦ [Vanguarda] §aVocê renomeou seu companheiro para §e§l" + clean + "§a!"));
+                        return InteractionResult.SUCCESS;
+                    }
+                }
+
                 // Open Warrior Companion Menu directly on click
                 this.setInventoryOpenPlayer(serverPlayer);
                 NetworkHooks.openScreen(serverPlayer, new SimpleMenuProvider(

@@ -164,6 +164,14 @@ public class CompanionSavedData extends SavedData {
         registerOrUpdate(companionUUID, ownerUUID, name, dimension, pos, mode, health, maxHealth, 1, 0, null);
     }
 
+    public void updateName(UUID companionUUID, String name) {
+        CompanionInfo info = companions.get(companionUUID);
+        if (info != null && name != null && !name.isEmpty()) {
+            info.name = name;
+            setDirty();
+        }
+    }
+
     public void updateLevelAndSpecialization(UUID companionUUID, int level, int specialization) {
         CompanionInfo info = companions.get(companionUUID);
         if (info != null) {
