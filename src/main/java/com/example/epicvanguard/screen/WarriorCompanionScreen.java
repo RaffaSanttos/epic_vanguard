@@ -138,11 +138,11 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
         // Botão de lápis ao lado do nome do guerreiro
         WarriorCompanionEntity warrior = getCompanion();
         String warriorName = warrior != null ? warrior.getWarriorName() : "Guerreiro";
-        String mochilaText = "Mochila: §9" + warriorName;
-        int nameW = this.font.width(mochilaText);
-        if (nameW > 82) nameW = 82;
-        int pencilX = leftPos + 60 + nameW + 3;
-        if (pencilX > leftPos + 146) pencilX = leftPos + 146;
+        String nameText = "§f" + warriorName;
+        int nameW = this.font.width(nameText);
+        if (nameW > 78) nameW = 78;
+        int pencilX = leftPos + 60 + nameW + 4;
+        if (pencilX > leftPos + 142) pencilX = leftPos + 142;
 
         pencilButton = Button.builder(
                 Component.literal("§e✏"),
@@ -253,18 +253,23 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
 
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        if (isRenaming) {
+            return;
+        }
+
         WarriorCompanionEntity warrior = getCompanion();
         String warriorName = warrior != null ? warrior.getWarriorName() : "Guerreiro";
 
-        // Títulos das seções
+        // Título da coluna de equipamentos
         guiGraphics.drawString(this.font, "Equip.", 12, 8, 0x404040, false);
 
-        String mochilaText = "Mochila: §9" + warriorName;
-        if (this.font.width(mochilaText) > 82) {
-            mochilaText = this.font.plainSubstrByWidth(mochilaText, 72) + "...";
+        // Nome da Companhia (sem o prefixo 'Mochila:' para dar espaço total ao nome)
+        String displayName = "§f" + warriorName;
+        if (this.font.width(displayName) > 78) {
+            displayName = this.font.plainSubstrByWidth(displayName, 70) + "...";
         }
-        guiGraphics.drawString(this.font, mochilaText, 60, 8, 0x404040, false);
-        guiGraphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 0x404040, false);
+        guiGraphics.drawString(this.font, displayName, 60, 8, 0xFFFFFF, true);
+        // Removido o rótulo 'Inventário' para eliminar poluição visual e não encostar na barra de XP
 
         // Painel Direito: Vida Total da Companhia
         guiGraphics.drawString(this.font, "§4❤ §8Vida", 168, 7, 0x404040, false);
@@ -275,7 +280,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
             int textW = this.font.width(hpStr);
             guiGraphics.drawString(this.font, hpStr, 186 - (textW / 2), 18, 0x202020, false);
 
-            // Indicador de Nível e Classe acima da barra de XP (centralizado sob a Mochila: x=105)
+            // Indicador de Nível e Classe acima da barra de XP (centralizado: x=105)
             int lvl = warrior.getWarriorLevel();
             int currentXp = warrior.getWarriorExperience();
             int nextXp = WarriorCompanionEntity.getXpForNextLevel(lvl);
@@ -287,7 +292,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
             int lvlX = 105 - (lvlW / 2);
             guiGraphics.drawString(this.font, levelText, lvlX, 75, 0x404040, false);
 
-            // Texto numérico de XP abaixo da barra (alinhado à direita para não conflitar com 'Inventory')
+            // Texto numérico de XP abaixo da barra (alinhado à direita)
             String xpText;
             if (lvl >= 20) {
                 xpText = "§6★ Nível Máximo ★";
@@ -313,20 +318,21 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
         renderBackground(guiGraphics);
-        super.render(guiGraphics, mouseX, mouseY, delta);
-        renderTooltip(guiGraphics, mouseX, mouseY);
 
         if (isRenaming) {
+            // Desenha apenas o fundo da HUD sem renderizar nenhum slot ou item da mochila
+            renderBg(guiGraphics, delta, mouseX, mouseY);
+
             int dialogW = 160;
             int dialogH = 68;
             int dialogX = leftPos + (imageWidth - dialogW) / 2;
             int dialogY = topPos + 40;
 
-            // Desativa teste de profundidade para que NENHUM slot ou botão transpasse o modal
-            RenderSystem.disableDepthTest();
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate(0, 0, 400.0F);
 
-            // Fundo escurecido semi-transparente cobrindo toda a tela
-            guiGraphics.fill(0, 0, this.width, this.height, 0x88000000);
+            // Fundo escurecido cobrindo toda a tela
+            guiGraphics.fill(0, 0, this.width, this.height, 0xAA000000);
 
             // Janela modal sólida (borda em relevo e interior escuro opaco)
             guiGraphics.fill(dialogX - 2, dialogY - 2, dialogX + dialogW + 2, dialogY + dialogH + 2, 0xFF101010);
@@ -343,8 +349,11 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
             this.renameConfirmButton.render(guiGraphics, mouseX, mouseY, delta);
             this.renameCancelButton.render(guiGraphics, mouseX, mouseY, delta);
 
-            RenderSystem.enableDepthTest();
+            guiGraphics.pose().popPose();
         } else {
+            super.render(guiGraphics, mouseX, mouseY, delta);
+            renderTooltip(guiGraphics, mouseX, mouseY);
+
             // Tooltip rica ao passar o mouse sobre o nível e a barra de XP
             WarriorCompanionEntity warrior = getCompanion();
             if (warrior != null) {
@@ -438,11 +447,11 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
         if (this.pencilButton == null) return;
         WarriorCompanionEntity warrior = getCompanion();
         String warriorName = warrior != null ? warrior.getWarriorName() : "Guerreiro";
-        String mochilaText = "Mochila: §9" + warriorName;
-        int nameW = this.font.width(mochilaText);
-        if (nameW > 82) nameW = 82;
-        int pencilX = leftPos + 60 + nameW + 3;
-        if (pencilX > leftPos + 146) pencilX = leftPos + 146;
+        String nameText = "§f" + warriorName;
+        int nameW = this.font.width(nameText);
+        if (nameW > 78) nameW = 78;
+        int pencilX = leftPos + 60 + nameW + 4;
+        if (pencilX > leftPos + 142) pencilX = leftPos + 142;
         this.pencilButton.setX(pencilX);
         this.pencilButton.setY(topPos + 5);
     }

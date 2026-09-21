@@ -562,7 +562,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
     public void setRecruited(boolean recruited) {
         this.entityData.set(RECRUITED, recruited);
         String name = this.getWarriorName();
-        String prefix = recruited ? "§9" : "§7";
+        String prefix = recruited ? "§f" : "§7";
         super.setCustomName(Component.literal(prefix + name));
         this.setCustomNameVisible(true);
     }
@@ -594,7 +594,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
             clean = clean.substring(0, 20);
         }
         this.entityData.set(WARRIOR_NAME, clean);
-        String prefix = this.isRecruited() ? "§9" : "§7";
+        String prefix = this.isRecruited() ? "§f" : "§7";
         super.setCustomName(Component.literal(prefix + clean));
         this.setCustomNameVisible(true);
         if (!this.level().isClientSide() && this.getServer() != null) {
