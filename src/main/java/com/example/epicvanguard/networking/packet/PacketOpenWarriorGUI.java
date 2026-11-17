@@ -1,13 +1,13 @@
 package com.example.epicvanguard.networking.packet;
 
 import com.example.epicvanguard.entity.WarriorCompanionEntity;
+import com.example.epicvanguard.networking.PacketGuards;
 import com.example.epicvanguard.screen.HonorContractMenu;
 import com.example.epicvanguard.screen.WarriorCompanionMenu;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleMenuProvider;
-import net.minecraft.world.entity.Entity;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.NetworkHooks;
 
@@ -36,19 +36,21 @@ public class PacketOpenWarriorGUI {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
-            if (player == null) return;
-            Entity entity = player.serverLevel().getEntity(entityId);
-            if (!(entity instanceof WarriorCompanionEntity warrior)) return;
+            WarriorCompanionEntity warrior = PacketGuards.nearbyWarrior(player, entityId);
+            if (warrior == null) return;
 
-            if (recruited) {
+            // Usa o estado real do servidor, não o flag enviado pelo cliente.
+            // Inventário de guerreiro recrutado: apenas o dono pode abrir.
+            if (warrior.isRecruited()) {
+                if (!warrior.isOwner(player)) return;
                 NetworkHooks.openScreen(player, new SimpleMenuProvider(
                         (id, inv, p) -> new WarriorCompanionMenu(id, inv, entityId),
-                        Component.literal(warrior.getWarriorName() + " - Inventário")
+                        Component.translatable("epicvanguard.text.packet_open_warrior_g_u_i.1", warrior.getWarriorName())
                 ), buf -> buf.writeInt(entityId));
             } else {
                 NetworkHooks.openScreen(player, new SimpleMenuProvider(
                         (id, inv, p) -> new HonorContractMenu(id, inv, entityId),
-                        Component.literal("Contrato de Honra: " + warrior.getWarriorName())
+                        Component.translatable("epicvanguard.text.packet_open_warrior_g_u_i.2", warrior.getWarriorName())
                 ), buf -> buf.writeInt(entityId));
             }
         });

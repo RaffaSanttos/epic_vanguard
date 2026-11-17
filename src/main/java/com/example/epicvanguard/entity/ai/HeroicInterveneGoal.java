@@ -74,7 +74,7 @@ public class HeroicInterveneGoal extends Goal {
         }
 
         owner.displayClientMessage(
-                Component.literal("\u00a6c\u00a7l\udbc0\udc19 [Vanguarda] \u00a7e" + warrior.getWarriorName() + " \u00a6cinterv\u00e9m para proteger sua vida!"),
+                Component.translatable("epicvanguard.text.heroic_intervene_goal.1", warrior.getWarriorName()),
                 true
         );
 

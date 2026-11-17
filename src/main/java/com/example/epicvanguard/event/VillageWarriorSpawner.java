@@ -262,7 +262,7 @@ public class VillageWarriorSpawner {
                 level.playSound(null, spawnPos, SoundEvents.FIREWORK_ROCKET_LAUNCH, SoundSource.AMBIENT, 2.0F, 1.0F);
 
                 // 💬 Notificação para o jogador
-                player.sendSystemMessage(Component.literal("§6✦ [Vanguarda] Uma nova companhia mercenária foi avistada nos arredores e se aproxima! ✦"));
+                player.sendSystemMessage(Component.translatable("epicvanguard.text.village_warrior_spawner.1"));
             } else {
                 level.sendParticles(ParticleTypes.HAPPY_VILLAGER,
                         spawnPos.getX() + 0.5D, spawnPos.getY() + 1.0D, spawnPos.getZ() + 0.5D,

@@ -1,5 +1,7 @@
 package com.example.epicvanguard.screen;
 
+
+import net.minecraft.client.resources.language.I18n;
 import com.example.epicvanguard.EpicVanguardMod;
 import com.example.epicvanguard.entity.WarriorCompanionEntity;
 import com.example.epicvanguard.init.ModItems;
@@ -51,7 +53,7 @@ public class HonorContractScreen extends AbstractContainerScreen<HonorContractMe
         boolean canAfford = isCreative || coins >= cost;
 
         this.recruitButton = Button.builder(
-                Component.literal(canAfford ? "§2✓ Selar Pacto" : "§8Selar Pacto"),
+                Component.literal(canAfford ? I18n.get("epicvanguard.ui.honor_contract_screen.1") : I18n.get("epicvanguard.ui.honor_contract_screen.2")),
                 btn -> {
                     Messages.sendToServer(new PacketRecruitWarrior(menu.getEntityId()));
                     this.onClose();
@@ -61,7 +63,7 @@ public class HonorContractScreen extends AbstractContainerScreen<HonorContractMe
         this.recruitButton.active = canAfford;
 
         this.closeButton = Button.builder(
-                Component.literal("§cFechar"),
+                Component.translatable("epicvanguard.text.honor_contract_screen.1"),
                 btn -> this.onClose())
                 .bounds(leftPos + 112, topPos + 134, 60, 20)
                 .build();
@@ -92,31 +94,31 @@ public class HonorContractScreen extends AbstractContainerScreen<HonorContractMe
         boolean canAfford = isCreative || coins >= cost;
 
         // Titulo centralizado
-        String titleStr = "§6§l✦ Contrato de Honra ✦";
+        String titleStr = I18n.get("epicvanguard.ui.honor_contract_screen.3");
         int titleX = (this.imageWidth - this.font.width(titleStr)) / 2;
         guiGraphics.drawString(this.font, titleStr, titleX, 12, 0x8B4513, false);
 
         // Informacoes do mercenario com contraste perfeito no pergaminho
-        guiGraphics.drawString(this.font, "§8Guerreiro: §0§l" + warrior.getWarriorName(), 18, 30, 0x333333, false);
+        guiGraphics.drawString(this.font, I18n.get("epicvanguard.ui.honor_contract_screen.4") + warrior.getWarriorName(), 18, 30, 0x333333, false);
 
         int tier = warrior.getEquipmentTier();
         String tierName = switch (tier) {
-            case 0 -> "§2Recruta §8(Couro/Madeira)";
-            case 1 -> "§1Veterano §8(Cota de Malha)";
-            case 2 -> "§5Elite §8(Ferro)";
-            case -1 -> "§cPrisioneiro de Guerra";
-            default -> "§8Mercenário";
+            case 0 -> I18n.get("epicvanguard.ui.honor_contract_screen.101");
+            case 1 -> I18n.get("epicvanguard.ui.honor_contract_screen.102");
+            case 2 -> I18n.get("epicvanguard.ui.honor_contract_screen.103");
+            case -1 -> I18n.get("epicvanguard.ui.honor_contract_screen.104");
+            default -> I18n.get("epicvanguard.ui.honor_contract_screen.5");
         };
-        guiGraphics.drawString(this.font, "§8Patente: " + tierName, 18, 44, 0x333333, false);
-        guiGraphics.drawString(this.font, "§8Preço: §6§l" + cost + " §8Moedas de Ouro", 18, 58, 0x333333, false);
+        guiGraphics.drawString(this.font, I18n.get("epicvanguard.ui.honor_contract_screen.6") + tierName, 18, 44, 0x333333, false);
+        guiGraphics.drawString(this.font, I18n.get("epicvanguard.ui.honor_contract_screen.7") + cost + I18n.get("epicvanguard.ui.honor_contract_screen.8"), 18, 58, 0x333333, false);
 
-        String coinStr = isCreative ? "§2§lCriativo (Grátis)" : (canAfford ? "§2§l" : "§c§l") + coins + " §8/ §6§l" + cost + " 🪙";
-        guiGraphics.drawString(this.font, "§8Seu Ouro: " + coinStr, 18, 72, 0x333333, false);
+        String coinStr = isCreative ? I18n.get("epicvanguard.ui.honor_contract_screen.9") : (canAfford ? "§2§l" : "§c§l") + coins + " §8/ §6§l" + cost + " 🪙";
+        guiGraphics.drawString(this.font, I18n.get("epicvanguard.ui.honor_contract_screen.10") + coinStr, 18, 72, 0x333333, false);
 
         // Mensagem descritiva com quebra de linha automatica dentro das margens do pergaminho
         String desc = canAfford
-                ? "§2Você possui os recursos para selar o contrato. Este guerreiro lutará ao seu lado com honra!"
-                : "§4Ouro insuficiente. Junte mais " + (cost - coins) + " moeda(s) de ouro para contratar.";
+                ? I18n.get("epicvanguard.ui.honor_contract_screen.11")
+                : I18n.get("epicvanguard.ui.honor_contract_screen.12") + (cost - coins) + I18n.get("epicvanguard.ui.honor_contract_screen.13");
         guiGraphics.drawWordWrap(this.font, FormattedText.of(desc), 18, 90, 154, 0x444444);
     }
 

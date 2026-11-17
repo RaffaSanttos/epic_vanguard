@@ -48,7 +48,7 @@ public class VanguardCommand {
     };
 
     private static final SuggestionProvider<CommandSourceStack> FRIENDLY_FIRE_SUGGESTIONS = (ctx, builder) ->
-            SharedSuggestionProvider.suggest(List.of("livre", "desativado", "melee", "fisico", "magias", "total", "ativado"), builder);
+            SharedSuggestionProvider.suggest(List.of("livre", "desativado", "melee", "fisico", "magias", "total", "ativado", "off", "spells", "all"), builder);
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Registra comando principal em Português
@@ -157,8 +157,8 @@ public class VanguardCommand {
     private static int getFriendlyFire(CommandSourceStack source) {
         CompanionSavedData data = CompanionSavedData.get(source.getServer());
         CompanionSavedData.FriendlyFireMode currentMode = data.getGlobalFriendlyFireMode();
-        source.sendSuccess(() -> Component.literal("§6⚔ Fogo Amigo Atual: " + currentMode.getFormatted()), false);
-        source.sendSuccess(() -> Component.literal("§7Modos disponíveis: §blivre §7(sem dano) | §emelee §7(apenas golpes físicos) | §ctotal §7(todos acertam)"), false);
+        source.sendSuccess(() -> Component.translatable("epicvanguard.text.vanguard_command.1", currentMode.getFormatted()), false);
+        source.sendSuccess(() -> Component.translatable("epicvanguard.text.vanguard_command.2"), false);
         return 1;
     }
 
@@ -166,13 +166,13 @@ public class VanguardCommand {
         CompanionSavedData data = CompanionSavedData.get(source.getServer());
         CompanionSavedData.FriendlyFireMode mode = CompanionSavedData.FriendlyFireMode.fromString(modoStr);
         data.setGlobalFriendlyFireMode(mode);
-        source.sendSuccess(() -> Component.literal("§a⚔ Fogo Amigo alterado globalmente para: " + mode.getFormatted()), true);
+        source.sendSuccess(() -> Component.translatable("epicvanguard.text.vanguard_command.3", mode.getFormatted()), true);
         return 1;
     }
 
     private static int listCompanions(CommandSourceStack source) {
         if (!(source.getEntity() instanceof ServerPlayer player)) {
-            source.sendFailure(Component.literal("§cApenas jogadores podem executar este comando."));
+            source.sendFailure(Component.translatable("epicvanguard.text.vanguard_command.4"));
             return 0;
         }
 
@@ -180,11 +180,11 @@ public class VanguardCommand {
         List<CompanionSavedData.CompanionInfo> companions = data.getPlayerCompanions(player.getUUID());
 
         if (companions.isEmpty()) {
-            player.sendSystemMessage(Component.literal("§e✦ Você ainda não possui nenhuma companhia contratada no mundo."));
+            player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.5"));
             return 1;
         }
 
-        player.sendSystemMessage(Component.literal("§6============== ⚔ SUAS COMPANHIAS (" + companions.size() + ") ⚔ =============="));
+        player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.6", companions.size()));
 
         for (int i = 0; i < companions.size(); i++) {
             CompanionSavedData.CompanionInfo info = companions.get(i);
@@ -210,20 +210,18 @@ public class VanguardCommand {
             float currentHp = liveEntity != null ? liveEntity.getHealth() : info.health;
             float maxHp = liveEntity != null ? liveEntity.getMaxHealth() : info.maxHealth;
             int companionLvl = liveEntity != null ? liveEntity.getWarriorLevel() : Math.max(1, info.level);
-            String specTitle = liveEntity != null ? liveEntity.getFormattedSpecializationTitle() : info.getFormattedSpecializationTitle();
+            Component specTitle = liveEntity != null ? liveEntity.getFormattedSpecializationTitle() : info.getFormattedSpecializationTitle();
 
-            String modeName;
-            switch (currentMode) {
-                case 0 -> modeName = "§a Seguir";
-                case 1 -> modeName = "§e Guarda";
-                case 2 -> modeName = "§7 Parado";
-                default -> modeName = "§a Seguir";
-            }
+            Component modeName = switch (currentMode) {
+                case 1 -> Component.translatable("epicvanguard.mode.guard");
+                case 2 -> Component.translatable("epicvanguard.mode.stay");
+                default -> Component.translatable("epicvanguard.mode.follow");
+            };
 
-            String distText = "";
+            Component distText = Component.empty();
             if (currentPos != null && player.level().dimension().location().toString().equals(currentDim)) {
                 double dist = Math.sqrt(player.blockPosition().distSqr(currentPos));
-                distText = " §7(§f" + (int) dist + " blocos de distância§7)";
+                distText = Component.translatable("epicvanguard.text.vanguard_command.distance", (int) dist);
             }
 
             String hpText = " §c " + (int) currentHp + "/" + (int) maxHp;
@@ -232,36 +230,36 @@ public class VanguardCommand {
             int posY = currentPos != null ? currentPos.getY() : 0;
             int posZ = currentPos != null ? currentPos.getZ() : 0;
 
-            MutableComponent line = Component.literal("§e[#" + (i + 1) + "] " + specTitle + " §b§l" + displayName + " §6(Nv. " + companionLvl + ")" + hpText + "\n")
-                    .append(Component.literal("  §7 Coordenadas: §fX: " + posX + ", Y: " + posY + ", Z: " + posZ + " §7(§d" + dimName + "§7)" + distText + "\n"))
-                    .append(Component.literal("  §7 Modo:" + modeName + "\n  "));
+            MutableComponent line = Component.translatable("epicvanguard.text.vanguard_command.7", (i + 1), specTitle, displayName, companionLvl, hpText)
+                    .append(Component.translatable("epicvanguard.text.vanguard_command.8", posX, posY, posZ, dimName, distText))
+                    .append(Component.translatable("epicvanguard.text.vanguard_command.9", modeName));
 
             if (info.companionUUID != null) {
                 String uuidStr = info.companionUUID.toString();
 
                 String tpBringCmd = "/companhias tp " + uuidStr;
-                MutableComponent btnBring = Component.literal("§8[§a Trazer§8]")
+                MutableComponent btnBring = Component.translatable("epicvanguard.text.vanguard_command.10")
                         .withStyle(style -> style
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpBringCmd))
-                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("§aClique para teletransportar " + displayName + " até você"))));
+                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("epicvanguard.text.vanguard_command.11", displayName))));
 
                 String tpGoCmd = "/companhias ir " + uuidStr;
-                MutableComponent btnGo = Component.literal(" §8[§b Ir§8]")
+                MutableComponent btnGo = Component.translatable("epicvanguard.text.vanguard_command.12")
                         .withStyle(style -> style
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpGoCmd))
-                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("§bClique para se teletransportar até a posição de " + displayName))));
+                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("epicvanguard.text.vanguard_command.13", displayName))));
 
                 String renameCmd = "/companhias renomear #" + (i + 1) + " ";
-                MutableComponent btnRename = Component.literal(" §8[§e ✏ Renomear§8]")
+                MutableComponent btnRename = Component.translatable("epicvanguard.text.vanguard_command.14")
                         .withStyle(style -> style
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, renameCmd))
-                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("§eClique para renomear " + displayName))));
+                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("epicvanguard.text.vanguard_command.15", displayName))));
 
                 String removeCmd = "/companhias dispensar " + uuidStr;
-                MutableComponent btnDismiss = Component.literal(" §8[§c Dispensar§8]")
+                MutableComponent btnDismiss = Component.translatable("epicvanguard.text.vanguard_command.16")
                         .withStyle(style -> style
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, removeCmd))
-                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("§cClique para dispensar " + displayName + " e remover da lista"))));
+                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("epicvanguard.text.vanguard_command.17", displayName))));
 
                 line.append(btnBring).append(btnGo).append(btnRename).append(btnDismiss);
             }
@@ -270,20 +268,20 @@ public class VanguardCommand {
         }
 
         MutableComponent footer = Component.literal("§6==================================================");
-        footer.append(Component.literal("\n§8[§a Chamar Todas as Companhias§8]")
+        footer.append(Component.translatable("epicvanguard.text.vanguard_command.18")
                 .withStyle(style -> style
                         .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/companhias chamar"))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("§aClique para teletransportar TODAS as suas companhias até você")))));
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("epicvanguard.text.vanguard_command.19")))));
 
-        footer.append(Component.literal(" §8[§e Limpar Inexistentes§8]")
+        footer.append(Component.translatable("epicvanguard.text.vanguard_command.20")
                 .withStyle(style -> style
                         .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/companhias limpar"))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("§eLimpa registros de companhias que não existem mais no mundo")))));
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("epicvanguard.text.vanguard_command.21")))));
 
-        footer.append(Component.literal(" §8[§b Fogo Amigo§8]")
+        footer.append(Component.translatable("epicvanguard.text.vanguard_command.22")
                 .withStyle(style -> style
                         .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/fogoamigo"))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("§bClique para ver e configurar o fogo amigo")))));
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("epicvanguard.text.vanguard_command.23")))));
 
         player.sendSystemMessage(footer);
 
@@ -329,7 +327,7 @@ public class VanguardCommand {
 
     private static int teleportCompanionToPlayer(CommandSourceStack source, String targetIdentifier) {
         if (!(source.getEntity() instanceof ServerPlayer player)) {
-            source.sendFailure(Component.literal("§cApenas jogadores podem executar este comando."));
+            source.sendFailure(Component.translatable("epicvanguard.text.vanguard_command.4"));
             return 0;
         }
 
@@ -337,12 +335,12 @@ public class VanguardCommand {
         CompanionSavedData.CompanionInfo info = findCompanionInfo(data, player, targetIdentifier, source.hasPermission(2));
 
         if (info == null) {
-            player.sendSystemMessage(Component.literal("§cCompanhia '" + targetIdentifier + "' não encontrada na lista."));
+            player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.24", targetIdentifier));
             return 0;
         }
 
         if (!player.getUUID().equals(info.ownerUUID) && !hasAdminAccess(source)) {
-            player.sendSystemMessage(Component.literal("§cVocê não é o dono desta companhia!"));
+            player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.25"));
             return 0;
         }
 
@@ -355,7 +353,7 @@ public class VanguardCommand {
                 entity.teleportTo((ServerLevel) player.level(), player.getX(), player.getY(), player.getZ(), null, entity.getYRot(), entity.getXRot());
             }
             entity.safeTeleportTo(player);
-            player.sendSystemMessage(Component.literal("§a✦ " + entity.getWarriorName() + " foi teletransportado(a) até você com sucesso!"));
+            player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.26", entity.getWarriorName()));
             return 1;
         } else {
             boolean isNear = player.level().dimension().location().toString().equals(info.dimension)
@@ -363,14 +361,14 @@ public class VanguardCommand {
 
             if (isNear) {
                 String removeCmd = "/companhias dispensar " + info.companionUUID;
-                MutableComponent btnRemove = Component.literal(" §c[Remover Registro]")
+                MutableComponent btnRemove = Component.translatable("epicvanguard.text.vanguard_command.27")
                         .withStyle(style -> style
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, removeCmd))
-                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("§cClique para remover este guerreiro que não existe mais"))));
+                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("epicvanguard.text.vanguard_command.28"))));
 
-                player.sendSystemMessage(Component.literal("§c✦ " + info.name + " não foi encontrado(a) nesta área (pode ter sido derrotado(a) ou removido(a)).").append(btnRemove));
+                player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.29", info.name).append(btnRemove));
             } else {
-                player.sendSystemMessage(Component.literal("§e✦ O chunk onde " + info.name + " está localizado (" + (info.pos != null ? info.pos.getX() + ", " + info.pos.getY() + ", " + info.pos.getZ() : "desconhecido") + ") está descarregado. Vá até próximo dele para localizá-lo!"));
+                player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.30", info.name, (info.pos != null ? info.pos.getX() + ", " + info.pos.getY() + ", " + info.pos.getZ() : Component.translatable("epicvanguard.text.unknown"))));
             }
             return 1;
         }
@@ -378,7 +376,7 @@ public class VanguardCommand {
 
     private static int teleportPlayerToCompanion(CommandSourceStack source, String targetIdentifier) {
         if (!(source.getEntity() instanceof ServerPlayer player)) {
-            source.sendFailure(Component.literal("§cApenas jogadores podem executar este comando."));
+            source.sendFailure(Component.translatable("epicvanguard.text.vanguard_command.4"));
             return 0;
         }
 
@@ -386,12 +384,12 @@ public class VanguardCommand {
         CompanionSavedData.CompanionInfo info = findCompanionInfo(data, player, targetIdentifier, source.hasPermission(2));
 
         if (info == null) {
-            player.sendSystemMessage(Component.literal("§cCompanhia '" + targetIdentifier + "' não encontrada na lista."));
+            player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.24", targetIdentifier));
             return 0;
         }
 
         if (!player.getUUID().equals(info.ownerUUID) && !hasAdminAccess(source)) {
-            player.sendSystemMessage(Component.literal("§cVocê não é o dono desta companhia!"));
+            player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.25"));
             return 0;
         }
 
@@ -416,7 +414,7 @@ public class VanguardCommand {
 
         player.teleportTo(targetLevel, targetX, targetY, targetZ, yRot, xRot);
         String name = entity != null ? entity.getWarriorName() : info.name;
-        player.sendSystemMessage(Component.literal("§a✦ Você foi teletransportado(a) até a posição de §b" + name + "§a!"));
+        player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.31", name));
 
         targetLevel.sendParticles(ParticleTypes.PORTAL, targetX, targetY + 1.0D, targetZ, 30, 0.5D, 0.5D, 0.5D, 0.1D);
         targetLevel.playSound(null, targetX, targetY, targetZ, SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 1.0F, 1.0F);
@@ -426,7 +424,7 @@ public class VanguardCommand {
 
     private static int removeCompanion(CommandSourceStack source, String targetIdentifier) {
         if (!(source.getEntity() instanceof ServerPlayer player)) {
-            source.sendFailure(Component.literal("§cApenas jogadores podem executar este comando."));
+            source.sendFailure(Component.translatable("epicvanguard.text.vanguard_command.4"));
             return 0;
         }
 
@@ -434,12 +432,12 @@ public class VanguardCommand {
         CompanionSavedData.CompanionInfo info = findCompanionInfo(data, player, targetIdentifier, source.hasPermission(2));
 
         if (info == null) {
-            player.sendSystemMessage(Component.literal("§cCompanhia '" + targetIdentifier + "' não encontrada na lista."));
+            player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.24", targetIdentifier));
             return 0;
         }
 
         if (!player.getUUID().equals(info.ownerUUID) && !hasAdminAccess(source)) {
-            player.sendSystemMessage(Component.literal("§cVocê não é o dono desta companhia!"));
+            player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.25"));
             return 0;
         }
 
@@ -451,13 +449,13 @@ public class VanguardCommand {
         }
 
         data.unregister(info.companionUUID);
-        player.sendSystemMessage(Component.literal("§a✦ Companhia §b" + info.name + "§a foi dispensada e removida da lista."));
+        player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.32", info.name));
         return 1;
     }
 
     private static int cleanInactiveCompanions(CommandSourceStack source) {
         if (!(source.getEntity() instanceof ServerPlayer player)) {
-            source.sendFailure(Component.literal("§cApenas jogadores podem executar este comando."));
+            source.sendFailure(Component.translatable("epicvanguard.text.vanguard_command.4"));
             return 0;
         }
 
@@ -478,16 +476,16 @@ public class VanguardCommand {
         }
 
         if (removed > 0) {
-            player.sendSystemMessage(Component.literal("§a✦ " + removed + " registro(s) de companhias inexistentes foram limpos da sua lista!"));
+            player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.33", removed));
         } else {
-            player.sendSystemMessage(Component.literal("§e✦ Nenhuma companhia inexistente encontrada perto de você para limpar."));
+            player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.34"));
         }
         return 1;
     }
 
     private static int summonAllCompanions(CommandSourceStack source) {
         if (!(source.getEntity() instanceof ServerPlayer player)) {
-            source.sendFailure(Component.literal("§cApenas jogadores podem executar este comando."));
+            source.sendFailure(Component.translatable("epicvanguard.text.vanguard_command.4"));
             return 0;
         }
 
@@ -495,7 +493,7 @@ public class VanguardCommand {
         List<CompanionSavedData.CompanionInfo> companions = data.getPlayerCompanions(player.getUUID());
 
         if (companions.isEmpty()) {
-            player.sendSystemMessage(Component.literal("§e✦ Você não possui companhias para chamar."));
+            player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.35"));
             return 1;
         }
 
@@ -514,7 +512,7 @@ public class VanguardCommand {
             }
         }
 
-        player.sendSystemMessage(Component.literal("§a✦ " + count + " de " + companions.size() + " companhia(s) foram teletransportadas até você!"));
+        player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.36", count, companions.size()));
         return 1;
     }
 
@@ -556,7 +554,7 @@ public class VanguardCommand {
 
     private static int renameSingleCompanion(CommandSourceStack source, String newName) {
         if (!(source.getEntity() instanceof ServerPlayer player)) {
-            source.sendFailure(Component.literal("§cApenas jogadores podem executar este comando."));
+            source.sendFailure(Component.translatable("epicvanguard.text.vanguard_command.4"));
             return 0;
         }
 
@@ -564,7 +562,7 @@ public class VanguardCommand {
         List<CompanionSavedData.CompanionInfo> playerCompanions = data.getPlayerCompanions(player.getUUID());
 
         if (playerCompanions.isEmpty()) {
-            player.sendSystemMessage(Component.literal("§cVocê não possui nenhum companheiro contratado."));
+            player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.37"));
             return 0;
         }
 
@@ -572,18 +570,18 @@ public class VanguardCommand {
             return renameCompanion(source, "#1", newName);
         }
 
-        player.sendSystemMessage(Component.literal("§cVocê possui mais de um companheiro! Especifique qual deseja renomear:\n§e/companhias renomear <alvo> <novo_nome> §7(Ex: §f/companhias renomear #1 " + newName + "§7)"));
+        player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.38", newName));
         return 0;
     }
 
     private static int renameCompanion(CommandSourceStack source, String targetIdentifier, String newName) {
         if (!(source.getEntity() instanceof ServerPlayer player)) {
-            source.sendFailure(Component.literal("§cApenas jogadores podem executar este comando."));
+            source.sendFailure(Component.translatable("epicvanguard.text.vanguard_command.4"));
             return 0;
         }
 
         if (newName == null || newName.trim().isEmpty()) {
-            player.sendSystemMessage(Component.literal("§cO novo nome não pode ser vazio."));
+            player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.39"));
             return 0;
         }
 
@@ -596,12 +594,12 @@ public class VanguardCommand {
         CompanionSavedData.CompanionInfo info = findCompanionInfo(data, player, targetIdentifier, source.hasPermission(2));
 
         if (info == null) {
-            player.sendSystemMessage(Component.literal("§cCompanhia '" + targetIdentifier + "' não encontrada na lista."));
+            player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.24", targetIdentifier));
             return 0;
         }
 
         if (!player.getUUID().equals(info.ownerUUID) && !hasAdminAccess(source)) {
-            player.sendSystemMessage(Component.literal("§cVocê não é o dono desta companhia!"));
+            player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.25"));
             return 0;
         }
 
@@ -615,7 +613,7 @@ public class VanguardCommand {
         }
 
         player.serverLevel().playSound(null, player.blockPosition(), SoundEvents.ANVIL_USE, SoundSource.PLAYERS, 0.8F, 1.2F);
-        player.sendSystemMessage(Component.literal("§6✦ [Vanguarda] §aO companheiro §e" + oldName + " §afoi renomeado para §e§l" + cleanName + "§a com sucesso!"));
+        player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.40", oldName, cleanName));
         return 1;
     }
 

@@ -1,5 +1,7 @@
 package com.example.epicvanguard.screen;
 
+
+import net.minecraft.client.resources.language.I18n;
 import com.example.epicvanguard.EpicVanguardMod;
 import com.example.epicvanguard.entity.BerserkerCompanionEntity;
 import com.example.epicvanguard.entity.DuelistCompanionEntity;
@@ -50,7 +52,7 @@ public class WarriorSkillTreeScreen extends Screen {
     }
 
     public WarriorSkillTreeScreen(int entityId) {
-        super(Component.literal("Árvore de Talentos da Vanguarda"));
+        super(Component.translatable("epicvanguard.text.warrior_skill_tree_screen.1"));
         this.entityId = entityId;
 
         if (Minecraft.getInstance().level != null) {
@@ -76,16 +78,16 @@ public class WarriorSkillTreeScreen extends Screen {
 
         // Abas superiores de navegação
         this.tabMochilaButton = Button.builder(
-                Component.literal("§7🎒 Mochila"),
+                Component.translatable("epicvanguard.text.warrior_skill_tree_screen.2"),
                 btn -> {
                     Messages.sendToServer(new PacketOpenWarriorGUI(entityId, true));
                 })
                 .bounds(leftPos + 8, topPos - 18, 70, 18)
-                .tooltip(Tooltip.create(Component.literal("Voltar para o Inventário e Equipamentos")))
+                .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.warrior_skill_tree_screen.3")))
                 .build();
 
         this.tabHabilidadesButton = Button.builder(
-                Component.literal("§6🌳 Talentos"),
+                Component.translatable("epicvanguard.text.warrior_skill_tree_screen.4"),
                 btn -> {})
                 .bounds(leftPos + 80, topPos - 18, 90, 18)
                 .build();
@@ -119,27 +121,27 @@ public class WarriorSkillTreeScreen extends Screen {
         // Nó 1: Nv. 1
         list.add(new SkillNode(
                 1,
-                "Fundamento Marcial",
-                "Uso de alimentos e itens da mochila.",
+                I18n.get("epicvanguard.ui.warrior_skill_tree_screen.1"),
+                I18n.get("epicvanguard.ui.warrior_skill_tree_screen.2"),
                 List.of(
-                        "§a✔ Alimentos: Consome comida da mochila para se curar (Padrão)",
-                        "§f• +1.5 de Vida Máxima base a cada nível",
-                        "§f• +0.25 de Dano Físico natural a cada nível",
-                        "§f• +0.5 de Armadura Natural a cada nível",
-                        "§7A base de disciplina de todo combatente da Vanguarda."
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.3"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.4"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.5"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.6"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.7")
                 )
         ));
 
         // Nó 2: Nv. 3
         list.add(new SkillNode(
                 3,
-                "Alquimia de Campanha",
-                "Uso tático de poções e resistência.",
+                I18n.get("epicvanguard.ui.warrior_skill_tree_screen.8"),
+                I18n.get("epicvanguard.ui.warrior_skill_tree_screen.9"),
                 List.of(
-                        "§e✦ Poções: Consome Poções de Cura e Regeneração da mochila",
-                        "§7• Consome e libera o espaço do inventário sem poluir a mochila",
-                        "§f• +1.0 de Armadura natural permanente adicional",
-                        "§7A experiência de campo forjada em dezenas de embates."
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.10"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.11"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.12"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.13")
                 )
         ));
 
@@ -147,44 +149,44 @@ public class WarriorSkillTreeScreen extends Screen {
         if (spec == 1) {
             list.add(new SkillNode(
                     5,
-                    "Fúria Berserker & Warcry",
-                    "Grito Feroz de Sangue e fúria brutal.",
+                    I18n.get("epicvanguard.ui.warrior_skill_tree_screen.14"),
+                    I18n.get("epicvanguard.ui.warrior_skill_tree_screen.15"),
                     List.of(
-                        "§c• 90% do dano nominal da arma empunhada",
-                        "§c• 20% de chance de Acerto Crítico (1.5x de dano)",
-                        "§c• Fúria com vida < 40%: +20% dano e velocidade",
-                        "§e📢 Warcry: Grito Feroz de Sangue (50s recarga)",
-                        "  §7Aterroriza inimigos com Fraqueza I por 10s",
-                        "  §7Concede Força II para si e Força I para o grupo"
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.16"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.17"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.18"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.19"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.20"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.21")
                     )
             ));
         } else if (spec == 2) {
             list.add(new SkillNode(
                     5,
-                    "Bastião de Ferro & Warcry",
-                    "Rugido do Bastião e proteção blindada.",
+                    I18n.get("epicvanguard.ui.warrior_skill_tree_screen.22"),
+                    I18n.get("epicvanguard.ui.warrior_skill_tree_screen.23"),
                     List.of(
-                        "§9• +30% de Vida Máxima permanente",
-                        "§9• +6 de Armadura Natural permanente",
-                        "§9• 40% Resistência a Repulsão (Knockback)",
-                        "§9• Muralha: 70% de chance de atrair foco dos monstros",
-                        "§e📢 Warcry: Rugido do Bastião (50s recarga)",
-                        "  §7Provocação absoluta (100% taunt) em 12 blocos",
-                        "  §7Concede Resistência II para si e Força I + Resistência I para o grupo"
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.24"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.25"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.26"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.27"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.28"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.29"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.30")
                     )
             ));
         } else {
             list.add(new SkillNode(
                     5,
-                    "Lâmina Fantasma & Warcry",
-                    "Brado da Tempestade e esquivas ágeis.",
+                    I18n.get("epicvanguard.ui.warrior_skill_tree_screen.31"),
+                    I18n.get("epicvanguard.ui.warrior_skill_tree_screen.32"),
                     List.of(
-                        "§b• +15% de Velocidade de Movimento constante",
-                        "§b• Recarga de esquiva reduzida para 1.5s (metade do tempo)",
-                        "§b• Esquiva Perfeita: 18% de chance de anular 100% do dano",
-                        "§e📢 Warcry: Brado da Tempestade (50s recarga)",
-                        "  §7Desestabiliza inimigos em 6 blocos com quebra de postura",
-                        "  §7Concede Velocidade II (+40%) e Força I para o grupo por 12s"
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.33"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.34"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.35"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.36"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.37"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.38")
                     )
             ));
         }
@@ -193,31 +195,31 @@ public class WarriorSkillTreeScreen extends Screen {
         if (spec == 1) {
             list.add(new SkillNode(
                     10,
-                    "Sede de Sangue",
-                    "Cura por abates e fúria em batalha.",
+                    I18n.get("epicvanguard.ui.warrior_skill_tree_screen.39"),
+                    I18n.get("epicvanguard.ui.warrior_skill_tree_screen.40"),
                     List.of(
-                        "§c• Abates curam o Berserker em 20% da vida máxima",
-                        "§c• Golpes críticos têm chance de desarmar adversários"
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.41"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.42")
                     )
             ));
         } else if (spec == 2) {
             list.add(new SkillNode(
                     10,
-                    "Baluarte Protetor",
-                    "Bloqueio de flechas e defesa leal.",
+                    I18n.get("epicvanguard.ui.warrior_skill_tree_screen.43"),
+                    I18n.get("epicvanguard.ui.warrior_skill_tree_screen.44"),
                     List.of(
-                        "§9• Bloqueio ativo de flechas e ataques pesados com escudo",
-                        "§9• Intervenção de emergência caso o jogador fique com < 3 corações"
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.45"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.46")
                     )
             ));
         } else {
             list.add(new SkillNode(
                     10,
-                    "Reflexos Relâmpago",
-                    "Contra-ataques e desvios perfeitos.",
+                    I18n.get("epicvanguard.ui.warrior_skill_tree_screen.47"),
+                    I18n.get("epicvanguard.ui.warrior_skill_tree_screen.48"),
                     List.of(
-                        "§b• Chance de Esquiva Perfeita aumenta para 25%",
-                        "§b• Contra-ataque de oportunidade imediato após desviar"
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.49"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.50")
                     )
             ));
         }
@@ -225,12 +227,12 @@ public class WarriorSkillTreeScreen extends Screen {
         // Nó 5: Nv. 20
         list.add(new SkillNode(
                 20,
-                "Lenda Viva da Vanguarda",
-                "Poder supremo e maestria absoluta.",
+                I18n.get("epicvanguard.ui.warrior_skill_tree_screen.51"),
+                I18n.get("epicvanguard.ui.warrior_skill_tree_screen.52"),
                 List.of(
-                        "§6• Bônus permanente de +5 de dano adicional",
-                        "§6• Cooldown do Warcry reduzido para 40 segundos",
-                        "§6• Sobrevivência heróica a golpes fatais uma vez a cada batalha"
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.53"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.54"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.55")
                 )
         ));
 
@@ -259,21 +261,21 @@ public class WarriorSkillTreeScreen extends Screen {
         WarriorCompanionEntity warrior = getCompanion();
         int companionLevel = warrior != null ? warrior.getWarriorLevel() : 1;
         String companionName = warrior != null ? warrior.getWarriorName() : "Guerreiro";
-        String companionTitle = warrior != null ? warrior.getFormattedSpecializationTitle() : "§7Guerreiro";
+        String companionTitle = warrior != null ? warrior.getFormattedSpecializationTitle().getString() : I18n.get("epicvanguard.ui.warrior_skill_tree_screen.56");
         int currentXp = warrior != null ? warrior.getWarriorExperience() : 0;
         int nextXp = WarriorCompanionEntity.getXpForNextLevel(companionLevel);
         float xpPct = (companionLevel >= 20) ? 1.0F : (nextXp > 0 ? Math.min(1.0F, (float) currentXp / nextXp) : 0.0F);
 
         // 1. Cabeçalho
         String headerTitle = switch (selectedSpec) {
-            case 1 -> "§4§lTALENTOS: ⚔ BERSERKER";
-            case 2 -> "§1§lTALENTOS: 🛡 GUARDIÃO";
-            case 3 -> "§2§lTALENTOS: 🗡 DUELISTA";
-            default -> "§4§lTALENTOS DA VANGUARDA";
+            case 1 -> I18n.get("epicvanguard.ui.warrior_skill_tree_screen.101");
+            case 2 -> I18n.get("epicvanguard.ui.warrior_skill_tree_screen.102");
+            case 3 -> I18n.get("epicvanguard.ui.warrior_skill_tree_screen.103");
+            default -> I18n.get("epicvanguard.ui.warrior_skill_tree_screen.57");
         };
         drawClampedString(guiGraphics, headerTitle, leftPos + 12, topPos + 7, 232, 0x222222);
 
-        String subHeader = "§8Companheiro: §0§l" + companionName + " §8• §2Nv. " + companionLevel + " §8(" + companionTitle + "§8)";
+        String subHeader = I18n.get("epicvanguard.ui.warrior_skill_tree_screen.58") + companionName + I18n.get("epicvanguard.ui.warrior_skill_tree_screen.59") + companionLevel + " §8(" + companionTitle + "§8)";
         drawClampedString(guiGraphics, subHeader, leftPos + 12, topPos + 18, 232, 0x333333);
 
         // 2. Painel de Atributos em Combate
@@ -309,10 +311,10 @@ public class WarriorSkillTreeScreen extends Screen {
 
             // Linha 2: Buffs e Passivas da Classe (Conciso e sem vazamentos)
             String specBuff = switch (selectedSpec) {
-                case 1 -> "§c✦ Fúria: §f90% Dano de Arma • 20% Crítico";
-                case 2 -> "§9✦ Bastião: §f+30% Vida • +6 Armad. • Taunt";
-                case 3 -> "§b✦ Agilidade: §f+15% Vel. • 18% Esquiva";
-                default -> "§7✦ Especialização Marcial da Vanguarda";
+                case 1 -> I18n.get("epicvanguard.ui.warrior_skill_tree_screen.104");
+                case 2 -> I18n.get("epicvanguard.ui.warrior_skill_tree_screen.105");
+                case 3 -> I18n.get("epicvanguard.ui.warrior_skill_tree_screen.106");
+                default -> I18n.get("epicvanguard.ui.warrior_skill_tree_screen.60");
             };
             drawClampedString(guiGraphics, specBuff, panelX + 6, panelY + 16, panelW - 12, 0xFFFFFF);
 
@@ -329,7 +331,7 @@ public class WarriorSkillTreeScreen extends Screen {
                 int xpColor = (companionLevel >= 20) ? 0xFFFFD700 : 0xFF00D836;
                 guiGraphics.fill(xpX, xpY, xpX + xpFill, xpY + xpH, xpColor);
             }
-            String xpLabel = (companionLevel >= 20) ? "§6★ Nível Máximo Atingido ★" : "§7XP: §a" + currentXp + " §7/ §f" + nextXp + " §8(" + (int)(xpPct * 100) + "%)";
+            String xpLabel = (companionLevel >= 20) ? I18n.get("epicvanguard.ui.warrior_skill_tree_screen.61") : I18n.get("epicvanguard.ui.warrior_skill_tree_screen.62") + currentXp + " §7/ §f" + nextXp + " §8(" + (int)(xpPct * 100) + "%)";
             drawClampedString(guiGraphics, xpLabel, xpX + 2, xpY + 5, xpW - 4, 0xCCCCCC);
         }
 
@@ -369,7 +371,7 @@ public class WarriorSkillTreeScreen extends Screen {
             guiGraphics.drawString(this.font, statusIcon, cardX + 5, currentY + 4, 0xFFFFFF, false);
 
             // Nível e Título (Clamped para nunca vazar)
-            String reqStr = isUnlocked ? "§2[Nv. " + node.level + "]" : "§c[Nv. " + node.level + "]";
+            String reqStr = isUnlocked ? I18n.get("epicvanguard.ui.warrior_skill_tree_screen.63") + node.level + "]" : I18n.get("epicvanguard.ui.warrior_skill_tree_screen.64") + node.level + "]";
             String titleStr = reqStr + " " + (isUnlocked ? "§f§l" : "§7§l") + node.title;
             drawClampedString(guiGraphics, titleStr, cardX + 18, currentY + 3, cardW - 22, 0xFFFFFF);
 
@@ -389,7 +391,7 @@ public class WarriorSkillTreeScreen extends Screen {
             boolean isUnlocked = (companionLevel >= hoveredNode.level);
             List<Component> tooltip = new ArrayList<>();
             tooltip.add(Component.literal("§6§l✦ " + hoveredNode.title + " ✦"));
-            tooltip.add(Component.literal(isUnlocked ? "§a✔ Habilidade Ativa & Desbloqueada" : "§c🔒 Bloqueado (Requer Nível " + hoveredNode.level + ")"));
+            tooltip.add(Component.literal(isUnlocked ? I18n.get("epicvanguard.ui.warrior_skill_tree_screen.65") : I18n.get("epicvanguard.ui.warrior_skill_tree_screen.66") + hoveredNode.level + ")"));
             tooltip.add(Component.literal(""));
             for (String detail : hoveredNode.details) {
                 tooltip.add(Component.literal(detail));

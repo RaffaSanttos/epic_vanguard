@@ -49,7 +49,7 @@ public class PacketPostVanguardContract {
             if (be instanceof VanguardPointBlockEntity vanguardEntity) {
                 if (instantComplete && player.isCreative()) {
                     vanguardEntity.completeContractInstantly();
-                    player.sendSystemMessage(Component.literal("§e⚡ [Criativo] Marcha da Vanguarda acelerada instantaneamente!"));
+                    player.sendSystemMessage(Component.translatable("epicvanguard.text.packet_post_vanguard_contract.1"));
                     return;
                 }
 
@@ -58,10 +58,10 @@ public class PacketPostVanguardContract {
                     if (started) {
                         player.serverLevel().playSound(null, pos, SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.BLOCKS, 1.0F, 1.0F);
                         player.serverLevel().playSound(null, pos, SoundEvents.VILLAGER_WORK_CARTOGRAPHER, SoundSource.BLOCKS, 1.0F, 1.0F);
-                        player.sendSystemMessage(Component.literal("§6✦ [Posto da Vanguarda] §aEdital publicado! Uma companhia da Vanguarda (Berserker, Guardião ou Duelista) marchará até o posto. Chegada estimada em 7 dias."));
+                        player.sendSystemMessage(Component.translatable("epicvanguard.text.packet_post_vanguard_contract.2"));
                     }
                 } else {
-                    player.sendSystemMessage(Component.literal("§cVocê precisa depositar 20 Moedas de Ouro no posto para convocar uma nova companhia."));
+                    player.sendSystemMessage(Component.translatable("epicvanguard.text.packet_post_vanguard_contract.3"));
                 }
             }
         });

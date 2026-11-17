@@ -62,15 +62,15 @@ public class PacketRecruitWarrior {
                     serverLevel.playSound(null, warrior.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1.0F, 1.0F);
                 }
 
-                player.sendSystemMessage(Component.literal("§6[" + warrior.getWarriorName() + "] §aPacto de honra selado! Estou às suas ordens."));
+                player.sendSystemMessage(Component.translatable("epicvanguard.text.packet_recruit_warrior.1", warrior.getWarriorName()));
 
                 // Abre a tela de gerenciamento do guerreiro
                 NetworkHooks.openScreen(player, new SimpleMenuProvider(
                         (id, inv, p) -> new WarriorCompanionMenu(id, inv, warrior.getId()),
-                        Component.literal("Companheiro - " + warrior.getWarriorName())
+                        Component.translatable("epicvanguard.text.warrior_companion_entity.11", warrior.getWarriorName())
                 ), buf -> buf.writeInt(warrior.getId()));
             } else {
-                player.sendSystemMessage(Component.literal("§cVocê precisa de " + cost + " Moedas de Ouro para contratar " + warrior.getWarriorName() + "."));
+                player.sendSystemMessage(Component.translatable("epicvanguard.text.packet_recruit_warrior.2", cost, warrior.getWarriorName()));
             }
         });
         return true;

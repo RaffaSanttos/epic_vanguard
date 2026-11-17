@@ -165,6 +165,8 @@ public class WarriorCompanionMenu extends AbstractContainerMenu {
         Entity entity = player.level().getEntity(entityId);
         if (entity instanceof WarriorCompanionEntity warrior && warrior.isAlive() && warrior.distanceTo(player) < 8.0F) {
             if (!player.level().isClientSide) {
+                // Inventário de guerreiro recrutado só fica aberto para o dono
+                if (warrior.isRecruited() && !warrior.isOwner(player)) return false;
                 warrior.setInventoryOpenPlayer(player);
             }
             return true;

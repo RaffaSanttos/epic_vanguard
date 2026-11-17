@@ -148,6 +148,15 @@ public class CompanionTeleportHandler {
             if (server == null) return;
 
             UUID uuid = warrior.getUUID();
+            CompanionSavedData data = CompanionSavedData.get(server);
+            // Cópia antiga: o companheiro morreu ou já foi rematerializado em outro lugar.
+            // Descarta sem dropar nada, senão os itens do inventário seriam duplicados.
+            if (data.isRetired(uuid) || warrior.isStaleCopy()) {
+                warrior.discard();
+                event.setCanceled(true);
+                return;
+            }
+
             // Prevenção de duplicação: se já existe outra instância viva com este UUID no servidor
             // (ex: o chunk antigo na natureza acordou depois de o guerreiro já ter sido trazido para o jogador)
             for (ServerLevel level : server.getAllLevels()) {
@@ -264,6 +273,9 @@ public class CompanionTeleportHandler {
             int tier = (info.level >= 3) ? 2 : (info.level == 2 ? 1 : 0);
             companion.applyEquipmentTier(tier);
         }
+
+        // Esta passa a ser a cópia oficial: qualquer cópia anterior vira "stale" e será descartada ao carregar
+        companion.setRestoreGeneration(CompanionSavedData.get(player.getServer()).bumpGeneration(info));
 
         // Garante os identificadores persistentes e modo seguir
         companion.setUUID(info.companionUUID);

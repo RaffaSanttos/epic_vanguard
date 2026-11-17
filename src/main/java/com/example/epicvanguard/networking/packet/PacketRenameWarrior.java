@@ -41,7 +41,7 @@ public class PacketRenameWarrior {
             if (!(entity instanceof WarriorCompanionEntity warrior)) return;
 
             if (!warrior.isOwner(player)) {
-                player.sendSystemMessage(Component.literal("§cVocê só pode renomear guerreiros que juraram lealdade a você!"));
+                player.sendSystemMessage(Component.translatable("epicvanguard.text.packet_rename_warrior.1"));
                 return;
             }
 
@@ -60,7 +60,7 @@ public class PacketRenameWarrior {
             }
 
             player.serverLevel().playSound(null, warrior.blockPosition(), SoundEvents.ANVIL_USE, SoundSource.PLAYERS, 0.8F, 1.2F);
-            player.sendSystemMessage(Component.literal("§6✦ [Vanguarda] §aO companheiro agora se chama §e§l" + clean + "§a!"));
+            player.sendSystemMessage(Component.translatable("epicvanguard.text.packet_rename_warrior.2", clean));
         });
         return true;
     }

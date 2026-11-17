@@ -245,9 +245,8 @@ public class VanguardPointBlockEntity extends BlockEntity implements MenuProvide
                     15, 0.2D, 0.4D, 0.2D, 0.02D);
 
             // 💬 Notificação para o jogador contratante e arredores anunciando a chegada para recrutamento
-            String specTitle = companion.getFormattedSpecializationTitle();
-            Component arrivalMsg = Component.literal("§6✦ [Posto da Vanguarda] §aUma nova companhia da Vanguarda chegou ao posto! O "
-                    + specTitle + " §f" + companion.getWarriorName() + " §aestá disponível para contratação. ✦");
+            Component specTitle = companion.getFormattedSpecializationTitle();
+            Component arrivalMsg = Component.translatable("epicvanguard.text.vanguard_point_block_entity.1", specTitle, companion.getWarriorName());
 
             if (this.requesterUUID != null) {
                 ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(this.requesterUUID);
@@ -335,7 +334,7 @@ public class VanguardPointBlockEntity extends BlockEntity implements MenuProvide
 
     @Override
     public Component getDisplayName() {
-        return Component.literal("Posto da Vanguarda");
+        return Component.translatable("epicvanguard.text.vanguard_point_block_entity.2");
     }
 
     @Nullable

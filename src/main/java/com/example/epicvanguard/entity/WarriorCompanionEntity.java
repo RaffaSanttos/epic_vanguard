@@ -364,6 +364,18 @@ public class WarriorCompanionEntity extends PathfinderMob {
     }
 
     private Player inventoryOpenPlayer = null;
+    /** Geração desta cópia do companheiro (ver {@link CompanionSavedData.CompanionInfo#generation}). */
+    private int restoreGeneration = 0;
+
+    public int getRestoreGeneration() { return restoreGeneration; }
+    public void setRestoreGeneration(int generation) { this.restoreGeneration = generation; }
+
+    /** True se existe uma cópia mais nova deste companheiro registrada no SavedData. */
+    public boolean isStaleCopy() {
+        if (this.getServer() == null) return false;
+        CompanionSavedData.CompanionInfo info = CompanionSavedData.get(this.getServer()).getCompanion(this.getUUID());
+        return info != null && this.restoreGeneration < info.generation;
+    }
 
     public void setInventoryOpenPlayer(@Nullable Player player) {
         this.inventoryOpenPlayer = player;
@@ -753,7 +765,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
             }
             Player owner = getOwner();
             if (owner != null) {
-                owner.sendSystemMessage(Component.literal("§6✦ [Vanguarda] §e§l" + getWarriorName() + " §asubiu para o §e§lNível " + currentLvl + "§a! Seus atributos aumentaram!"));
+                owner.sendSystemMessage(Component.translatable("epicvanguard.text.warrior_companion_entity.1", getWarriorName(), currentLvl));
             }
         }
     }
@@ -786,22 +798,27 @@ public class WarriorCompanionEntity extends PathfinderMob {
         return 50 + (lvl - 1) * 30 + (int) (Math.pow(lvl - 1, 1.6) * 8.0);
     }
 
-    public String getSpecializationName() {
-        return switch (getSpecialization()) {
-            case SPEC_BERSERKER -> "Berserker";
-            case SPEC_GUARDIAN  -> "Guardião";
-            case SPEC_DUELIST   -> "Duelista";
-            default             -> "Guerreiro";
+    private static String specializationKey(int spec) {
+        return switch (spec) {
+            case SPEC_BERSERKER -> "berserker";
+            case SPEC_GUARDIAN  -> "guardian";
+            case SPEC_DUELIST   -> "duelist";
+            default             -> "warrior";
         };
     }
 
-    public String getFormattedSpecializationTitle() {
-        return switch (getSpecialization()) {
-            case SPEC_BERSERKER -> "§c⚔ Berserker";
-            case SPEC_GUARDIAN  -> "§9🛡 Guardião";
-            case SPEC_DUELIST   -> "§b🗡 Duelista";
-            default             -> "§7Guerreiro";
-        };
+    /** Nome traduzível da especialização (lang: epicvanguard.spec.<spec>.name). */
+    public Component getSpecializationName() {
+        return Component.translatable("epicvanguard.spec." + specializationKey(getSpecialization()) + ".name");
+    }
+
+    /** Título colorido traduzível (lang: epicvanguard.spec.<spec>.title). No cliente use {@code .getString()}. */
+    public static Component specializationTitle(int spec) {
+        return Component.translatable("epicvanguard.spec." + specializationKey(spec) + ".title");
+    }
+
+    public Component getFormattedSpecializationTitle() {
+        return specializationTitle(getSpecialization());
     }
 
     public void triggerWarcry() {
@@ -846,7 +863,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
         if (owner != null && owner.distanceToSqr(this) <= 256.0D) {
             owner.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 200, 0, false, true));
             owner.displayClientMessage(
-                    Component.literal("§c⚔ [Berserker] " + this.getWarriorName() + " rugiu em fúria! O Grito Feroz de Sangue ecoa! (Força I concedida)"),
+                    Component.translatable("epicvanguard.text.warrior_companion_entity.2", this.getWarriorName()),
                     false);
         }
     }
@@ -875,7 +892,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
             owner.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 300, 0, false, true));
             owner.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 300, 0, false, true));
             owner.displayClientMessage(
-                    Component.literal("§9🛡 [Guardião] " + this.getWarriorName() + " bateu seu escudo! O Rugido do Bastião ecoa! (Monstros provocados & Resistência I)"),
+                    Component.translatable("epicvanguard.text.warrior_companion_entity.3", this.getWarriorName()),
                     false);
         }
     }
@@ -905,7 +922,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
             owner.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 240, 1, false, true));
             owner.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 240, 0, false, true));
             owner.displayClientMessage(
-                    Component.literal("§b🗡 [Duelista] " + this.getWarriorName() + " disparou o Brado da Tempestade! (Velocidade II e Força I)"),
+                    Component.translatable("epicvanguard.text.warrior_companion_entity.4", this.getWarriorName()),
                     false);
         }
     }
@@ -921,7 +938,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
         if (owner != null && owner.distanceToSqr(this) <= 256.0D) {
             owner.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 160, 0, false, true));
             owner.displayClientMessage(
-                    Component.literal("§7[Guerreiro] " + this.getWarriorName() + " rugiu em batalha! (Força I concedida)"),
+                    Component.translatable("epicvanguard.text.warrior_companion_entity.5", this.getWarriorName()),
                     false);
         }
     }
@@ -1207,7 +1224,8 @@ public class WarriorCompanionEntity extends PathfinderMob {
             pickUpGroundItems();
 
             // Update CompanionSavedData periodically (every 20 ticks = 1 second)
-            if (isRecruited() && this.tickCount % 20 == 0) {
+            // Snapshot completo a cada 10s; saída de chunk/mundo já salva na hora (CompanionTeleportHandler)
+            if (isRecruited() && this.tickCount % 200 == 0) {
                 updateSavedData();
             }
         }
@@ -1215,6 +1233,8 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
     public void updateSavedData() {
         if (!this.level().isClientSide && isRecruited() && this.isAlive() && this.getServer() != null && getOwnerUUID().isPresent()) {
+            // Uma cópia antiga nunca pode sobrescrever o snapshot da cópia oficial
+            if (isStaleCopy()) return;
             CompoundTag fullNbt = new CompoundTag();
             this.saveWithoutId(fullNbt);
             fullNbt.putInt("Specialization", this.getSpecialization());
@@ -1356,7 +1376,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
                 if (pSource.getEntity() instanceof Player player) {
                     this.setOwnerUUID(player.getUUID());
                     player.displayClientMessage(
-                            Component.literal("§6" + this.getWarriorName() + "§a se rende e jura lealdade a você!"),
+                            Component.translatable("epicvanguard.text.warrior_companion_entity.6", this.getWarriorName()),
                             false);
                 }
 
@@ -1415,7 +1435,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
         super.die(pDamageSource);
         if (!this.level().isClientSide) {
             if (this.getServer() != null) {
-                CompanionSavedData.get(this.getServer()).unregister(this.getUUID());
+                CompanionSavedData.get(this.getServer()).retire(this.getUUID());
             }
             dropAllInventory();
         }
@@ -1525,10 +1545,10 @@ public class WarriorCompanionEntity extends PathfinderMob {
                     serverLevel.playSound(null, this.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1.0F, 1.0F);
                 }
 
-                pPlayer.sendSystemMessage(Component.literal("§6[" + this.getWarriorName() + "] §aVocê salvou a minha vida! Juro lealdade absoluta à sua espada!"));
+                pPlayer.sendSystemMessage(Component.translatable("epicvanguard.text.warrior_companion_entity.7", this.getWarriorName()));
                 return InteractionResult.SUCCESS;
             } else {
-                pPlayer.sendSystemMessage(Component.literal("§c" + this.getWarriorName() + " está fraco e ferido! Entregue comida/poção para curá-lo ou uma arma para resgatá-lo."));
+                pPlayer.sendSystemMessage(Component.translatable("epicvanguard.text.warrior_companion_entity.8", this.getWarriorName()));
                 return InteractionResult.SUCCESS;
             }
         }
@@ -1538,7 +1558,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
             this.setInventoryOpenPlayer(serverPlayer);
             NetworkHooks.openScreen(serverPlayer, new SimpleMenuProvider(
                     (id, inv, p) -> new HonorContractMenu(id, inv, this.getId()),
-                    Component.literal("Contrato de Honra")
+                    Component.translatable("epicvanguard.text.warrior_companion_entity.9")
             ), buf -> buf.writeInt(this.getId()));
             return InteractionResult.SUCCESS;
         } else {
@@ -1556,7 +1576,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
                         if (this.level() instanceof ServerLevel serverLevel) {
                             serverLevel.playSound(null, this.blockPosition(), SoundEvents.ANVIL_USE, SoundSource.PLAYERS, 0.8F, 1.2F);
                         }
-                        pPlayer.sendSystemMessage(Component.literal("§6✦ [Vanguarda] §aVocê renomeou seu companheiro para §e§l" + clean + "§a!"));
+                        pPlayer.sendSystemMessage(Component.translatable("epicvanguard.text.warrior_companion_entity.10", clean));
                         return InteractionResult.SUCCESS;
                     }
                 }
@@ -1565,7 +1585,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
                 this.setInventoryOpenPlayer(serverPlayer);
                 NetworkHooks.openScreen(serverPlayer, new SimpleMenuProvider(
                         (id, inv, p) -> new WarriorCompanionMenu(id, inv, this.getId()),
-                        Component.literal("Companheiro - " + this.getWarriorName())
+                        Component.translatable("epicvanguard.text.warrior_companion_entity.11", this.getWarriorName())
                 ), buf -> buf.writeInt(this.getId()));
                 return InteractionResult.SUCCESS;
             }
@@ -1606,11 +1626,13 @@ public class WarriorCompanionEntity extends PathfinderMob {
         CompoundTag invTag = new CompoundTag();
         warriorInventory.saveToNBT(invTag);
         pCompound.put("WarriorInventory", invTag);
+        pCompound.putInt("RestoreGen", restoreGeneration);
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag pCompound) {
         super.readAdditionalSaveData(pCompound);
+        this.restoreGeneration = pCompound.getInt("RestoreGen");
         if (pCompound.hasUUID("OwnerUUID")) {
             setOwnerUUID(pCompound.getUUID("OwnerUUID"));
         }

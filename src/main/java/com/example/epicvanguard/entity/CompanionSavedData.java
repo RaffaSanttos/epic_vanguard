@@ -15,25 +15,25 @@ public class CompanionSavedData extends SavedData {
     private static final String DATA_NAME = "grimal_companions";
 
     public enum FriendlyFireMode {
-        DISABLED("Totalmente Livre de Fogo Amigo", "§a🛡 Livre de Fogo Amigo §7(Nenhum dano)"),
-        SPELLS_ONLY("Apenas Magias", "§b✦ Apenas Magias §7(Magias acertam / Golpes bloqueados)"),
-        MELEE_ONLY("Apenas Golpes Físicos / Epic Fight", "§e⚔ Apenas Golpes Físicos / Epic Fight §7(Golpes acertam / Magias bloqueadas)"),
-        ALL("Totalmente Habilitado", "§c⚡ Totalmente Habilitado §7(Magias e Golpes acertam)");
+        DISABLED("disabled"),
+        SPELLS_ONLY("spells_only"),
+        MELEE_ONLY("melee_only"),
+        ALL("all");
 
-        private final String name;
-        private final String formatted;
+        private final String key;
 
-        FriendlyFireMode(String name, String formatted) {
-            this.name = name;
-            this.formatted = formatted;
+        FriendlyFireMode(String key) {
+            this.key = key;
         }
 
-        public String getName() {
-            return name;
+        /** Nome curto traduzível (lang: epicvanguard.friendly_fire.<modo>.name). */
+        public net.minecraft.network.chat.Component getName() {
+            return net.minecraft.network.chat.Component.translatable("epicvanguard.friendly_fire." + key + ".name");
         }
 
-        public String getFormatted() {
-            return formatted;
+        /** Descrição colorida traduzível (lang: epicvanguard.friendly_fire.<modo>.formatted). */
+        public net.minecraft.network.chat.Component getFormatted() {
+            return net.minecraft.network.chat.Component.translatable("epicvanguard.friendly_fire." + key + ".formatted");
         }
 
         public static FriendlyFireMode fromString(String input) {
@@ -60,6 +60,12 @@ public class CompanionSavedData extends SavedData {
         public int level;
         public int specialization;
         public CompoundTag entityNbt;
+        /**
+         * Geração da cópia "oficial" do companheiro. É incrementada toda vez que ele é
+         * rematerializado a partir do snapshot; cópias antigas (geração menor) que acordarem
+         * em chunks descarregados são descartadas, evitando duplicação de itens.
+         */
+        public int generation;
 
         public CompanionInfo(UUID companionUUID, UUID ownerUUID, String name, String dimension, BlockPos pos, int combatMode, float health, float maxHealth, int level, int specialization) {
             this.companionUUID = companionUUID;
@@ -79,13 +85,8 @@ public class CompanionSavedData extends SavedData {
             this(companionUUID, ownerUUID, name, dimension, pos, combatMode, health, maxHealth, 1, 0);
         }
 
-        public String getFormattedSpecializationTitle() {
-            return switch (specialization) {
-                case 1 -> "§c⚔ Berserker";
-                case 2 -> "§9🛡 Guardião";
-                case 3 -> "§b🗡 Duelista";
-                default -> "§7Guerreiro";
-            };
+        public net.minecraft.network.chat.Component getFormattedSpecializationTitle() {
+            return WarriorCompanionEntity.specializationTitle(specialization);
         }
 
         public CompoundTag save() {
@@ -100,6 +101,7 @@ public class CompanionSavedData extends SavedData {
             tag.putFloat("maxHealth", maxHealth);
             tag.putInt("level", level);
             tag.putInt("spec", specialization);
+            tag.putInt("gen", generation);
             if (entityNbt != null) {
                 tag.put("entityNbt", entityNbt);
             }
@@ -118,6 +120,7 @@ public class CompanionSavedData extends SavedData {
             int level = tag.contains("level") ? tag.getInt("level") : 1;
             int spec = tag.contains("spec") ? tag.getInt("spec") : 0;
             CompanionInfo info = new CompanionInfo(companionUUID, ownerUUID, name, dim, pos, mode, health, maxHealth, level, spec);
+            info.generation = tag.getInt("gen");
             if (tag.contains("entityNbt")) {
                 info.entityNbt = tag.getCompound("entityNbt");
             }
@@ -126,6 +129,8 @@ public class CompanionSavedData extends SavedData {
     }
 
     private final Map<UUID, CompanionInfo> companions = new ConcurrentHashMap<>();
+    /** Companheiros que morreram: cópias antigas deles em chunks descarregados não podem "ressuscitar". */
+    private final Set<UUID> retired = ConcurrentHashMap.newKeySet();
     private FriendlyFireMode globalFriendlyFireMode = FriendlyFireMode.DISABLED;
 
     public static CompanionSavedData get(MinecraftServer server) {
@@ -213,6 +218,25 @@ public class CompanionSavedData extends SavedData {
         setDirty();
     }
 
+    /** Remove o companheiro e marca o UUID como morto, para descartar cópias antigas que acordarem depois. */
+    public void retire(UUID companionUUID) {
+        if (companionUUID == null) return;
+        companions.remove(companionUUID);
+        retired.add(companionUUID);
+        setDirty();
+    }
+
+    public boolean isRetired(UUID companionUUID) {
+        return companionUUID != null && retired.contains(companionUUID);
+    }
+
+    /** Marca uma nova cópia oficial do companheiro e devolve a geração dela. */
+    public int bumpGeneration(CompanionInfo info) {
+        info.generation++;
+        setDirty();
+        return info.generation;
+    }
+
     public List<CompanionInfo> getPlayerCompanions(UUID owner) {
         List<CompanionInfo> list = new ArrayList<>();
         for (CompanionInfo info : companions.values()) {
@@ -252,7 +276,14 @@ public class CompanionSavedData extends SavedData {
         for (int i = 0; i < list.size(); i++) {
             CompoundTag compTag = list.getCompound(i);
             CompanionInfo info = CompanionInfo.load(compTag);
-            data.companions.put(info.companionUUID, info);
+            if (info.companionUUID != null) {
+                data.companions.put(info.companionUUID, info);
+            }
+        }
+
+        ListTag retiredList = tag.getList("Retired", Tag.TAG_INT_ARRAY);
+        for (int i = 0; i < retiredList.size(); i++) {
+            data.retired.add(net.minecraft.nbt.NbtUtils.loadUUID(retiredList.get(i)));
         }
 
         if (tag.contains("GlobalFriendlyFire", Tag.TAG_STRING)) {
@@ -280,6 +311,11 @@ public class CompanionSavedData extends SavedData {
             list.add(info.save());
         }
         pCompoundTag.put("Companions", list);
+        ListTag retiredList = new ListTag();
+        for (UUID uuid : retired) {
+            retiredList.add(net.minecraft.nbt.NbtUtils.createUUID(uuid));
+        }
+        pCompoundTag.put("Retired", retiredList);
         pCompoundTag.putString("GlobalFriendlyFire", getGlobalFriendlyFireMode().name());
 
         return pCompoundTag;

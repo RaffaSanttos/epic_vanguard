@@ -3,3 +3,8 @@ build/
 run/
 *.log
 *.gz
+# IDE / ferramentas locais
+.idea/
+*.iml
+.vscode/
+*.class

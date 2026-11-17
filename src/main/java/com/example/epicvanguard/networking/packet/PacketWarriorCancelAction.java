@@ -1,8 +1,8 @@
 package com.example.epicvanguard.networking.packet;
 
 import com.example.epicvanguard.entity.WarriorCompanionEntity;
+import com.example.epicvanguard.networking.PacketGuards;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.Entity;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
@@ -25,9 +25,8 @@ public class PacketWarriorCancelAction {
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> {
-            if (context.getSender() == null) return;
-            Entity entity = context.getSender().serverLevel().getEntity(entityId);
-            if (entity instanceof WarriorCompanionEntity warrior) {
+            WarriorCompanionEntity warrior = PacketGuards.ownedWarrior(context.getSender(), entityId);
+            if (warrior != null) {
                 warrior.clearCombatTarget();
             }
         });

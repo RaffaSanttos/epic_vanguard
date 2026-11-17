@@ -1,5 +1,7 @@
 package com.example.epicvanguard.screen;
 
+
+import net.minecraft.client.resources.language.I18n;
 import com.example.epicvanguard.EpicVanguardMod;
 import com.example.epicvanguard.entity.WarriorCompanionEntity;
 import com.example.epicvanguard.networking.Messages;
@@ -28,7 +30,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
             new ResourceLocation(EpicVanguardMod.MOD_ID, "textures/gui/warrior_hud.png");
 
     private static final String[] MODE_NAMES = {
-            "§a🚶 Seguir", "§e🏠 Guarda", "§7⏹ Parado"
+            I18n.get("epicvanguard.ui.warrior_companion_screen.1"), I18n.get("epicvanguard.ui.warrior_companion_screen.2"), I18n.get("epicvanguard.ui.warrior_companion_screen.3")
     };
 
     private int currentMode = 0;
@@ -80,17 +82,17 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
                     Messages.sendToServer(new PacketWarriorCombatMode(menu.getEntityId(), currentMode));
                 })
                 .bounds(leftPos + 163, topPos + 37, 46, 16)
-                .tooltip(Tooltip.create(Component.literal("Postura: Clique para alternar entre Seguir, Guarda e Parado")))
+                .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.warrior_companion_screen.1")))
                 .build();
 
         // Painel Direito: Botão 2 - Cessar-fogo / Cancelar Alvo (Y = 55, 46x16)
         cancelButton = Button.builder(
-                Component.literal("§c🛑 Parar"),
+                Component.translatable("epicvanguard.text.warrior_companion_screen.2"),
                 btn -> {
                     Messages.sendToServer(new PacketWarriorCancelAction(menu.getEntityId()));
                 })
                 .bounds(leftPos + 163, topPos + 55, 46, 16)
-                .tooltip(Tooltip.create(Component.literal("Cessar-fogo: Interrompe o combate e limpa o alvo imediatamente")))
+                .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.warrior_companion_screen.3")))
                 .build();
 
         // Painel Direito: Botão 3 - Ícone Monstros Hostis (Y = 73, 22x18)
@@ -102,7 +104,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
                     Messages.sendToServer(new PacketWarriorTactics(menu.getEntityId(), targetHostiles, targetPassives));
                 })
                 .bounds(leftPos + 163, topPos + 73, 22, 18)
-                .tooltip(Tooltip.create(Component.literal("Monstros Hostis: ON / OFF (Atacar zumbis, esqueletos, etc.)")))
+                .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.warrior_companion_screen.4")))
                 .build();
 
         // Painel Direito: Botão 4 - Ícone Caça de Comida / Passivos (Y = 73, 22x18)
@@ -114,25 +116,25 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
                     Messages.sendToServer(new PacketWarriorTactics(menu.getEntityId(), targetHostiles, targetPassives));
                 })
                 .bounds(leftPos + 187, topPos + 73, 22, 18)
-                .tooltip(Tooltip.create(Component.literal("Caçar Comida: ON / OFF (Abater animais adultos para alimento)")))
+                .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.warrior_companion_screen.5")))
                 .build();
 
         // Abas superiores de navegação (somente 2 abas limpas)
         tabMochilaButton = Button.builder(
-                Component.literal("§6🎒 Mochila"),
+                Component.translatable("epicvanguard.text.warrior_companion_screen.6"),
                 btn -> {})
                 .bounds(leftPos + 8, topPos - 18, 70, 18)
-                .tooltip(Tooltip.create(Component.literal("Inventário e Equipamentos do Guerreiro")))
+                .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.warrior_companion_screen.7")))
                 .build();
         tabMochilaButton.active = false; // Já estamos nesta tela
 
         tabHabilidadesButton = Button.builder(
-                Component.literal("§7🌳 Talentos"),
+                Component.translatable("epicvanguard.text.warrior_companion_screen.8"),
                 btn -> {
                     Minecraft.getInstance().setScreen(new WarriorSkillTreeScreen(this.menu.getEntityId()));
                 })
                 .bounds(leftPos + 80, topPos - 18, 90, 18)
-                .tooltip(Tooltip.create(Component.literal("Abrir Árvore de Talentos da Vanguarda")))
+                .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.warrior_companion_screen.9")))
                 .build();
 
         // Botão de lápis ao lado do nome do guerreiro
@@ -148,7 +150,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
                 Component.literal("§e✏"),
                 btn -> openRenameModal())
                 .bounds(pencilX, topPos + 5, 14, 14)
-                .tooltip(Tooltip.create(Component.literal("Renomear este guerreiro da Vanguarda")))
+                .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.warrior_companion_screen.10")))
                 .build();
 
         // Modal de Renomear Companheiro
@@ -159,20 +161,20 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
 
         String initialName = warrior != null ? warrior.getWarriorName() : "";
 
-        this.renameEditBox = new EditBox(this.font, dialogX + 15, dialogY + 20, dialogW - 30, 16, Component.literal("Nome da Vanguarda"));
+        this.renameEditBox = new EditBox(this.font, dialogX + 15, dialogY + 20, dialogW - 30, 16, Component.translatable("epicvanguard.text.warrior_companion_screen.11"));
         this.renameEditBox.setMaxLength(20);
         this.renameEditBox.setValue(initialName);
         this.renameEditBox.setVisible(false);
 
-        this.renameConfirmButton = Button.builder(Component.literal("§a✔ Salvar"), btn -> confirmRename())
+        this.renameConfirmButton = Button.builder(Component.translatable("epicvanguard.text.warrior_companion_screen.12"), btn -> confirmRename())
                 .bounds(dialogX + 15, dialogY + 42, 60, 18)
-                .tooltip(Tooltip.create(Component.literal("Salvar novo nome")))
+                .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.warrior_companion_screen.13")))
                 .build();
         this.renameConfirmButton.visible = false;
 
-        this.renameCancelButton = Button.builder(Component.literal("§c✖ Cancelar"), btn -> closeRenameModal())
+        this.renameCancelButton = Button.builder(Component.translatable("epicvanguard.text.warrior_companion_screen.14"), btn -> closeRenameModal())
                 .bounds(dialogX + dialogW - 75, dialogY + 42, 60, 18)
-                .tooltip(Tooltip.create(Component.literal("Cancelar alteração")))
+                .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.warrior_companion_screen.15")))
                 .build();
         this.renameCancelButton.visible = false;
 
@@ -272,7 +274,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
         // Removido o rótulo 'Inventário' para eliminar poluição visual e não encostar na barra de XP
 
         // Painel Direito: Vida Total da Companhia
-        guiGraphics.drawString(this.font, "§4❤ §8Vida", 168, 7, 0x404040, false);
+        guiGraphics.drawString(this.font, I18n.get("epicvanguard.ui.warrior_companion_screen.4"), 168, 7, 0x404040, false);
         if (warrior != null) {
             int curHp = (int) Math.ceil(warrior.getHealth());
             int maxHp = (int) warrior.getMaxHealth();
@@ -286,8 +288,8 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
             int nextXp = WarriorCompanionEntity.getXpForNextLevel(lvl);
             float xpPct = (lvl >= 20) ? 1.0F : (nextXp > 0 ? Math.min(1.0F, (float) currentXp / nextXp) : 0.0F);
 
-            String title = warrior.getFormattedSpecializationTitle();
-            String levelText = "§2Nv. §l" + lvl + "§r §8• " + title;
+            String title = warrior.getFormattedSpecializationTitle().getString();
+            String levelText = I18n.get("epicvanguard.ui.warrior_companion_screen.5") + lvl + "§r §8• " + title;
             int lvlW = this.font.width(levelText);
             int lvlX = 105 - (lvlW / 2);
             guiGraphics.drawString(this.font, levelText, lvlX, 75, 0x404040, false);
@@ -295,9 +297,9 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
             // Texto numérico de XP abaixo da barra (alinhado à direita)
             String xpText;
             if (lvl >= 20) {
-                xpText = "§6★ Nível Máximo ★";
+                xpText = I18n.get("epicvanguard.ui.warrior_companion_screen.6");
             } else {
-                xpText = "§8" + currentXp + "/" + nextXp + " XP §2(" + (int) (xpPct * 100) + "%)";
+                xpText = "§8" + currentXp + "/" + nextXp + I18n.get("epicvanguard.ui.warrior_companion_screen.7") + (int) (xpPct * 100) + "%)";
             }
             int xpW = this.font.width(xpText);
             int xpX = 149 - xpW;
@@ -340,7 +342,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
             guiGraphics.fill(dialogX, dialogY, dialogX + dialogW, dialogY + dialogH, 0xFF242424);
 
             // Título do modal
-            String modalTitle = "§6§lRenomear Companheiro";
+            String modalTitle = I18n.get("epicvanguard.ui.warrior_companion_screen.8");
             int titleW = this.font.width(modalTitle);
             guiGraphics.drawString(this.font, modalTitle, dialogX + (dialogW - titleW) / 2, dialogY + 6, 0xFFFFFF, false);
 
@@ -366,15 +368,15 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
                     float xpPct = (lvl >= 20) ? 1.0F : (nextXp > 0 ? Math.min(1.0F, (float) currentXp / nextXp) : 0.0F);
 
                     List<Component> tooltip = new ArrayList<>();
-                    tooltip.add(Component.literal("§6§l✦ Experiência de Combate ✦"));
-                    tooltip.add(Component.literal("§7Nível Atual: §eNv. " + lvl + " " + warrior.getFormattedSpecializationTitle()));
+                    tooltip.add(Component.translatable("epicvanguard.text.warrior_companion_screen.16"));
+                    tooltip.add(Component.translatable("epicvanguard.text.warrior_companion_screen.17", lvl, warrior.getFormattedSpecializationTitle()));
                     if (lvl >= 20) {
-                        tooltip.add(Component.literal("§6★ Nível Máximo Atingido! ★"));
-                        tooltip.add(Component.literal("§7Este guerreiro atingiu o ápice de seu poder."));
+                        tooltip.add(Component.translatable("epicvanguard.text.warrior_companion_screen.18"));
+                        tooltip.add(Component.translatable("epicvanguard.text.warrior_companion_screen.19"));
                     } else {
-                        tooltip.add(Component.literal("§7Progresso: §a" + currentXp + " §7/ §f" + nextXp + " XP §7(" + (int) (xpPct * 100) + "%)"));
-                        tooltip.add(Component.literal("§7XP Restante: §e" + (nextXp - currentXp) + " XP"));
-                        tooltip.add(Component.literal("§8Derrote monstros em batalha para evoluir!"));
+                        tooltip.add(Component.translatable("epicvanguard.text.warrior_companion_screen.20", currentXp, nextXp, (int) (xpPct * 100)));
+                        tooltip.add(Component.translatable("epicvanguard.text.warrior_companion_screen.21", (nextXp - currentXp)));
+                        tooltip.add(Component.translatable("epicvanguard.text.warrior_companion_screen.22"));
                     }
                     guiGraphics.renderComponentTooltip(this.font, tooltip, mouseX, mouseY);
                 }

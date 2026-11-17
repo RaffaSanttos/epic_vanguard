@@ -1,5 +1,7 @@
 package com.example.epicvanguard.screen;
 
+
+import net.minecraft.client.resources.language.I18n;
 import com.example.epicvanguard.EpicVanguardMod;
 import com.example.epicvanguard.block.entity.VanguardPointBlockEntity;
 import com.example.epicvanguard.networking.Messages;
@@ -41,24 +43,24 @@ public class VanguardPointScreen extends AbstractContainerScreen<VanguardPointMe
         boolean isCreative = player != null && player.isCreative();
 
         this.postButton = Button.builder(
-                Component.literal("§2📜 Publicar Pedido"),
+                Component.translatable("epicvanguard.text.vanguard_point_screen.1"),
                 btn -> {
                     Messages.sendToServer(new PacketPostVanguardContract(menu.getPos(), false));
                 })
                 .bounds(leftPos + 30, topPos + 74, 130, 18)
-                .tooltip(Tooltip.create(Component.literal("Chamar uma companhia da Vanguarda até o posto (Custo: 20 Moedas de Ouro)")))
+                .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.vanguard_point_screen.2")))
                 .build();
 
         this.addRenderableWidget(this.postButton);
 
         if (isCreative) {
             this.accelerateButton = Button.builder(
-                    Component.literal("§e⚡ Chegar"),
+                    Component.translatable("epicvanguard.text.vanguard_point_screen.3"),
                     btn -> {
                         Messages.sendToServer(new PacketPostVanguardContract(menu.getPos(), true));
                     })
                     .bounds(leftPos + 130, topPos + 22, 52, 14)
-                    .tooltip(Tooltip.create(Component.literal("Acelerar chegada imediatamente (Modo Criativo)")))
+                    .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.vanguard_point_screen.4")))
                     .build();
 
             this.addRenderableWidget(this.accelerateButton);
@@ -77,13 +79,13 @@ public class VanguardPointScreen extends AbstractContainerScreen<VanguardPointMe
 
         if (active) {
             postButton.active = false;
-            postButton.setMessage(Component.literal("§8Marcha em Andamento..."));
+            postButton.setMessage(Component.translatable("epicvanguard.text.vanguard_point_screen.5"));
             if (accelerateButton != null) {
                 accelerateButton.visible = true;
             }
         } else {
             postButton.active = canAfford;
-            postButton.setMessage(Component.literal(canAfford ? "§2📜 Publicar Pedido" : "§8Publicar Pedido"));
+            postButton.setMessage(Component.literal(canAfford ? I18n.get("epicvanguard.ui.vanguard_point_screen.1") : I18n.get("epicvanguard.ui.vanguard_point_screen.2")));
             if (accelerateButton != null) {
                 accelerateButton.visible = false;
             }
@@ -127,23 +129,23 @@ public class VanguardPointScreen extends AbstractContainerScreen<VanguardPointMe
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         // Título centralizado no topo do pergaminho
-        String titleStr = "§6§l✦ Posto da Vanguarda ✦";
+        String titleStr = I18n.get("epicvanguard.ui.vanguard_point_screen.3");
         int titleX = (this.imageWidth - this.font.width(titleStr)) / 2;
         guiGraphics.drawString(this.font, titleStr, titleX, 6, 0x8B4513, false);
 
         if (!menu.isContractActive()) {
             // Modo Inativo: Publicar Edital
-            guiGraphics.drawString(this.font, "§8Chamado: §0§lNova Companhia", 15, 23, 0x333333, false);
-            guiGraphics.drawString(this.font, "§8Custo de Chamado: §6§l20 Moedas 🪙", 15, 34, 0x333333, false);
+            guiGraphics.drawString(this.font, I18n.get("epicvanguard.ui.vanguard_point_screen.4"), 15, 23, 0x333333, false);
+            guiGraphics.drawString(this.font, I18n.get("epicvanguard.ui.vanguard_point_screen.5"), 15, 34, 0x333333, false);
 
             int coins = menu.getStoredCoins();
-            String coinStatus = (coins >= 20 ? "§2§l" : "§c§l") + coins + " §8/ §6§l20 Moedas";
-            guiGraphics.drawString(this.font, "§8Depositado: " + coinStatus, 15, 45, 0x333333, false);
+            String coinStatus = (coins >= 20 ? "§2§l" : "§c§l") + coins + I18n.get("epicvanguard.ui.vanguard_point_screen.6");
+            guiGraphics.drawString(this.font, I18n.get("epicvanguard.ui.vanguard_point_screen.7") + coinStatus, 15, 45, 0x333333, false);
 
             guiGraphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 0x404040, false);
         } else {
             // Modo Ativo: Marcha das Tropas
-            String marchingTitle = "§6§l⚔ Companhias a Caminho! ⚔";
+            String marchingTitle = I18n.get("epicvanguard.ui.vanguard_point_screen.8");
             int mx = (this.imageWidth - this.font.width(marchingTitle)) / 2;
             guiGraphics.drawString(this.font, marchingTitle, mx, 23, 0x8B4513, false);
 
@@ -157,14 +159,14 @@ public class VanguardPointScreen extends AbstractContainerScreen<VanguardPointMe
             int secs = totalSec % 60;
             String timeStr = (hours > 0 ? hours + "h " : "") + mins + "m " + secs + "s";
 
-            String dayText = "§8Chegada: §e§l" + days + (days == 1 ? " Dia" : " Dias") + " §8(" + timeStr + ")";
+            String dayText = I18n.get("epicvanguard.ui.vanguard_point_screen.9") + days + (days == 1 ? I18n.get("epicvanguard.ui.vanguard_point_screen.10") : I18n.get("epicvanguard.ui.vanguard_point_screen.11")) + " §8(" + timeStr + ")";
             int dx = (this.imageWidth - this.font.width(dayText)) / 2;
             guiGraphics.drawString(this.font, dayText, dx, 36, 0x333333, false);
 
             // Texto sobre a barra de progresso
             float progress = 1.0F - ((float) remTicks / (float) menu.getTotalTicks());
             int pct = (int) (progress * 100);
-            String pctStr = "§f§l" + pct + "% em marcha";
+            String pctStr = "§f§l" + pct + I18n.get("epicvanguard.ui.vanguard_point_screen.12");
             int px = (this.imageWidth - this.font.width(pctStr)) / 2;
             guiGraphics.drawString(this.font, pctStr, px, 57, 0xFFFFFF, true);
 
