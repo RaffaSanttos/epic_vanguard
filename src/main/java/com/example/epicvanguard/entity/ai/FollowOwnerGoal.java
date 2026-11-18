@@ -64,7 +64,7 @@ public class FollowOwnerGoal extends Goal {
         // Mudança de dimensão
         if (owner.level() != warrior.level() && owner.level() instanceof ServerLevel targetLevel) {
             if (owner.getY() >= owner.level().getMinBuildHeight() && !owner.isFallFlying() && !owner.getAbilities().flying) {
-                warrior.teleportTo(targetLevel, owner.getX(), owner.getY(), owner.getZ(), null, warrior.getYRot(), warrior.getXRot());
+                // A entidade é recriada na outra dimensão (esta é removida): safeTeleportTo cuida disso
                 warrior.safeTeleportTo(owner);
             }
             return;

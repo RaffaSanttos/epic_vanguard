@@ -147,6 +147,7 @@
   "epicvanguard.text.vanguard_command.38": "§cYou have more than one companion! Specify which one to rename:\n§e/companhias renomear <target> <new_name> §7(e.g. §f/companhias renomear #1 %s§7)",
   "epicvanguard.text.vanguard_command.39": "§cThe new name can't be empty.",
   "epicvanguard.text.vanguard_command.40": "§6✦ [Vanguard] §aCompanion §e%s §awas renamed to §e§l%s§a successfully!",
+  "epicvanguard.text.vanguard_command.no_permission": "§cOnly operators can change the friendly fire mode (it applies to every player).",
   "epicvanguard.text.warrior_companion_entity.1": "§6✦ [Vanguard] §e§l%s §areached §e§lLevel %s§a! Their attributes increased!",
   "epicvanguard.text.warrior_companion_entity.2": "§c⚔ [Berserker] %s roared in fury! The Fierce Blood Cry echoes! (Strength I granted)",
   "epicvanguard.text.warrior_companion_entity.3": "§9🛡 [Guardian] %s struck their shield! The Bastion's Roar echoes! (Monsters taunted & Resistance I)",

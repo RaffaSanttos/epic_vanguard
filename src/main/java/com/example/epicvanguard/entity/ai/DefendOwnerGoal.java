@@ -25,7 +25,7 @@ public class DefendOwnerGoal extends TargetGoal {
 
     @Override
     public boolean canUse() {
-        if (!warrior.isRecruited() || warrior.getCombatMode() == 2 || warrior.isEmergencyRetreating() || warrior.isLowHealth()) return false;
+        if (!warrior.isRecruited() || warrior.getCombatMode() == 2 || warrior.shouldAvoidCombat()) return false;
         Player owner = warrior.getOwner();
         if (owner == null) return false;
 

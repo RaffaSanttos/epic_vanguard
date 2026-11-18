@@ -45,7 +45,7 @@ public class VanguardPointMenu extends AbstractContainerMenu {
 
         // Se o contrato já estiver em andamento e ainda houver troco/moedas sobressalentes no slot,
         // devolve imediatamente ao inventário do jogador que abriu a tela!
-        if (!playerInv.player.level().isClientSide && blockEntity.isContractActive()) {
+        if (!playerInv.player.level().isClientSide && blockEntity.isContractActive() && blockEntity.canAccessCoins(playerInv.player)) {
             int stored = blockEntity.getStoredCoins();
             if (stored > 0) {
                 ItemStack refund = blockEntity.getItemHandler().extractItem(0, stored, false);
@@ -59,15 +59,25 @@ public class VanguardPointMenu extends AbstractContainerMenu {
         }
 
         // Slot 0: Depósito de Moedas de Ouro (Centralizado na HUD)
+        // Cada menu é de um jogador: as moedas no slot pertencem a quem depositou primeiro.
+        final Player menuPlayer = playerInv.player;
         this.addSlot(new SlotItemHandler(handler, 0, 87, 55) {
             @Override
             public boolean mayPlace(@NotNull ItemStack stack) {
-                return !isContractActive() && stack.is(ModItems.GOLD_COIN.get());
+                return !isContractActive() && stack.is(ModItems.GOLD_COIN.get()) && blockEntity.canAccessCoins(menuPlayer);
             }
 
             @Override
             public boolean mayPickup(Player playerIn) {
-                return true; // Sempre permite retirar qualquer moeda restante/troco!
+                return blockEntity.canAccessCoins(playerIn);
+            }
+
+            @Override
+            public void setChanged() {
+                super.setChanged();
+                if (!menuPlayer.level().isClientSide && this.hasItem() && blockEntity.getDepositorUUID() == null) {
+                    blockEntity.setDepositor(menuPlayer.getUUID());
+                }
             }
         });
 

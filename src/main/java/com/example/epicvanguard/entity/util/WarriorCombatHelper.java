@@ -70,7 +70,9 @@ public class WarriorCombatHelper {
     }
 
     public static boolean checkDuelistDodge(WarriorCompanionEntity warrior, DamageSource source) {
+        // Só esquiva de golpes/projéteis (dano com entidade); queda, lava, fogo etc. não se esquivam
         if (warrior.getSpecialization() == WarriorCompanionEntity.SPEC_DUELIST &&
+                source.getDirectEntity() != null &&
                 !source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
             if (warrior.getRandom().nextFloat() < 0.18F) {
                 warrior.level().playSound(null, warrior.getX(), warrior.getY(), warrior.getZ(),
@@ -86,6 +88,10 @@ public class WarriorCombatHelper {
     }
 
     public static float applyShieldBlock(WarriorCompanionEntity warrior, DamageSource source, float amount) {
+        // O escudo só apara golpes e projéteis; não reduz queda, lava, fogo, afogamento, veneno etc.
+        if (source.getDirectEntity() == null || source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_SHIELD)) {
+            return amount;
+        }
         ItemStack offhand = warrior.getItemBySlot(EquipmentSlot.OFFHAND);
         ItemStack mainhand = warrior.getItemBySlot(EquipmentSlot.MAINHAND);
         if (offhand.getItem() instanceof ShieldItem || mainhand.getItem() instanceof ShieldItem) {
@@ -105,7 +111,10 @@ public class WarriorCombatHelper {
     public static void performEmergencyDodgeRoll(WarriorCompanionEntity warrior, @Nullable Vec3 threatPos) {
         if (warrior.getDodgeCooldown() > 0) return;
         warrior.setDodgeCooldown((warrior.getSpecialization() == WarriorCompanionEntity.SPEC_DUELIST) ? 30 : 60);
-        warrior.setEmergencyRetreatCooldown(180);
+        // Só entra em recuo se tiver algo para se curar; sem consumíveis ele rola e continua lutando
+        if (warrior.hasEmergencyConsumable()) {
+            warrior.setEmergencyRetreatCooldown(180);
+        }
 
         Vec3 awayDir;
         if (threatPos != null) {
@@ -139,6 +148,8 @@ public class WarriorCombatHelper {
                     1, 0.0D, 0.0D, 0.0D, 0.0D);
         }
 
-        EpicFightCompat.playDodgeRollAnimation(warrior);
+        if (com.example.epicvanguard.EpicVanguardMod.isEpicFightLoaded()) {
+            EpicFightCompat.playDodgeRollAnimation(warrior);
+        }
     }
 }

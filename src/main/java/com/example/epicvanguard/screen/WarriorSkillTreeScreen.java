@@ -260,7 +260,7 @@ public class WarriorSkillTreeScreen extends Screen {
 
         WarriorCompanionEntity warrior = getCompanion();
         int companionLevel = warrior != null ? warrior.getWarriorLevel() : 1;
-        String companionName = warrior != null ? warrior.getWarriorName() : "Guerreiro";
+        String companionName = warrior != null ? warrior.getWarriorName() : WarriorCompanionEntity.DEFAULT_NAME;
         String companionTitle = warrior != null ? warrior.getFormattedSpecializationTitle().getString() : I18n.get("epicvanguard.ui.warrior_skill_tree_screen.56");
         int currentXp = warrior != null ? warrior.getWarriorExperience() : 0;
         int nextXp = WarriorCompanionEntity.getXpForNextLevel(companionLevel);

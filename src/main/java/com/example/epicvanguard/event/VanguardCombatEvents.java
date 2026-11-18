@@ -78,11 +78,16 @@ public class VanguardCombatEvents {
                 attacker = event.getSource().getDirectEntity();
             }
 
+            if (victim instanceof Player || victim instanceof WarriorCompanionEntity) return;
+            boolean warriorKill = attacker instanceof WarriorCompanionEntity;
+            boolean warriorAssist = victim.getLastHurtByMob() instanceof WarriorCompanionEntity;
+            if (!warriorKill && !warriorAssist && !(attacker instanceof Player)) return;
+
             int xp = calculateMobExperience(victim);
             if (xp <= 0) xp = 5;
 
             // 1. Golpe fatal pelo guerreiro companheiro
-            if (attacker instanceof WarriorCompanionEntity warrior && !(victim instanceof Player) && !(victim instanceof WarriorCompanionEntity)) {
+            if (attacker instanceof WarriorCompanionEntity warrior) {
                 warrior.addWarriorExperience(Math.max(15, xp * 2));
                 WarriorSpeechSystem.onKillTarget(warrior, victim);
                 if (serverLevel.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_DOMOBLOOT)) {
@@ -90,11 +95,11 @@ public class VanguardCombatEvents {
                 }
             }
             // 2. Assistência de combate pelo guerreiro (se ele infligiu dano recente ao monstro)
-            else if (victim.getLastHurtByMob() instanceof WarriorCompanionEntity assistWarrior && !(victim instanceof Player) && !(victim instanceof WarriorCompanionEntity)) {
+            else if (victim.getLastHurtByMob() instanceof WarriorCompanionEntity assistWarrior) {
                 assistWarrior.addWarriorExperience(Math.max(10, xp));
             }
             // 3. Jogador abateu monstro: companheiros recrutados próximos (raio de 24 blocos) ganham XP de combate conjunto
-            else if (attacker instanceof Player player && !(victim instanceof Player) && !(victim instanceof WarriorCompanionEntity)) {
+            else if (attacker instanceof Player player) {
                 java.util.List<WarriorCompanionEntity> nearbyCompanions = serverLevel.getEntitiesOfClass(
                         WarriorCompanionEntity.class,
                         player.getBoundingBox().inflate(24.0D),
@@ -107,19 +112,30 @@ public class VanguardCombatEvents {
         }
     }
 
+    /** LivingEntity#getExperienceReward (protegido), resolvido uma única vez. */
+    private static java.lang.reflect.Method experienceRewardMethod;
+    private static boolean experienceRewardLookupDone = false;
+
+    private static java.lang.reflect.Method getExperienceRewardMethod() {
+        if (!experienceRewardLookupDone) {
+            experienceRewardLookupDone = true;
+            try {
+                experienceRewardMethod = net.minecraftforge.fml.util.ObfuscationReflectionHelper.findMethod(
+                        LivingEntity.class, "m_213860_"); // getExperienceReward
+            } catch (Exception e) {
+                EpicVanguardMod.LOGGER.warn("Epic Vanguard: getExperienceReward not found, using XP estimates", e);
+            }
+        }
+        return experienceRewardMethod;
+    }
+
     private static int calculateMobExperience(LivingEntity entity) {
         if (entity instanceof net.minecraft.world.entity.Mob mob) {
-            try {
-                java.lang.reflect.Method m = net.minecraftforge.fml.util.ObfuscationReflectionHelper.findMethod(
-                        net.minecraft.world.entity.Mob.class, "m_213860_"); // getExperienceReward
-                m.setAccessible(true);
-                return (int) m.invoke(mob);
-            } catch (Exception ignored) {
+            java.lang.reflect.Method m = getExperienceRewardMethod();
+            if (m != null) {
                 try {
-                    java.lang.reflect.Method m = net.minecraft.world.entity.Mob.class.getDeclaredMethod("getExperienceReward");
-                    m.setAccessible(true);
                     return (int) m.invoke(mob);
-                } catch (Exception ignored2) {
+                } catch (Exception ignored) {
                 }
             }
 

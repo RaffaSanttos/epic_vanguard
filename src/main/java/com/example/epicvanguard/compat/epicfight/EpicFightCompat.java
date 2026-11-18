@@ -6,7 +6,8 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.entity.EntityAttributeModificationEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import yesman.epicfight.api.client.forgeevent.PatchedRenderersEvent;
@@ -18,8 +19,34 @@ import yesman.epicfight.world.capabilities.provider.EntityPatchProvider;
 
 import java.util.List;
 
-@Mod.EventBusSubscriber(modid = EpicVanguardMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
+/**
+ * Integração com o Epic Fight. NÃO usa {@code @Mod.EventBusSubscriber}: o Forge registraria a classe
+ * mesmo sem o Epic Fight instalado e o carregamento quebraria (NoClassDefFoundError nos tipos do Epic Fight).
+ * É registrada manualmente por {@link #register(IEventBus)}, só quando {@code ModList.isLoaded("epicfight")}.
+ * Fora deste pacote, só chame métodos daqui depois de checar {@link EpicVanguardMod#isEpicFightLoaded()}.
+ */
 public class EpicFightCompat {
+
+    /** Registra os listeners do Epic Fight no barramento do mod. Só chamar com o Epic Fight carregado. */
+    public static void register(IEventBus modEventBus) {
+        modEventBus.register(EpicFightCompat.class);
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            modEventBus.register(ClientEpicFightEvents.class);
+        }
+    }
+
+    /** Armas do Epic Fight (WeaponItem ou item com capability de arma). */
+    public static boolean isEpicFightWeapon(net.minecraft.world.item.ItemStack stack) {
+        try {
+            if (stack.getItem() instanceof yesman.epicfight.world.item.WeaponItem) {
+                return true;
+            }
+            var cap = yesman.epicfight.world.capabilities.EpicFightCapabilities.getItemStackCapability(stack);
+            return cap != null && !cap.isEmpty() && cap.getWeaponCategory() != null;
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
 
     private static List<net.minecraft.world.entity.EntityType<?>> getCompanionTypes() {
         return List.of(
@@ -54,7 +81,6 @@ public class EpicFightCompat {
     }
 
     public static void playDodgeRollAnimation(com.example.epicvanguard.entity.WarriorCompanionEntity entity) {
-        if (!net.minecraftforge.fml.ModList.get().isLoaded("epicfight")) return;
         try {
             yesman.epicfight.world.capabilities.entitypatch.MobPatch<?> patch =
                     yesman.epicfight.world.capabilities.EpicFightCapabilities.getEntityPatch(entity, yesman.epicfight.world.capabilities.entitypatch.MobPatch.class);
@@ -65,7 +91,6 @@ public class EpicFightCompat {
     }
 
     @OnlyIn(Dist.CLIENT)
-    @Mod.EventBusSubscriber(modid = EpicVanguardMod.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
     public static class ClientEpicFightEvents {
 
         @SubscribeEvent

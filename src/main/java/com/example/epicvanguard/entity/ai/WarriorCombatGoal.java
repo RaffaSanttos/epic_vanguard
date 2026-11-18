@@ -18,7 +18,7 @@ public class WarriorCombatGoal extends MeleeAttackGoal {
 
     @Override
     public boolean canUse() {
-        if (warrior.isTalking() || warrior.isInventoryOpen() || warrior.isInStaminaRegen() || warrior.isDuelMode() || warrior.isEmergencyRetreating() || warrior.isLowHealth()) return false;
+        if (warrior.isTalking() || warrior.isInventoryOpen() || warrior.isInStaminaRegen() || warrior.isDuelMode() || warrior.shouldAvoidCombat()) return false;
         if (warrior.isPrisoner()) return false;
 
         if (!warrior.isRecruited()) {
@@ -53,7 +53,7 @@ public class WarriorCombatGoal extends MeleeAttackGoal {
 
     @Override
     public boolean canContinueToUse() {
-        if (warrior.isEmergencyRetreating() || warrior.isLowHealth()) return false;
+        if (warrior.shouldAvoidCombat()) return false;
         if (warrior.isPrisoner()) return false;
         if (warrior.isRecruited()) {
             if (warrior.getCombatMode() == 2) {

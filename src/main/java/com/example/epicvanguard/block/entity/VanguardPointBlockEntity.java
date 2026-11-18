@@ -49,6 +49,10 @@ public class VanguardPointBlockEntity extends BlockEntity implements MenuProvide
 
         @Override
         protected void onContentsChanged(int slot) {
+            // Slot vazio: as moedas não pertencem mais a ninguém
+            if (getStackInSlot(0).isEmpty()) {
+                depositorUUID = null;
+            }
             setChanged();
             if (level != null && !level.isClientSide) {
                 level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
@@ -64,6 +68,8 @@ public class VanguardPointBlockEntity extends BlockEntity implements MenuProvide
     private UUID requesterUUID = null;
     private String requesterName = "";
     private long lastDayTime = -1L;
+    /** Quem depositou as moedas que estão no slot: só ele pode retirá-las, completá-las ou usá-las no edital. */
+    private UUID depositorUUID = null;
 
     protected final ContainerData dataAccess = new ContainerData() {
         @Override
@@ -125,9 +131,30 @@ public class VanguardPointBlockEntity extends BlockEntity implements MenuProvide
         return dataAccess;
     }
 
+    @Nullable
+    public UUID getDepositorUUID() {
+        return depositorUUID;
+    }
+
+    public void setDepositor(@Nullable UUID uuid) {
+        this.depositorUUID = uuid;
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+        }
+    }
+
+    /** O jogador pode mexer nas moedas do slot (vazio, são dele, ou é admin/criativo). */
+    public boolean canAccessCoins(Player player) {
+        return depositorUUID == null || depositorUUID.equals(player.getUUID())
+                || player.isCreative() || player.hasPermissions(2);
+    }
+
     public boolean canStartContract(Player player) {
         if (contractActive) return false;
-        return player.isCreative() || getStoredCoins() >= REQUIRED_COINS;
+        if (player.isCreative()) return true;
+        // Não pode usar moedas que outro jogador depositou
+        return getStoredCoins() >= REQUIRED_COINS && canAccessCoins(player);
     }
 
     public boolean startContract(Player player) {
@@ -172,9 +199,12 @@ public class VanguardPointBlockEntity extends BlockEntity implements MenuProvide
     public static void serverTick(Level level, BlockPos pos, BlockState state, VanguardPointBlockEntity entity) {
         if (!entity.contractActive) return;
 
-        // Devolve moedas excedentes presas no bloco automaticamente caso algum jogador esteja próximo
+        // Devolve moedas excedentes presas no bloco ao dono delas, se ele estiver por perto
         if (entity.getStoredCoins() > 0) {
-            Player nearbyPlayer = level.getNearestPlayer(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 8.0D, false);
+            Player nearbyPlayer = entity.depositorUUID != null ? level.getPlayerByUUID(entity.depositorUUID) : null;
+            if (nearbyPlayer != null && nearbyPlayer.distanceToSqr(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D) > 64.0D) {
+                nearbyPlayer = null;
+            }
             if (nearbyPlayer != null) {
                 int left = entity.getStoredCoins();
                 ItemStack change = entity.getItemHandler().extractItem(0, left, false);
@@ -301,6 +331,9 @@ public class VanguardPointBlockEntity extends BlockEntity implements MenuProvide
         }
         tag.putString("RequesterName", requesterName);
         tag.putLong("LastDayTime", lastDayTime);
+        if (depositorUUID != null) {
+            tag.putUUID("DepositorUUID", depositorUUID);
+        }
     }
 
     @Override
@@ -319,6 +352,7 @@ public class VanguardPointBlockEntity extends BlockEntity implements MenuProvide
         }
         requesterName = tag.getString("RequesterName");
         lastDayTime = tag.getLong("LastDayTime");
+        depositorUUID = tag.hasUUID("DepositorUUID") ? tag.getUUID("DepositorUUID") : null;
     }
 
     @Override

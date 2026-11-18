@@ -70,7 +70,7 @@ public class CompanionSavedData extends SavedData {
         public CompanionInfo(UUID companionUUID, UUID ownerUUID, String name, String dimension, BlockPos pos, int combatMode, float health, float maxHealth, int level, int specialization) {
             this.companionUUID = companionUUID;
             this.ownerUUID = ownerUUID;
-            this.name = name != null && !name.isEmpty() ? name : "Guerreiro";
+            this.name = name != null && !name.isEmpty() ? name : WarriorCompanionEntity.DEFAULT_NAME;
             this.dimension = dimension;
             this.pos = pos;
             this.combatMode = combatMode;
@@ -93,7 +93,7 @@ public class CompanionSavedData extends SavedData {
             CompoundTag tag = new CompoundTag();
             if (companionUUID != null) tag.putUUID("companion", companionUUID);
             if (ownerUUID != null) tag.putUUID("owner", ownerUUID);
-            tag.putString("name", name != null ? name : "Guerreiro");
+            tag.putString("name", name != null ? name : WarriorCompanionEntity.DEFAULT_NAME);
             tag.putString("dim", dimension != null ? dimension : "minecraft:overworld");
             tag.putLong("pos", pos != null ? pos.asLong() : 0L);
             tag.putInt("mode", combatMode);
@@ -131,6 +131,11 @@ public class CompanionSavedData extends SavedData {
     private final Map<UUID, CompanionInfo> companions = new ConcurrentHashMap<>();
     /** Companheiros que morreram: cópias antigas deles em chunks descarregados não podem "ressuscitar". */
     private final Set<UUID> retired = ConcurrentHashMap.newKeySet();
+    /**
+     * Companheiros dispensados enquanto estavam em chunk descarregado: quando a entidade carregar,
+     * ela ainda está marcada como recrutada no NBT e precisa ser liberada (senão voltaria ao registro).
+     */
+    private final Set<UUID> dismissed = ConcurrentHashMap.newKeySet();
     private FriendlyFireMode globalFriendlyFireMode = FriendlyFireMode.DISABLED;
 
     public static CompanionSavedData get(MinecraftServer server) {
@@ -140,6 +145,8 @@ public class CompanionSavedData extends SavedData {
 
     public void registerOrUpdate(UUID companionUUID, UUID ownerUUID, String name, String dimension, BlockPos pos, int mode, float health, float maxHealth, int level, int specialization, CompoundTag fullNbt) {
         if (companionUUID == null) return;
+        // Foi recrutado de novo: não está mais dispensado
+        dismissed.remove(companionUUID);
         CompanionInfo info = companions.get(companionUUID);
         if (info == null) {
             info = new CompanionInfo(companionUUID, ownerUUID, name, dimension, pos, mode, health, maxHealth, level, specialization);
@@ -218,6 +225,25 @@ public class CompanionSavedData extends SavedData {
         setDirty();
     }
 
+    /** Remove o companheiro do registro e marca para liberar a entidade quando ela carregar. */
+    public void dismiss(UUID companionUUID) {
+        if (companionUUID == null) return;
+        companions.remove(companionUUID);
+        dismissed.add(companionUUID);
+        setDirty();
+    }
+
+    public boolean isDismissed(UUID companionUUID) {
+        return companionUUID != null && dismissed.contains(companionUUID);
+    }
+
+    /** A entidade dispensada já foi liberada: não precisa mais ser lembrada. */
+    public void clearDismissed(UUID companionUUID) {
+        if (companionUUID != null && dismissed.remove(companionUUID)) {
+            setDirty();
+        }
+    }
+
     /** Remove o companheiro e marca o UUID como morto, para descartar cópias antigas que acordarem depois. */
     public void retire(UUID companionUUID) {
         if (companionUUID == null) return;
@@ -286,6 +312,11 @@ public class CompanionSavedData extends SavedData {
             data.retired.add(net.minecraft.nbt.NbtUtils.loadUUID(retiredList.get(i)));
         }
 
+        ListTag dismissedList = tag.getList("Dismissed", Tag.TAG_INT_ARRAY);
+        for (int i = 0; i < dismissedList.size(); i++) {
+            data.dismissed.add(net.minecraft.nbt.NbtUtils.loadUUID(dismissedList.get(i)));
+        }
+
         if (tag.contains("GlobalFriendlyFire", Tag.TAG_STRING)) {
             try {
                 data.globalFriendlyFireMode = FriendlyFireMode.valueOf(tag.getString("GlobalFriendlyFire"));
@@ -316,6 +347,11 @@ public class CompanionSavedData extends SavedData {
             retiredList.add(net.minecraft.nbt.NbtUtils.createUUID(uuid));
         }
         pCompoundTag.put("Retired", retiredList);
+        ListTag dismissedList = new ListTag();
+        for (UUID uuid : dismissed) {
+            dismissedList.add(net.minecraft.nbt.NbtUtils.createUUID(uuid));
+        }
+        pCompoundTag.put("Dismissed", dismissedList);
         pCompoundTag.putString("GlobalFriendlyFire", getGlobalFriendlyFireMode().name());
 
         return pCompoundTag;

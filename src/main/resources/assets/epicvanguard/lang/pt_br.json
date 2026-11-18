@@ -147,6 +147,7 @@
   "epicvanguard.text.vanguard_command.38": "§cVocê possui mais de um companheiro! Especifique qual deseja renomear:\n§e/companhias renomear <alvo> <novo_nome> §7(Ex: §f/companhias renomear #1 %s§7)",
   "epicvanguard.text.vanguard_command.39": "§cO novo nome não pode ser vazio.",
   "epicvanguard.text.vanguard_command.40": "§6✦ [Vanguarda] §aO companheiro §e%s §afoi renomeado para §e§l%s§a com sucesso!",
+  "epicvanguard.text.vanguard_command.no_permission": "§cSó operadores podem mudar o fogo amigo (ele vale para todos os jogadores).",
   "epicvanguard.text.warrior_companion_entity.1": "§6✦ [Vanguarda] §e§l%s §asubiu para o §e§lNível %s§a! Seus atributos aumentaram!",
   "epicvanguard.text.warrior_companion_entity.2": "§c⚔ [Berserker] %s rugiu em fúria! O Grito Feroz de Sangue ecoa! (Força I concedida)",
   "epicvanguard.text.warrior_companion_entity.3": "§9🛡 [Guardião] %s bateu seu escudo! O Rugido do Bastião ecoa! (Monstros provocados & Resistência I)",

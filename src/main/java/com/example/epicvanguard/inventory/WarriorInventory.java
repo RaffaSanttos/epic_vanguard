@@ -17,7 +17,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ShieldItem;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.TridentItem;
-import net.minecraftforge.fml.ModList;
+import com.example.epicvanguard.EpicVanguardMod;
+import com.example.epicvanguard.compat.epicfight.EpicFightCompat;
 
 /**
  * Inventário do Guerreiro Companheiro (Epic Vanguard).
@@ -74,17 +75,9 @@ public class WarriorInventory extends SimpleContainer {
             return true;
         }
 
-        // Compatibilidade com armas do Epic Fight
-        if (ModList.get().isLoaded("epicfight")) {
-            try {
-                if (item instanceof yesman.epicfight.world.item.WeaponItem) {
-                    return true;
-                }
-                var cap = yesman.epicfight.world.capabilities.EpicFightCapabilities.getItemStackCapability(stack);
-                if (cap != null && !cap.isEmpty() && cap.getWeaponCategory() != null) {
-                    return true;
-                }
-            } catch (Throwable ignored) {}
+        // Compatibilidade com armas do Epic Fight (classe isolada: só carrega se o mod estiver presente)
+        if (EpicVanguardMod.isEpicFightLoaded() && EpicFightCompat.isEpicFightWeapon(stack)) {
+            return true;
         }
 
         // Itens que possuem dano de ataque (ex: armas de outros mods)

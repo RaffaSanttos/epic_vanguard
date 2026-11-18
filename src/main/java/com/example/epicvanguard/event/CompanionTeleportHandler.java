@@ -168,7 +168,22 @@ public class CompanionTeleportHandler {
                 }
             }
 
+            // Dispensado enquanto o chunk estava descarregado: libera agora, sem voltar ao registro
+            if (data.isDismissed(uuid)) {
+                if (warrior.isRecruited()) {
+                    warrior.setRecruited(false);
+                    warrior.setOwnerUUID(null);
+                }
+                data.clearDismissed(uuid);
+                return;
+            }
+
             if (warrior.isRecruited() && warrior.isAlive()) {
+                // O nome no registro é o oficial (pode ter sido renomeado por comando com a entidade descarregada)
+                CompanionSavedData.CompanionInfo info = data.getCompanion(uuid);
+                if (info != null && info.name != null && !info.name.isEmpty() && !info.name.equals(warrior.getWarriorName())) {
+                    warrior.setWarriorName(info.name);
+                }
                 warrior.updateSavedData();
             }
         }
@@ -204,11 +219,8 @@ public class CompanionTeleportHandler {
 
                 warrior.stopRiding();
 
-                if (warrior.level() != targetLevel) {
-                    warrior.teleportTo(targetLevel, player.getX(), player.getY(), player.getZ(), null, warrior.getYRot(), warrior.getXRot());
-                }
-
-                warrior.safeTeleportTo(player);
+                // Entre dimensões a entidade é recriada: segue com a nova
+                warrior = warrior.safeTeleportTo(player);
                 warrior.setTarget(null);
                 warrior.getNavigation().stop();
                 warrior.setDeltaMovement(0.0D, 0.0D, 0.0D);

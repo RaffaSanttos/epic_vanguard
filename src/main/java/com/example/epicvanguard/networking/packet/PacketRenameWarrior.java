@@ -47,7 +47,7 @@ public class PacketRenameWarrior {
 
             String clean = newName.replaceAll("§[0-9a-fk-or]", "").trim();
             if (clean.isEmpty()) {
-                clean = "Guerreiro";
+                clean = WarriorCompanionEntity.DEFAULT_NAME;
             }
             if (clean.length() > 20) {
                 clean = clean.substring(0, 20);

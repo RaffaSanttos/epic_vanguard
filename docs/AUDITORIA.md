@@ -36,7 +36,7 @@ As validações ficam em [`networking/PacketGuards.java`](../src/main/java/com/e
 
 ## 4. Dependências e licença
 
-- ✅ `epicfight` está como opcional no `mods.toml` e o código checa `ModList.isLoaded("epicfight")`.
+- ✅ `epicfight` está como opcional no `mods.toml`. **Corrigido (18/11/2026):** `EpicFightCompat` tinha `@Mod.EventBusSubscriber` com tipos do Epic Fight nos métodos, o que derrubaria o carregamento sem o Epic Fight. Agora é registrada à mão em `EpicVanguardMod` só se `isEpicFightLoaded()`; o código de fora do pacote `compat` só chama a integração depois dessa checagem.
 - ⏳ `libs/epic-fight-20.14.17-mc1.20.1-forge.jar` está versionado no git. Conferir se a licença do Epic Fight permite redistribuir o jar; o ideal é baixar via CurseMaven/Modrinth Maven no `build.gradle`:
   ```groovy
   repositories { maven { url "https://cursemaven.com" } }
@@ -65,8 +65,34 @@ As validações ficam em [`networking/PacketGuards.java`](../src/main/java/com/e
 ## 7. Testes e documentação
 
 - ⏳ Não há testes. Começar por lógica pura: custo de recrutamento, curva de XP/nível, `FriendlyFireMode.fromString`.
+- ⏳ **Plano registrado (17/11/2026), a fazer depois:**
+  1. **Testes automáticos com GameTest do Forge** (`@GameTestHolder` + `./gradlew runGameTestServer`). Rodam dentro de um mundo de verdade, sem abrir o jogo, e podem entrar no CI.
+  2. **Smoke test com `./gradlew runServer`**: subir um servidor dedicado e ler o log procurando erro de carregamento, registro ou classe de cliente carregada no servidor.
+  - Casos GameTest prioritários: jogador que não é dono não comanda nem abre o inventário do guerreiro (`PacketGuards`); cópia antiga (geração menor) é descartada ao carregar; guerreiro morto (`Retired`) não reaparece; toda chave `epicvanguard.*` usada no código existe nos dois idiomas.
 - ⏳ Não há README. Sugestão: o que o mod faz, como recrutar, modos de combate, comandos `/vanguard`, dependências, como compilar.
 - 💡 Avisos de compilação `ResourceLocation(String,String)` deprecado: normal na 1.20.1; só precisa trocar por `ResourceLocation.fromNamespaceAndPath` ao migrar para 1.21.
+
+## 8. Segunda revisão (18/11/2026)
+
+| Problema | Correção |
+|---|---|
+| `/fogoamigo <modo>` sem permissão: qualquer jogador mudava o modo global | Exige operador (`hasPermission(2)`) |
+| Duplicação na morte: o `Mob` dropava o equipamento (8,5% por slot ao morrer para jogador) e depois o inventário inteiro | Chance de drop dos slots de equipamento zerada no construtor |
+| Vanguard Point quebrado não dropava nada | `loot_tables/blocks/vanguard_point.json` |
+| Dispensar companheiro em chunk descarregado não valia: ele voltava ao registro ao carregar | `CompanionSavedData.dismiss` + conjunto `Dismissed` no save; a entidade é liberada ao entrar no mundo |
+| Renomear por comando com o guerreiro descarregado: o nome antigo voltava | Ao entrar no mundo, o nome do registro prevalece |
+| `findOrLoadCompanion` carregava chunk na hora (lag) e quase nunca achava a entidade (carregamento assíncrono) | Só procura entidades carregadas; senão usa o snapshot (a geração descarta a cópia antiga) |
+| Vida baixa sem comida: guerreiro ficava passivo para sempre (não regenera) | `shouldAvoidCombat()` só evita combate se houver consumível; regeneração lenta fora de combate (1 HP / 3 s) |
+| Escudo reduzia queda, lava, fogo, veneno; Duelista esquivava de queda e lava | Só vale para dano com entidade causadora e que não ignora escudo |
+| Teleporte entre dimensões continuava usando a entidade removida e tentava teleportar duas vezes | `moveToLevel` devolve a entidade nova; `safeTeleportTo` devolve quem está ao lado do alvo |
+| Recuo de emergência lia a ameaça depois de limpar o alvo | Ameaça lida antes |
+| Duelo recrutava qualquer jogador que desse o golpe; `DuelGoal` não era usado | Só o adversário do duelo recruta; `DuelGoal` removido |
+| Moedas do Vanguard Point eram de todos (retirar, usar, troco para o jogador mais próximo) | Dono do depósito (`DepositorUUID`): só ele retira, completa, usa no edital e recebe o troco |
+| Nome padrão "Guerreiro" no jogo em inglês | `WarriorCompanionEntity.DEFAULT_NAME = "Warrior"`; "Guerreiro" antigo ainda é reconhecido |
+| `/grimal` conflitava com o comando do outro mod | Removido |
+| Reflection de XP a cada morte de qualquer mob | `Method` cacheado e XP só calculado quando um guerreiro/jogador está envolvido |
+
+Verificado: `gradlew compileJava` sem erros. **Não testado em jogo**, inclusive o carregamento sem o Epic Fight.
 
 ---
 

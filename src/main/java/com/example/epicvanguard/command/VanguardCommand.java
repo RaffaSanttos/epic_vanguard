@@ -17,12 +17,9 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.level.TicketType;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.chunk.ChunkStatus;
 
 import java.util.List;
 import java.util.UUID;
@@ -60,9 +57,6 @@ public class VanguardCommand {
         // Registra comando com o nome do Mod
         dispatcher.register(buildRootCommand("vanguard"));
         dispatcher.register(buildRootCommand("epicvanguard"));
-
-        // Compatibilidade retroativa
-        dispatcher.register(buildRootCommand("grimal"));
 
         // Atalhos diretos para comando de Fogo Amigo
         dispatcher.register(Commands.literal("fogoamigo")
@@ -163,6 +157,11 @@ public class VanguardCommand {
     }
 
     private static int setFriendlyFire(CommandSourceStack source, String modoStr) {
+        // O modo de fogo amigo é global (vale para todos os jogadores): só operadores podem alterar
+        if (!source.hasPermission(2)) {
+            source.sendFailure(Component.translatable("epicvanguard.text.vanguard_command.no_permission"));
+            return 0;
+        }
         CompanionSavedData data = CompanionSavedData.get(source.getServer());
         CompanionSavedData.FriendlyFireMode mode = CompanionSavedData.FriendlyFireMode.fromString(modoStr);
         data.setGlobalFriendlyFireMode(mode);
@@ -349,10 +348,7 @@ public class VanguardCommand {
             entity = com.example.epicvanguard.event.CompanionTeleportHandler.restoreCompanionAtPlayer(player, (ServerLevel) player.level(), info);
         }
         if (entity != null) {
-            if (entity.level() != player.level()) {
-                entity.teleportTo((ServerLevel) player.level(), player.getX(), player.getY(), player.getZ(), null, entity.getYRot(), entity.getXRot());
-            }
-            entity.safeTeleportTo(player);
+            entity = entity.safeTeleportTo(player);
             player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.26", entity.getWarriorName()));
             return 1;
         } else {
@@ -445,10 +441,11 @@ public class VanguardCommand {
         if (live != null) {
             live.setRecruited(false);
             live.setOwnerUUID(null);
-            live.setCustomName(Component.literal("§7" + live.getWarriorName()));
+            data.unregister(info.companionUUID);
+        } else {
+            // Entidade em chunk descarregado: será liberada quando carregar (CompanionTeleportHandler)
+            data.dismiss(info.companionUUID);
         }
-
-        data.unregister(info.companionUUID);
         player.sendSystemMessage(Component.translatable("epicvanguard.text.vanguard_command.32", info.name));
         return 1;
     }
@@ -504,9 +501,6 @@ public class VanguardCommand {
                 entity = com.example.epicvanguard.event.CompanionTeleportHandler.restoreCompanionAtPlayer(player, (ServerLevel) player.level(), info);
             }
             if (entity != null) {
-                if (entity.level() != player.level()) {
-                    entity.teleportTo((ServerLevel) player.level(), player.getX(), player.getY(), player.getZ(), null, entity.getYRot(), entity.getXRot());
-                }
                 entity.safeTeleportTo(player);
                 count++;
             }
@@ -527,29 +521,13 @@ public class VanguardCommand {
         return null;
     }
 
+    /**
+     * Só procura entidades já carregadas. Carregar o chunk na hora travava o servidor e não adiantava:
+     * desde a 1.17 as entidades carregam depois do chunk, de forma assíncrona. Quem chama cai no
+     * snapshot (restoreCompanionAtPlayer), e a cópia antiga é descartada pela geração ao carregar.
+     */
     private static WarriorCompanionEntity findOrLoadCompanion(net.minecraft.server.MinecraftServer server, CompanionSavedData.CompanionInfo info) {
-        WarriorCompanionEntity live = findLoadedCompanion(server, info.companionUUID);
-        if (live != null) return live;
-
-        for (ServerLevel level : server.getAllLevels()) {
-            if (level.dimension().location().toString().equals(info.dimension)) {
-                if (info.pos != null) {
-                    ChunkPos cpos = new ChunkPos(info.pos);
-                    try {
-                        level.getChunkSource().addRegionTicket(TicketType.FORCED, cpos, 2, cpos);
-                        level.getChunk(cpos.x, cpos.z, ChunkStatus.FULL, true);
-
-                        Entity e = level.getEntity(info.companionUUID);
-                        if (e instanceof WarriorCompanionEntity warrior && warrior.isAlive()) {
-                            return warrior;
-                        }
-                    } finally {
-                        level.getChunkSource().removeRegionTicket(TicketType.FORCED, cpos, 2, cpos);
-                    }
-                }
-            }
-        }
-        return null;
+        return findLoadedCompanion(server, info.companionUUID);
     }
 
     private static int renameSingleCompanion(CommandSourceStack source, String newName) {

@@ -102,6 +102,13 @@ import java.util.UUID;
 public class WarriorCompanionEntity extends PathfinderMob {
 
     public static final int SKIN_COUNT = 3;
+    /** Nome usado quando não há nenhum (fallback). */
+    public static final String DEFAULT_NAME = "Warrior";
+
+    /** Nome padrão antigo ou atual: guerreiros sem recrutar com esse nome ganham um nome sorteado. */
+    public static boolean isDefaultName(String name) {
+        return name == null || name.isEmpty() || "Guerreiro".equalsIgnoreCase(name) || DEFAULT_NAME.equalsIgnoreCase(name);
+    }
     public static final String[] WARRIOR_NAMES = {
             "Aldric", "Arthur", "Baldwin", "Bram", "Caelan", "Cedric", "Dante", "Dorian",
             "Elric", "Eudes", "Faolan", "Finnian", "Gareth", "Gawain", "Hadwin", "Hector",
@@ -206,13 +213,26 @@ public class WarriorCompanionEntity extends PathfinderMob {
         return this.emergencyRetreatCooldown > 0;
     }
 
+    /** Tem comida/poção que serve para se curar em emergência. */
+    public boolean hasEmergencyConsumable() {
+        return WarriorHealingHelper.findBestConsumableSlot(this, true) != -1;
+    }
+
+    /**
+     * Deve evitar combate: recuando, ou com vida baixa e algo para se curar.
+     * Sem nada para comer ele luta mesmo com vida baixa; antes ficava passivo para sempre.
+     */
+    public boolean shouldAvoidCombat() {
+        return this.isEmergencyRetreating() || (this.isLowHealth() && this.hasEmergencyConsumable());
+    }
+
     public void setEmergencyRetreatCooldown(int ticks) {
         this.emergencyRetreatCooldown = ticks;
     }
 
     @Override
     public void setTarget(@javax.annotation.Nullable LivingEntity target) {
-        if (this.isEmergencyRetreating() || this.isLowHealth()) {
+        if (target != null && this.shouldAvoidCombat()) {
             super.setTarget(null);
             return;
         }
@@ -435,6 +455,12 @@ public class WarriorCompanionEntity extends PathfinderMob {
             groundNav.setCanPassDoors(true);
         }
 
+        // Os slots de equipamento só espelham o WarriorInventory, que é dropado inteiro na morte.
+        // Sem zerar a chance de drop do Mob, armadura/arma podiam cair duas vezes (duplicação).
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
+            this.setDropChance(slot, 0.0F);
+        }
+
         if (!pLevel.isClientSide && this.entityData.get(WARRIOR_NAME).isEmpty()) {
             String name = WARRIOR_NAMES[this.random.nextInt(WARRIOR_NAMES.length)];
             this.setWarriorName(name);
@@ -594,12 +620,12 @@ public class WarriorCompanionEntity extends PathfinderMob {
         if (synched != null && !synched.isEmpty()) {
             return synched;
         }
-        return "Guerreiro";
+        return DEFAULT_NAME;
     }
 
     public void setWarriorName(String name) {
         if (name == null || name.trim().isEmpty()) {
-            name = "Guerreiro";
+            name = DEFAULT_NAME;
         }
         String clean = name.replaceAll("§[0-9a-fk-or]", "").trim();
         if (clean.length() > 20) {
@@ -1037,7 +1063,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
     @Override
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor pLevel, DifficultyInstance pDifficulty, MobSpawnType pReason, @Nullable SpawnGroupData pSpawnData, @Nullable CompoundTag pDataTag) {
         SpawnGroupData data = super.finalizeSpawn(pLevel, pDifficulty, pReason, pSpawnData, pDataTag);
-        if (this.entityData.get(WARRIOR_NAME).isEmpty() || "Guerreiro".equals(this.entityData.get(WARRIOR_NAME))) {
+        if (isDefaultName(this.entityData.get(WARRIOR_NAME))) {
             String name = WARRIOR_NAMES[this.random.nextInt(WARRIOR_NAMES.length)];
             this.setWarriorName(name);
             this.setSkinId(this.random.nextInt(SKIN_COUNT));
@@ -1190,6 +1216,14 @@ public class WarriorCompanionEntity extends PathfinderMob {
                 if (triggerSpeechCooldowns[i] > 0) {
                     triggerSpeechCooldowns[i]--;
                 }
+            }
+
+            // Regeneração natural lenta fora de combate (1 HP a cada 3 s, após 5 s sem levar dano)
+            if (this.isAlive() && !this.isPrisoner() && this.getHealth() < this.getMaxHealth()
+                    && this.tickCount % 60 == 0 && !this.isFighting()
+                    && (this.tickCount - this.getLastHurtByMobTimestamp()) > 100
+                    && this.hurtTime == 0) {
+                this.heal(1.0F);
             }
 
             // Sync Warrior Inventory equipment to entity equipment slots for rendering
@@ -1365,7 +1399,8 @@ public class WarriorCompanionEntity extends PathfinderMob {
         pAmount = WarriorCombatHelper.applyShieldBlock(this, pSource, pAmount);
 
         // Duel Mode mechanic: If damage would drop HP to <= 0 in duel
-        if (isDuelMode()) {
+        // Duelo: só o adversário do duelo pode vencer e recrutar
+        if (isDuelMode() && this.duelTarget instanceof Player duelist && pSource.getEntity() == duelist) {
             if (this.getHealth() - pAmount <= 1.0F) {
                 this.setHealth(1.0F);
                 this.setDuelMode(false);
@@ -1373,12 +1408,10 @@ public class WarriorCompanionEntity extends PathfinderMob {
                 this.duelTarget = null;
                 this.setRecruited(true);
 
-                if (pSource.getEntity() instanceof Player player) {
-                    this.setOwnerUUID(player.getUUID());
-                    player.displayClientMessage(
-                            Component.translatable("epicvanguard.text.warrior_companion_entity.6", this.getWarriorName()),
-                            false);
-                }
+                this.setOwnerUUID(duelist.getUUID());
+                duelist.displayClientMessage(
+                        Component.translatable("epicvanguard.text.warrior_companion_entity.6", this.getWarriorName()),
+                        false);
 
                 if (this.level() instanceof ServerLevel serverLevel) {
                     serverLevel.sendParticles(ParticleTypes.TOTEM_OF_UNDYING, this.getX(), this.getY() + 1.0D, this.getZ(),
@@ -1662,7 +1695,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
         } else {
             setRecruited(false);
         }
-        if (!this.isRecruited() && ("Guerreiro".equalsIgnoreCase(this.entityData.get(WARRIOR_NAME)) || this.entityData.get(WARRIOR_NAME).isEmpty())) {
+        if (!this.isRecruited() && isDefaultName(this.entityData.get(WARRIOR_NAME))) {
             String name = WARRIOR_NAMES[this.random.nextInt(WARRIOR_NAMES.length)];
             this.setWarriorName(name);
         }
@@ -1731,24 +1764,51 @@ public class WarriorCompanionEntity extends PathfinderMob {
     }
 
     // ── Intelligent Safe Teleport ─────────────────────────────────────────────
-    public void safeTeleportTo(Entity target) {
-        if (target == null) return;
+    /**
+     * Move o guerreiro para outra dimensão, como o {@code Entity#teleportTo(ServerLevel, ...)} do vanilla,
+     * mas devolve a entidade nova. Quando muda de dimensão, {@code this} é removido e não deve mais ser usado.
+     */
+    public WarriorCompanionEntity moveToLevel(ServerLevel targetLevel, double x, double y, double z) {
+        if (this.level() == targetLevel) {
+            this.teleportTo(x, y, z);
+            return this;
+        }
+        if (this.isRemoved()) return this;
+        this.unRide();
+        Entity created = this.getType().create(targetLevel);
+        if (!(created instanceof WarriorCompanionEntity copy)) return this;
+        copy.restoreFrom(this);
+        copy.moveTo(x, y, z, this.getYRot(), this.getXRot());
+        copy.setYHeadRot(this.getYRot());
+        copy.setDeltaMovement(Vec3.ZERO);
+        this.setRemoved(Entity.RemovalReason.CHANGED_DIMENSION);
+        targetLevel.addDuringTeleport(copy);
+        return copy;
+    }
 
-        // Se estiver em outra dimensão, transfere primeiro
+    /**
+     * Teleporta com segurança para perto do alvo (inclusive entre dimensões).
+     * @return a entidade que está agora ao lado do alvo (é uma nova se mudou de dimensão)
+     */
+    public WarriorCompanionEntity safeTeleportTo(Entity target) {
+        if (target == null) return this;
+
+        // Outra dimensão: transfere e continua o teleporte seguro na entidade nova
         if (this.level() != target.level() && target.level() instanceof ServerLevel targetLevel) {
-            this.teleportTo(targetLevel, target.getX(), target.getY(), target.getZ(), null, this.getYRot(), this.getXRot());
+            WarriorCompanionEntity moved = this.moveToLevel(targetLevel, target.getX(), target.getY(), target.getZ());
+            return moved == this ? this : moved.safeTeleportTo(target);
         }
 
         // 1. Proteção contra o Void: se o alvo estiver no void ou abaixo da altura mínima, NÃO teletransporta
         if (target.getY() < target.level().getMinBuildHeight()) {
-            return;
+            return this;
         }
 
         // 2. Proteção contra Voo / Elytra:
         // Se o jogador estiver voando ativamente ou planando com Elytra, aguarda
         if (target instanceof Player player) {
             if (player.isFallFlying() || player.getAbilities().flying) {
-                return;
+                return this;
             }
         }
 
@@ -1762,7 +1822,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
                     BlockPos candidate = targetPos.offset(dx, dy, dz);
                     if (isSafeTeleportBlock(candidate)) {
                         doTeleport(candidate.getX() + 0.5D, candidate.getY(), candidate.getZ() + 0.5D);
-                        return;
+                        return this;
                     }
                 }
             }
@@ -1771,7 +1831,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
         // 4. Fallback: se o bloco onde o alvo está pisando for seguro
         if (isSafeTeleportBlock(targetPos)) {
             doTeleport(target.getX(), target.getY(), target.getZ());
-            return;
+            return this;
         }
 
         // 5. Fallback secundário: se o jogador estiver em bloco especial (ex: Waystone, slab),
@@ -1779,6 +1839,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
         if (target.getY() >= target.level().getMinBuildHeight() && !target.isInLava()) {
             doTeleport(target.getX(), target.getY(), target.getZ());
         }
+        return this;
     }
 
     public void safeTeleportTo(BlockPos targetPos) {

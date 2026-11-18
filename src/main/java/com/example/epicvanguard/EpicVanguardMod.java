@@ -9,6 +9,7 @@ import com.example.epicvanguard.init.ModMenus;
 import com.example.epicvanguard.init.ModPoiTypes;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -33,7 +34,21 @@ public class EpicVanguardMod {
 
         modEventBus.addListener(this::commonSetup);
 
+        // Epic Fight é opcional: a integração só é registrada (e suas classes só são carregadas) se ele estiver instalado
+        if (isEpicFightLoaded()) {
+            com.example.epicvanguard.compat.epicfight.EpicFightCompat.register(modEventBus);
+        }
+
         MinecraftForge.EVENT_BUS.register(this);
+    }
+
+    private static Boolean epicFightLoaded;
+
+    public static boolean isEpicFightLoaded() {
+        if (epicFightLoaded == null) {
+            epicFightLoaded = ModList.get().isLoaded("epicfight");
+        }
+        return epicFightLoaded;
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {

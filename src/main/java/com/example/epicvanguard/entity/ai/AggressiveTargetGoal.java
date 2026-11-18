@@ -16,7 +16,7 @@ public class AggressiveTargetGoal extends NearestAttackableTargetGoal<Mob> {
 
     @Override
     public boolean canUse() {
-        if (!warrior.isRecruited() || !warrior.isTargetHostiles() || warrior.getCombatMode() == 2 || warrior.isEmergencyRetreating() || warrior.isLowHealth()) return false;
+        if (!warrior.isRecruited() || !warrior.isTargetHostiles() || warrior.getCombatMode() == 2 || warrior.shouldAvoidCombat()) return false;
         return super.canUse();
     }
 }

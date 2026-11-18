@@ -52,13 +52,13 @@ public class EmergencyRetreatAndEatGoal extends Goal {
 
     @Override
     public void start() {
-        warrior.setTarget(null);
-        warrior.setLastHurtByMob(null);
+        // Guarda a ameaça ANTES de limpar o alvo, senão a rolagem nunca foge do atacante
+        LivingEntity threat = warrior.getLastHurtByMob();
+        if (threat == null || !threat.isAlive()) threat = warrior.getTarget();
+
         warrior.clearCombatTarget();
         warrior.setEmergencyRetreatCooldown(180);
 
-        LivingEntity threat = warrior.getLastHurtByMob();
-        if (threat == null || !threat.isAlive()) threat = warrior.getTarget();
         WarriorCombatHelper.performEmergencyDodgeRoll(warrior, threat != null ? threat.position() : null);
 
         currentSlot = findBestConsumableSlot();

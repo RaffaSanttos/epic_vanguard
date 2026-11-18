@@ -48,7 +48,7 @@ public class WarriorTacticalCombatGoal extends Goal {
     @Override
     public boolean canUse() {
         if (warrior.isTalking() || warrior.isInventoryOpen() || warrior.isDuelMode() ||
-            warrior.isEmergencyRetreating() || warrior.isLowHealth() || warrior.isPrisoner()) {
+            warrior.shouldAvoidCombat() || warrior.isPrisoner()) {
             return false;
         }
 
@@ -87,7 +87,7 @@ public class WarriorTacticalCombatGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        if (warrior.isEmergencyRetreating() || warrior.isLowHealth() || warrior.isPrisoner()) {
+        if (warrior.shouldAvoidCombat() || warrior.isPrisoner()) {
             return false;
         }
         if (warrior.isRecruited() && warrior.getCombatMode() == 2) {

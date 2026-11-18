@@ -23,7 +23,7 @@ public class HuntAnimalGoal extends NearestAttackableTargetGoal<Animal> {
 
     @Override
     public boolean canUse() {
-        if (!warrior.isRecruited() || !warrior.isTargetPassives() || warrior.getCombatMode() == 2 || warrior.isEmergencyRetreating() || warrior.isLowHealth()) return false;
+        if (!warrior.isRecruited() || !warrior.isTargetPassives() || warrior.getCombatMode() == 2 || warrior.shouldAvoidCombat()) return false;
         return super.canUse();
     }
 }
