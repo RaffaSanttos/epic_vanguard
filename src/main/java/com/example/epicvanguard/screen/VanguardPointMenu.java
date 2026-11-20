@@ -99,7 +99,7 @@ public class VanguardPointMenu extends AbstractContainerMenu {
         if (be instanceof VanguardPointBlockEntity vanguardEntity) {
             return vanguardEntity;
         }
-        throw new IllegalStateException("BlockEntity na posição " + pos + " não é um VanguardPointBlockEntity!");
+        throw new IllegalStateException("BlockEntity at " + pos + " is not a VanguardPointBlockEntity!");
     }
 
     public boolean isContractActive() {

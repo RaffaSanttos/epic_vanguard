@@ -108,7 +108,7 @@
   "epicvanguard.text.vanguard_point_block_entity.1": "§6✦ [Vanguard Post] §aA new Vanguard company has arrived at the post! The %s §f%s §ais available for hire. ✦",
   "epicvanguard.text.vanguard_point_block_entity.2": "Vanguard Post",
   "epicvanguard.text.vanguard_command.1": "§6⚔ Current Friendly Fire: %s",
-  "epicvanguard.text.vanguard_command.2": "§7Available modes: §blivre §7(no damage) | §emelee §7(physical hits only) | §ctotal §7(everything hits)",
+  "epicvanguard.text.vanguard_command.2": "§7Available modes: §aoff §7(no damage) | §emelee §7(physical hits only) | §bspells §7(spells only) | §call §7(everything hits)",
   "epicvanguard.text.vanguard_command.3": "§a⚔ Friendly Fire changed globally to: %s",
   "epicvanguard.text.vanguard_command.4": "§cOnly players can run this command.",
   "epicvanguard.text.vanguard_command.5": "§e✦ You haven't hired any companions in this world yet.",
@@ -144,7 +144,7 @@
   "epicvanguard.text.vanguard_command.35": "§e✦ You have no companions to call.",
   "epicvanguard.text.vanguard_command.36": "§a✦ %s of %s companion(s) were teleported to you!",
   "epicvanguard.text.vanguard_command.37": "§cYou have no hired companions.",
-  "epicvanguard.text.vanguard_command.38": "§cYou have more than one companion! Specify which one to rename:\n§e/companhias renomear <target> <new_name> §7(e.g. §f/companhias renomear #1 %s§7)",
+  "epicvanguard.text.vanguard_command.38": "§cYou have more than one companion! Specify which one to rename:\n§e/companions rename <target> <new_name> §7(e.g. §f/companions rename #1 %s§7)",
   "epicvanguard.text.vanguard_command.39": "§cThe new name can't be empty.",
   "epicvanguard.text.vanguard_command.40": "§6✦ [Vanguard] §aCompanion §e%s §awas renamed to §e§l%s§a successfully!",
   "epicvanguard.text.vanguard_command.no_permission": "§cOnly operators can change the friendly fire mode (it applies to every player).",
@@ -330,6 +330,9 @@
   "epicvanguard.mode.follow": "§a Follow",
   "epicvanguard.mode.guard": "§e Guard",
   "epicvanguard.mode.stay": "§7 Stay",
+  "epicvanguard.personality.veteran": "Veteran",
+  "epicvanguard.personality.brave": "Brave",
+  "epicvanguard.personality.sentinel": "Sentinel",
   "epicvanguard.text.vanguard_command.distance": " §7(§f%s blocks away§7)",
   "epicvanguard.text.unknown": "unknown"
 }

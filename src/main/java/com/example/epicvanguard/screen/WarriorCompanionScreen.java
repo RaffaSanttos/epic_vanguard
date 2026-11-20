@@ -29,8 +29,10 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
     private static final ResourceLocation TEXTURE =
             new ResourceLocation(EpicVanguardMod.MOD_ID, "textures/gui/warrior_hud.png");
 
-    private static final String[] MODE_NAMES = {
-            I18n.get("epicvanguard.ui.warrior_companion_screen.1"), I18n.get("epicvanguard.ui.warrior_companion_screen.2"), I18n.get("epicvanguard.ui.warrior_companion_screen.3")
+    // Chaves dos nomes dos modos, traduzidas na hora de desenhar. Um array estático com I18n.get
+    // ficava preso no idioma ativo quando a classe carregou e não mudava ao trocar o idioma.
+    private static final String[] MODE_KEYS = {
+            "epicvanguard.ui.warrior_companion_screen.1", "epicvanguard.ui.warrior_companion_screen.2", "epicvanguard.ui.warrior_companion_screen.3"
     };
 
     private int currentMode = 0;
@@ -75,10 +77,10 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
 
         // Painel Direito: Botão 1 - Modo de Postura (Y = 37, 46x16)
         modeButton = Button.builder(
-                Component.literal(MODE_NAMES[currentMode % 3]),
+                Component.translatable(MODE_KEYS[currentMode % 3]),
                 btn -> {
                     currentMode = (currentMode + 1) % 3;
-                    btn.setMessage(Component.literal(MODE_NAMES[currentMode]));
+                    btn.setMessage(Component.translatable(MODE_KEYS[currentMode]));
                     Messages.sendToServer(new PacketWarriorCombatMode(menu.getEntityId(), currentMode));
                 })
                 .bounds(leftPos + 163, topPos + 37, 46, 16)

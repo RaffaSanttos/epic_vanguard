@@ -108,7 +108,7 @@
   "epicvanguard.text.vanguard_point_block_entity.1": "§6✦ [Posto da Vanguarda] §aUma nova companhia da Vanguarda chegou ao posto! O %s §f%s §aestá disponível para contratação. ✦",
   "epicvanguard.text.vanguard_point_block_entity.2": "Posto da Vanguarda",
   "epicvanguard.text.vanguard_command.1": "§6⚔ Fogo Amigo Atual: %s",
-  "epicvanguard.text.vanguard_command.2": "§7Modos disponíveis: §blivre §7(sem dano) | §emelee §7(apenas golpes físicos) | §ctotal §7(todos acertam)",
+  "epicvanguard.text.vanguard_command.2": "§7Modos disponíveis: §alivre §7(sem dano) | §efisico §7(apenas golpes físicos) | §bmagias §7(apenas magias) | §ctotal §7(todos acertam)",
   "epicvanguard.text.vanguard_command.3": "§a⚔ Fogo Amigo alterado globalmente para: %s",
   "epicvanguard.text.vanguard_command.4": "§cApenas jogadores podem executar este comando.",
   "epicvanguard.text.vanguard_command.5": "§e✦ Você ainda não possui nenhuma companhia contratada no mundo.",
@@ -330,6 +330,9 @@
   "epicvanguard.mode.follow": "§a Seguir",
   "epicvanguard.mode.guard": "§e Guarda",
   "epicvanguard.mode.stay": "§7 Parado",
+  "epicvanguard.personality.veteran": "Veterano",
+  "epicvanguard.personality.brave": "Audaz",
+  "epicvanguard.personality.sentinel": "Sentinela",
   "epicvanguard.text.vanguard_command.distance": " §7(§f%s blocos de distância§7)",
   "epicvanguard.text.unknown": "desconhecido"
 }

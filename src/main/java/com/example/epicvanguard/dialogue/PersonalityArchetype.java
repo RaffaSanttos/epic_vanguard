@@ -1,18 +1,16 @@
 package com.example.epicvanguard.dialogue;
 
 public enum PersonalityArchetype {
-    VETERAN(0, "veteran", "Veterano"),
-    BRAVE(1, "brave", "Audaz"),
-    SENTINEL(2, "sentinel", "Sentinela");
+    VETERAN(0, "veteran"),
+    BRAVE(1, "brave"),
+    SENTINEL(2, "sentinel");
 
     private final int id;
     private final String key;
-    private final String displayName;
 
-    PersonalityArchetype(int id, String key, String displayName) {
+    PersonalityArchetype(int id, String key) {
         this.id = id;
         this.key = key;
-        this.displayName = displayName;
     }
 
     public int getId() {
@@ -23,8 +21,9 @@ public enum PersonalityArchetype {
         return key;
     }
 
-    public String getDisplayName() {
-        return displayName;
+    /** Nome traduzível (lang: epicvanguard.personality.<key>). */
+    public net.minecraft.network.chat.Component getDisplayName() {
+        return net.minecraft.network.chat.Component.translatable("epicvanguard.personality." + key);
     }
 
     public static PersonalityArchetype byId(int id) {

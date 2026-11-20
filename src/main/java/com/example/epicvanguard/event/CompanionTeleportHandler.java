@@ -274,7 +274,7 @@ public class CompanionTeleportHandler {
             try {
                 companion.load(info.entityNbt);
             } catch (Exception e) {
-                EpicVanguardMod.LOGGER.error("Falha ao carregar NBT do companheiro: " + info.companionUUID, e);
+                EpicVanguardMod.LOGGER.error("Failed to load companion NBT: " + info.companionUUID, e);
             }
         } else {
             // Fallback para dados legados sem snapshot de NBT

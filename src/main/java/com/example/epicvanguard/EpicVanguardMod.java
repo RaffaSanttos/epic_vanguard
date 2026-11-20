@@ -52,6 +52,6 @@ public class EpicVanguardMod {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
-        LOGGER.info("Epic Vanguard inicializado com sucesso!");
+        LOGGER.info("Epic Vanguard initialized.");
     }
 }

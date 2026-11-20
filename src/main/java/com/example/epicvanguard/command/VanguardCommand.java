@@ -45,7 +45,7 @@ public class VanguardCommand {
     };
 
     private static final SuggestionProvider<CommandSourceStack> FRIENDLY_FIRE_SUGGESTIONS = (ctx, builder) ->
-            SharedSuggestionProvider.suggest(List.of("livre", "desativado", "melee", "fisico", "magias", "total", "ativado", "off", "spells", "all"), builder);
+            SharedSuggestionProvider.suggest(List.of("off", "melee", "spells", "all", "livre", "fisico", "magias", "total"), builder);
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Registra comando principal em Português
@@ -61,15 +61,15 @@ public class VanguardCommand {
         // Atalhos diretos para comando de Fogo Amigo
         dispatcher.register(Commands.literal("fogoamigo")
                 .executes(context -> getFriendlyFire(context.getSource()))
-                .then(Commands.argument("modo", StringArgumentType.word())
+                .then(Commands.argument("mode", StringArgumentType.word())
                         .suggests(FRIENDLY_FIRE_SUGGESTIONS)
-                        .executes(context -> setFriendlyFire(context.getSource(), StringArgumentType.getString(context, "modo"))))
+                        .executes(context -> setFriendlyFire(context.getSource(), StringArgumentType.getString(context, "mode"))))
         );
         dispatcher.register(Commands.literal("friendlyfire")
                 .executes(context -> getFriendlyFire(context.getSource()))
-                .then(Commands.argument("modo", StringArgumentType.word())
+                .then(Commands.argument("mode", StringArgumentType.word())
                         .suggests(FRIENDLY_FIRE_SUGGESTIONS)
-                        .executes(context -> setFriendlyFire(context.getSource(), StringArgumentType.getString(context, "modo"))))
+                        .executes(context -> setFriendlyFire(context.getSource(), StringArgumentType.getString(context, "mode"))))
         );
     }
 
@@ -87,59 +87,67 @@ public class VanguardCommand {
                 .then(Commands.literal("summon")
                         .executes(context -> summonAllCompanions(context.getSource())))
                 .then(Commands.literal("tp")
-                        .then(Commands.argument("alvo", StringArgumentType.greedyString())
+                        .then(Commands.argument("target", StringArgumentType.greedyString())
                                 .suggests(TARGET_SUGGESTIONS)
-                                .executes(context -> teleportCompanionToPlayer(context.getSource(), StringArgumentType.getString(context, "alvo")))))
+                                .executes(context -> teleportCompanionToPlayer(context.getSource(), StringArgumentType.getString(context, "target")))))
                 .then(Commands.literal("trazer")
-                        .then(Commands.argument("alvo", StringArgumentType.greedyString())
+                        .then(Commands.argument("target", StringArgumentType.greedyString())
                                 .suggests(TARGET_SUGGESTIONS)
-                                .executes(context -> teleportCompanionToPlayer(context.getSource(), StringArgumentType.getString(context, "alvo")))))
+                                .executes(context -> teleportCompanionToPlayer(context.getSource(), StringArgumentType.getString(context, "target")))))
                 .then(Commands.literal("bring")
-                        .then(Commands.argument("alvo", StringArgumentType.greedyString())
+                        .then(Commands.argument("target", StringArgumentType.greedyString())
                                 .suggests(TARGET_SUGGESTIONS)
-                                .executes(context -> teleportCompanionToPlayer(context.getSource(), StringArgumentType.getString(context, "alvo")))))
+                                .executes(context -> teleportCompanionToPlayer(context.getSource(), StringArgumentType.getString(context, "target")))))
                 .then(Commands.literal("ir")
-                        .then(Commands.argument("alvo", StringArgumentType.greedyString())
+                        .then(Commands.argument("target", StringArgumentType.greedyString())
                                 .suggests(TARGET_SUGGESTIONS)
-                                .executes(context -> teleportPlayerToCompanion(context.getSource(), StringArgumentType.getString(context, "alvo")))))
+                                .executes(context -> teleportPlayerToCompanion(context.getSource(), StringArgumentType.getString(context, "target")))))
                 .then(Commands.literal("goto")
-                        .then(Commands.argument("alvo", StringArgumentType.greedyString())
+                        .then(Commands.argument("target", StringArgumentType.greedyString())
                                 .suggests(TARGET_SUGGESTIONS)
-                                .executes(context -> teleportPlayerToCompanion(context.getSource(), StringArgumentType.getString(context, "alvo")))))
+                                .executes(context -> teleportPlayerToCompanion(context.getSource(), StringArgumentType.getString(context, "target")))))
                 .then(Commands.literal("dispensar")
-                        .then(Commands.argument("alvo", StringArgumentType.greedyString())
+                        .then(Commands.argument("target", StringArgumentType.greedyString())
                                 .suggests(TARGET_SUGGESTIONS)
-                                .executes(context -> removeCompanion(context.getSource(), StringArgumentType.getString(context, "alvo")))))
+                                .executes(context -> removeCompanion(context.getSource(), StringArgumentType.getString(context, "target")))))
                 .then(Commands.literal("remover")
-                        .then(Commands.argument("alvo", StringArgumentType.greedyString())
+                        .then(Commands.argument("target", StringArgumentType.greedyString())
                                 .suggests(TARGET_SUGGESTIONS)
-                                .executes(context -> removeCompanion(context.getSource(), StringArgumentType.getString(context, "alvo")))))
+                                .executes(context -> removeCompanion(context.getSource(), StringArgumentType.getString(context, "target")))))
+                .then(Commands.literal("dismiss")
+                        .then(Commands.argument("target", StringArgumentType.greedyString())
+                                .suggests(TARGET_SUGGESTIONS)
+                                .executes(context -> removeCompanion(context.getSource(), StringArgumentType.getString(context, "target")))))
+                .then(Commands.literal("remove")
+                        .then(Commands.argument("target", StringArgumentType.greedyString())
+                                .suggests(TARGET_SUGGESTIONS)
+                                .executes(context -> removeCompanion(context.getSource(), StringArgumentType.getString(context, "target")))))
                 .then(Commands.literal("renomear")
-                        .then(Commands.argument("alvo", StringArgumentType.string())
+                        .then(Commands.argument("target", StringArgumentType.string())
                                 .suggests(TARGET_SUGGESTIONS)
-                                .executes(context -> renameSingleCompanion(context.getSource(), StringArgumentType.getString(context, "alvo")))
-                                .then(Commands.argument("novo_nome", StringArgumentType.greedyString())
-                                        .executes(context -> renameCompanion(context.getSource(), StringArgumentType.getString(context, "alvo"), StringArgumentType.getString(context, "novo_nome"))))))
+                                .executes(context -> renameSingleCompanion(context.getSource(), StringArgumentType.getString(context, "target")))
+                                .then(Commands.argument("new_name", StringArgumentType.greedyString())
+                                        .executes(context -> renameCompanion(context.getSource(), StringArgumentType.getString(context, "target"), StringArgumentType.getString(context, "new_name"))))))
                 .then(Commands.literal("rename")
-                        .then(Commands.argument("alvo", StringArgumentType.string())
+                        .then(Commands.argument("target", StringArgumentType.string())
                                 .suggests(TARGET_SUGGESTIONS)
-                                .executes(context -> renameSingleCompanion(context.getSource(), StringArgumentType.getString(context, "alvo")))
-                                .then(Commands.argument("novo_nome", StringArgumentType.greedyString())
-                                        .executes(context -> renameCompanion(context.getSource(), StringArgumentType.getString(context, "alvo"), StringArgumentType.getString(context, "novo_nome"))))))
+                                .executes(context -> renameSingleCompanion(context.getSource(), StringArgumentType.getString(context, "target")))
+                                .then(Commands.argument("new_name", StringArgumentType.greedyString())
+                                        .executes(context -> renameCompanion(context.getSource(), StringArgumentType.getString(context, "target"), StringArgumentType.getString(context, "new_name"))))))
                 .then(Commands.literal("limpar")
                         .executes(context -> cleanInactiveCompanions(context.getSource())))
                 .then(Commands.literal("clean")
                         .executes(context -> cleanInactiveCompanions(context.getSource())))
                 .then(Commands.literal("fogoamigo")
                         .executes(context -> getFriendlyFire(context.getSource()))
-                        .then(Commands.argument("modo", StringArgumentType.word())
+                        .then(Commands.argument("mode", StringArgumentType.word())
                                 .suggests(FRIENDLY_FIRE_SUGGESTIONS)
-                                .executes(context -> setFriendlyFire(context.getSource(), StringArgumentType.getString(context, "modo")))))
+                                .executes(context -> setFriendlyFire(context.getSource(), StringArgumentType.getString(context, "mode")))))
                 .then(Commands.literal("friendlyfire")
                         .executes(context -> getFriendlyFire(context.getSource()))
-                        .then(Commands.argument("modo", StringArgumentType.word())
+                        .then(Commands.argument("mode", StringArgumentType.word())
                                 .suggests(FRIENDLY_FIRE_SUGGESTIONS)
-                                .executes(context -> setFriendlyFire(context.getSource(), StringArgumentType.getString(context, "modo")))));
+                                .executes(context -> setFriendlyFire(context.getSource(), StringArgumentType.getString(context, "mode")))));
     }
 
     public static boolean hasAdminAccess(CommandSourceStack source) {
@@ -236,25 +244,25 @@ public class VanguardCommand {
             if (info.companionUUID != null) {
                 String uuidStr = info.companionUUID.toString();
 
-                String tpBringCmd = "/companhias tp " + uuidStr;
+                String tpBringCmd = "/companions bring " + uuidStr;
                 MutableComponent btnBring = Component.translatable("epicvanguard.text.vanguard_command.10")
                         .withStyle(style -> style
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpBringCmd))
                                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("epicvanguard.text.vanguard_command.11", displayName))));
 
-                String tpGoCmd = "/companhias ir " + uuidStr;
+                String tpGoCmd = "/companions goto " + uuidStr;
                 MutableComponent btnGo = Component.translatable("epicvanguard.text.vanguard_command.12")
                         .withStyle(style -> style
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpGoCmd))
                                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("epicvanguard.text.vanguard_command.13", displayName))));
 
-                String renameCmd = "/companhias renomear #" + (i + 1) + " ";
+                String renameCmd = "/companions rename #" + (i + 1) + " ";
                 MutableComponent btnRename = Component.translatable("epicvanguard.text.vanguard_command.14")
                         .withStyle(style -> style
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, renameCmd))
                                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("epicvanguard.text.vanguard_command.15", displayName))));
 
-                String removeCmd = "/companhias dispensar " + uuidStr;
+                String removeCmd = "/companions dismiss " + uuidStr;
                 MutableComponent btnDismiss = Component.translatable("epicvanguard.text.vanguard_command.16")
                         .withStyle(style -> style
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, removeCmd))
@@ -269,17 +277,17 @@ public class VanguardCommand {
         MutableComponent footer = Component.literal("§6==================================================");
         footer.append(Component.translatable("epicvanguard.text.vanguard_command.18")
                 .withStyle(style -> style
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/companhias chamar"))
+                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/companions call"))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("epicvanguard.text.vanguard_command.19")))));
 
         footer.append(Component.translatable("epicvanguard.text.vanguard_command.20")
                 .withStyle(style -> style
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/companhias limpar"))
+                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/companions clean"))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("epicvanguard.text.vanguard_command.21")))));
 
         footer.append(Component.translatable("epicvanguard.text.vanguard_command.22")
                 .withStyle(style -> style
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/fogoamigo"))
+                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/friendlyfire"))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("epicvanguard.text.vanguard_command.23")))));
 
         player.sendSystemMessage(footer);
@@ -356,7 +364,7 @@ public class VanguardCommand {
                     && info.pos != null && player.blockPosition().distSqr(info.pos) < 64 * 64;
 
             if (isNear) {
-                String removeCmd = "/companhias dispensar " + info.companionUUID;
+                String removeCmd = "/companions dismiss " + info.companionUUID;
                 MutableComponent btnRemove = Component.translatable("epicvanguard.text.vanguard_command.27")
                         .withStyle(style -> style
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, removeCmd))
