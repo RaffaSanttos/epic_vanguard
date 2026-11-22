@@ -1,0 +1,19 @@
+{
+  "name": "Guardião",
+  "icon": "epicvanguard:guardian_companion_spawn_egg",
+  "category": "epicvanguard:classes",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:entity",
+      "entity": "epicvanguard:guardian_companion",
+      "scale": 0.9,
+      "name": "Guardião",
+      "text": "Uma muralha viva. Aguenta os golpes por você. Dê um escudo a ele."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(li)+30% de vida máxima.$(li)+6 de armadura natural e +2 de resistência de armadura.$(li)40% de resistência a empurrão.$(li)Combina com um escudo, que para ataques de criaturas (não queda, fogo ou lava).$(br2)$(thing)Grito de guerra$(): Rugido do Bastião, que puxa todos os monstros próximos para o Guardião."
+    }
+  ]
+}

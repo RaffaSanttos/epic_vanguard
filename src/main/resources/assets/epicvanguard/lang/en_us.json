@@ -334,5 +334,9 @@
   "epicvanguard.personality.brave": "Brave",
   "epicvanguard.personality.sentinel": "Sentinel",
   "epicvanguard.text.vanguard_command.distance": " §7(§f%s blocks away§7)",
-  "epicvanguard.text.unknown": "unknown"
+  "epicvanguard.text.unknown": "unknown",
+  "book.epicvanguard.guide.name": "Vanguard Field Guide",
+  "book.epicvanguard.guide.subtitle": "Epic Vanguard",
+  "book.epicvanguard.guide.landing_text": "Commander,$(br2)this guide explains how to find, hire and lead your $(thing)mercenary companions$().$(br2)New here? Start with $(l:epicvanguard:getting_started/introduction)Getting Started$().",
+  "epicvanguard.text.guide_book.given": "§6✦ [Vanguard] §aYou received the §eVanguard Field Guide§a. Open it to learn how to hire companions!"
 }

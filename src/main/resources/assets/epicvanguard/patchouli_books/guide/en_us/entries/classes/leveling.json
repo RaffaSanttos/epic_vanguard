@@ -1,0 +1,17 @@
+{
+  "name": "Levels and Experience",
+  "icon": "minecraft:experience_bottle",
+  "category": "epicvanguard:classes",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Companions gain XP by fighting:$(li)Killing a monster themselves gives the most.$(li)Helping with a kill gives some.$(li)When $(thing)you$() kill a monster, companions within 24 blocks also learn.$(br2)The maximum level is $(thing)20$(). Each level-up heals them by half their health."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Per Level",
+      "text": "Every level adds:$(li)+1.5 max health$(li)+0.25 base damage$(li)+0.5 natural armor$(li)a little armor toughness and speed$(br2)From $(thing)level 5$() they unlock their class $(l:epicvanguard:classes/warcries)warcry$()."
+    }
+  ]
+}

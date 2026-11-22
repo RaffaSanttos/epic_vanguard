@@ -1,0 +1,23 @@
+{
+  "name": "Hiring a Companion",
+  "icon": "minecraft:writable_book",
+  "category": "epicvanguard:getting_started",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "title": "Contract of Honor",
+      "text": "$(thing)Right-click$() a mercenary to open the $(thing)Contract of Honor$(). It shows their name, rank and price.$(br2)If you carry enough $(item)Gold Coins$(), press $(thing)Seal Pact$(). The coins are taken from your inventory and the mercenary swears loyalty to you."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Ranks and Prices",
+      "text": "The price depends on the gear they come with:$(br)$(li)$(thing)Recruit$(): leather and wood, level 1, 20 to 30 coins.$(li)$(thing)Veteran$(): chainmail, stone and shield, level 2, 40 to 50 coins.$(li)$(thing)Elite$(): iron and shield, level 3, 60 to 80 coins.$(br2)Their starting gear is yours to keep and upgrade."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Rescuing a Prisoner",
+      "text": "A prisoner joins you for free. $(thing)Right-click$() them holding $(item)food$(), a $(item)potion$() or a $(item)sword or axe$().$(br2)They are healed, lose their weakness and swear loyalty. A weapon you hand over goes straight to their main hand."
+    }
+  ]
+}

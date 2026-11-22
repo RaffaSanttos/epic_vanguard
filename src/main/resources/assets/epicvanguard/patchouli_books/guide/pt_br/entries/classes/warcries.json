@@ -1,0 +1,16 @@
+{
+  "name": "Gritos de Guerra",
+  "icon": "minecraft:goat_horn",
+  "category": "epicvanguard:classes",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "A partir do $(thing)nível 5$(), os companheiros dão um grito de guerra em lutas difíceis: quando você ou eles ficam abaixo de 40% da vida, ou quando há 2 ou mais monstros a até 10 blocos. Ele recarrega em $(thing)50 segundos$(). Os bônus te alcançam a até ~16 blocos.$(br2)$(thing)Berserker$(): monstros próximos recebem Fraqueza por 10 s. O Berserker ganha Força II e você ganha Força I."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(thing)Guardião$(): todo monstro a até 12 blocos passa a mirar no Guardião. Ele ganha Resistência II, e você ganha Força I e Resistência I por 15 s.$(br2)$(thing)Duelista$(): inimigos a até 6 blocos ficam lentos e fracos por um instante. Você e o Duelista ganham Velocidade II e Força I por 12 s."
+    }
+  ]
+}

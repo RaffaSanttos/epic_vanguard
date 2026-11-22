@@ -334,5 +334,9 @@
   "epicvanguard.personality.brave": "Audaz",
   "epicvanguard.personality.sentinel": "Sentinela",
   "epicvanguard.text.vanguard_command.distance": " §7(§f%s blocos de distância§7)",
-  "epicvanguard.text.unknown": "desconhecido"
+  "epicvanguard.text.unknown": "desconhecido",
+  "book.epicvanguard.guide.name": "Guia de Campo da Vanguarda",
+  "book.epicvanguard.guide.subtitle": "Epic Vanguard",
+  "book.epicvanguard.guide.landing_text": "Comandante,$(br2)este guia explica como encontrar, contratar e liderar seus $(thing)companheiros mercenários$().$(br2)Primeira vez? Comece por $(l:epicvanguard:getting_started/introduction)Primeiros Passos$().",
+  "epicvanguard.text.guide_book.given": "§6✦ [Vanguard] §aVocê recebeu o §eGuia de Campo da Vanguarda§a. Abra para aprender a contratar companheiros!"
 }

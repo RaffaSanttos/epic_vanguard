@@ -1,0 +1,22 @@
+{
+  "name": "Publicando um Edital",
+  "icon": "epicvanguard:vanguard_point",
+  "category": "epicvanguard:vanguard_point",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:crafting",
+      "recipe": "epicvanguard:vanguard_point_shaped",
+      "text": "O $(item)Vanguard Point$() é um mural onde você chama novos mercenários para a sua base."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Clique com o $(thing)botão direito$(), coloque $(item)20 Moedas de Ouro$() no slot e aperte $(thing)Publicar Edital$(). Só quem depositou as moedas pode usá-las ou retirá-las, e as moedas a mais são devolvidas.$(br2)Uma companhia começa a marchar e chega em $(thing)7 dias do jogo$(). Dormir à noite também conta."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Chegada",
+      "text": "Fogos de artifício e cornetas anunciam a chegada. Um novo $(thing)Berserker, Guardião ou Duelista$() aparece ao lado do Vanguard Point.$(br2)As 20 moedas só pagam a marcha. Para ficar com o mercenário, você ainda precisa $(l:epicvanguard:getting_started/recruiting)contratá-lo$() normalmente.$(br2)A marcha só avança com o chunk carregado."
+    }
+  ]
+}

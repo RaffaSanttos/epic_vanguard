@@ -1,0 +1,22 @@
+{
+  "name": "Posting a Request",
+  "icon": "epicvanguard:vanguard_point",
+  "category": "epicvanguard:vanguard_point",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:crafting",
+      "recipe": "epicvanguard:vanguard_point_shaped",
+      "text": "The $(item)Vanguard Point$() is a notice board where you call new mercenaries to your base."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(thing)Right-click$() it, put $(item)20 Gold Coins$() in the slot and press $(thing)Post Request$(). Only the player who deposited the coins can use or take them back, and any extra coins are returned.$(br2)A company starts marching and arrives in $(thing)7 in-game days$(). Sleeping through the night counts too."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Arrival",
+      "text": "Fireworks and horns announce the arrival. A new $(thing)Berserker, Guardian or Duelist$() appears next to the Vanguard Point.$(br2)The 20 coins only pay for the march. To keep the mercenary, you still need to $(l:epicvanguard:getting_started/recruiting)hire them$() normally.$(br2)The march only advances while its chunk is loaded."
+    }
+  ]
+}

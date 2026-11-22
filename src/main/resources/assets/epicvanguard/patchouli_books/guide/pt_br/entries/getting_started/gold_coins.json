@@ -1,0 +1,19 @@
+{
+  "name": "Moedas de Ouro",
+  "icon": "epicvanguard:gold_coin",
+  "category": "epicvanguard:getting_started",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "epicvanguard:gold_coin",
+      "text": "Mercenários só trabalham por $(item)Moedas de Ouro$(). Você precisa delas para contratar um companheiro e para publicar um edital no $(l:epicvanguard:vanguard_point/vanguard_point)Vanguard Point$()."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "epicvanguard:gold_coin",
+      "recipe2": "epicvanguard:gold_nuggets_from_coin",
+      "text": "Dois lingotes de ouro fazem uma moeda. Uma moeda pode ser desfeita em 18 pepitas de ouro."
+    }
+  ]
+}

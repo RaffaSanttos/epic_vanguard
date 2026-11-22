@@ -1,0 +1,17 @@
+{
+  "name": "A Tela do Companheiro",
+  "icon": "minecraft:chest",
+  "category": "epicvanguard:commanding",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Clique com o $(thing)botão direito$() no seu companheiro para abrir a tela dele (só o dono).$(br)No lado direito:$(li)$(thing)Postura$(): alterna entre $(l:epicvanguard:commanding/stances)Seguir, Guarda e Parado$().$(li)$(thing)Parar$(): encerra a luta atual e limpa o alvo.$(li)$(thing)Espada$(): liga/desliga atacar monstros hostis.$(li)$(thing)Carne$(): liga/desliga caçar animais adultos para comida."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Abas e Nome",
+      "text": "A aba $(thing)Mochila$() mostra o equipamento e a vida; a aba $(thing)Talentos$() mostra o nível, o XP e os bônus da classe.$(br2)Para renomear um companheiro, aperte o $(thing)lápis$(), use uma $(item)Etiqueta$() com nome nele, ou o $(l:epicvanguard:reference/commands)comando de renomear$()."
+    }
+  ]
+}

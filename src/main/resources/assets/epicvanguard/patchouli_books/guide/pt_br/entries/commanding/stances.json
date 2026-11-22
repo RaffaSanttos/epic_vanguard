@@ -1,0 +1,16 @@
+{
+  "name": "Posturas",
+  "icon": "minecraft:shield",
+  "category": "epicvanguard:commanding",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(thing)Seguir$(): anda com você e luta contra o que te ameaça. Se ficar mais de 13 blocos para trás, se teleporta para o seu lado, até entre dimensões ou de chunks descarregados.$(br2)$(thing)Guarda$(): defende o ponto onde você escolheu a postura, ficando a uns 6 blocos dele."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(thing)Parado$(): fica imóvel e não caça nem persegue nada. Ainda se defende se for atacado.$(br2)Companheiros em $(thing)Guarda$() ou $(thing)Parado$() nunca se teleportam até você. Use o $(l:epicvanguard:reference/commands)comando de chamar$() para trazê-los de volta."
+    }
+  ]
+}

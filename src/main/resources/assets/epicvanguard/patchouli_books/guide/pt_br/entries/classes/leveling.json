@@ -1,0 +1,17 @@
+{
+  "name": "Níveis e Experiência",
+  "icon": "minecraft:experience_bottle",
+  "category": "epicvanguard:classes",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Os companheiros ganham XP lutando:$(li)Matar um monstro eles mesmos dá mais.$(li)Ajudar numa morte dá um pouco.$(li)Quando $(thing)você$() mata um monstro, companheiros a até 24 blocos também aprendem.$(br2)O nível máximo é $(thing)20$(). Cada nível novo cura metade da vida."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Por Nível",
+      "text": "Cada nível adiciona:$(li)+1,5 de vida máxima$(li)+0,25 de dano base$(li)+0,5 de armadura natural$(li)um pouco de resistência de armadura e velocidade$(br2)A partir do $(thing)nível 5$() eles liberam o $(l:epicvanguard:classes/warcries)grito de guerra$() da classe."
+    }
+  ]
+}

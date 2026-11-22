@@ -1,0 +1,12 @@
+{
+  "name": "Fogo Amigo",
+  "icon": "minecraft:blaze_powder",
+  "category": "epicvanguard:reference",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(thing)/fogoamigo$() mostra o modo atual. Operadores podem mudá-lo para o servidor inteiro:$(li)$(thing)livre$(): seus ataques nunca ferem seus companheiros (padrão).$(li)$(thing)fisico$(): só golpes físicos e ataques do Epic Fight ferem.$(li)$(thing)magias$(): só magias ferem.$(li)$(thing)total$(): tudo fere."
+    }
+  ]
+}

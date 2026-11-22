@@ -1,0 +1,6 @@
+{
+  "name": "Commands & Settings",
+  "description": "Chat commands and the friendly fire setting.",
+  "icon": "minecraft:command_block",
+  "sortnum": 4
+}

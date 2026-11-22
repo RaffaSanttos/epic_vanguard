@@ -1,0 +1,17 @@
+{
+  "name": "Comida e Cura",
+  "icon": "minecraft:golden_apple",
+  "category": "epicvanguard:commanding",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Os companheiros se cuidam com o que está na $(thing)mochila$():$(li)Fora de combate e feridos, comem $(item)comida$() até se curarem.$(li)Bebem poções de $(item)Cura$() e $(item)Regeneração$(), deixando o frasco vazio.$(li)Numa emergência preferem os itens mais fortes, como $(item)maçãs douradas$()."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Recuo",
+      "text": "Quando a vida fica baixa e eles têm algo para se curar, eles $(thing)rolam para trás$(), recuam e comem antes de voltar à luta.$(br2)Sem nenhuma comida, continuam lutando. Fora de combate também se regeneram devagar sozinhos."
+    }
+  ]
+}

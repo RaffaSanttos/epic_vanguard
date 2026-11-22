@@ -1,0 +1,23 @@
+{
+  "name": "Onde Achar Mercenários",
+  "icon": "minecraft:compass",
+  "category": "epicvanguard:getting_started",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "title": "Casas de Guerreiro",
+      "text": "Pequenas $(thing)casas de guerreiro$() estão espalhadas pelo Overworld. Na primeira vez que você chega perto de uma, há um mercenário esperando para ser contratado.$(br2)Todo mercenário pertence a uma das classes: $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardião$() ou $(l:epicvanguard:classes/duelist)Duelista$()."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Prisioneiros de Guerra",
+      "text": "Perto dos $(thing)Postos de Saqueadores$() pode haver uma cela de madeira com um $(thing)prisioneiro$(): fraco, desarmado e ferido.$(br2)Você pode resgatá-lo de graça: veja $(l:epicvanguard:getting_started/recruiting)Contratando um Companheiro$()."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Convocando uma Companhia",
+      "text": "Você também pode construir um $(l:epicvanguard:vanguard_point/vanguard_point)Vanguard Point$() na sua base e pagar para um novo mercenário marchar até você."
+    }
+  ]
+}

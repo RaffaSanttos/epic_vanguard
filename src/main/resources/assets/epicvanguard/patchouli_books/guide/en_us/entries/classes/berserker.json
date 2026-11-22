@@ -1,0 +1,19 @@
+{
+  "name": "Berserker",
+  "icon": "epicvanguard:berserker_companion_spawn_egg",
+  "category": "epicvanguard:classes",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:entity",
+      "entity": "epicvanguard:berserker_companion",
+      "scale": 0.9,
+      "name": "Berserker",
+      "text": "All-out offense. Hits harder than the other classes and fights until 20% health before retreating."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(li)Deals 90% of the weapon damage (other classes deal 75%).$(li)$(thing)Critical hits$(): 20% chance to deal 1.5x damage.$(li)$(thing)Fury$(): below 40% health, deals 20% more damage.$(br2)$(thing)Warcry$(): Fierce Blood Cry. See $(l:epicvanguard:classes/warcries)Warcries$()."
+    }
+  ]
+}

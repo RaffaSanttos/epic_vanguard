@@ -1,0 +1,21 @@
+{
+  "name": "Equipamento e Mochila",
+  "icon": "minecraft:bundle",
+  "category": "epicvanguard:commanding",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Todo companheiro tem $(thing)4 slots de armadura$(), um slot de $(thing)arma principal$(), um slot de $(thing)mão secundária$() para escudo ou segunda arma, e uma $(thing)mochila de 15 slots$().$(br2)Espadas, machados, armas do Epic Fight e a maioria das armas de outros mods cabem nos slots de arma. Shift + clique manda armadura e armas para o slot certo."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Os encantamentos da arma funcionam: $(thing)Afiação$(), $(thing)Julgamento$(), $(thing)Repulsão$(), $(thing)Aspecto Flamejante$() e outros. As armas gastam como as suas e quebram quando acabam.$(br2)Companheiros recrutados $(thing)pegam itens$() do chão ao passar por cima e guardam na mochila."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Se Ele Cair",
+      "text": "Quando um companheiro morre, tudo o que ele carregava cai no chão. Ele não volta, então mantenha-o alimentado e bem protegido."
+    }
+  ]
+}

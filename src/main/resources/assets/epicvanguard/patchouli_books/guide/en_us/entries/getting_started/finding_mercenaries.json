@@ -1,0 +1,23 @@
+{
+  "name": "Finding Mercenaries",
+  "icon": "minecraft:compass",
+  "category": "epicvanguard:getting_started",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "title": "Warrior Houses",
+      "text": "Small $(thing)warrior houses$() are scattered across the Overworld. When you get close to one for the first time, a mercenary is waiting there to be hired.$(br2)Every mercenary belongs to one of the classes: $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardian$() or $(l:epicvanguard:classes/duelist)Duelist$()."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Prisoners of War",
+      "text": "Next to $(thing)Pillager Outposts$() you may find a wooden cage holding a $(thing)prisoner$(): weak, unarmed and wounded.$(br2)Rescue them for free: see $(l:epicvanguard:getting_started/recruiting)Hiring a Companion$()."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Calling a Company",
+      "text": "You can also build a $(l:epicvanguard:vanguard_point/vanguard_point)Vanguard Point$() at your base and pay to have a new mercenary march to you."
+    }
+  ]
+}

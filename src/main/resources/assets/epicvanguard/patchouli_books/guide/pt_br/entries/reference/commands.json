@@ -1,0 +1,16 @@
+{
+  "name": "Comandos",
+  "icon": "minecraft:command_block",
+  "category": "epicvanguard:reference",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(thing)/companhias$(): lista seus companheiros com botões clicáveis.$(li)$(thing)chamar$(): traz todos até você.$(li)$(thing)trazer <alvo>$(): traz um companheiro.$(li)$(thing)ir <alvo>$(): te teleporta até um.$(li)$(thing)renomear <alvo> <nome>$()$(li)$(thing)dispensar <alvo>$(): libera um companheiro.$(li)$(thing)limpar$(): remove registros perdidos."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "O $(thing)<alvo>$() pode ser o número da lista (como $(thing)#1$()), o nome ou o ID.$(br2)$(thing)/vanguard$() e $(thing)/companions$() funcionam igual, e os nomes em inglês ($(thing)/companions call$() e outros) também.$(br2)Só operadores podem usar esses comandos nos companheiros de outros jogadores."
+    }
+  ]
+}

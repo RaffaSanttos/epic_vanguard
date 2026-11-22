@@ -1,0 +1,17 @@
+{
+  "name": "Protegendo Você",
+  "icon": "minecraft:totem_of_undying",
+  "category": "epicvanguard:commanding",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Companheiros em $(thing)Seguir$() ou $(thing)Guarda$() atacam o que te machuca.$(br2)$(thing)Intervenção Heroica$(): se sua vida cair para 3 corações ou menos, um companheiro próximo corre até a criatura que te ataca.$(br2)Companheiros com $(item)escudo$() o levantam contra flechas e golpes, e todos tentam fugir de creepers prestes a explodir."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Fogo Amigo",
+      "text": "Por padrão seus ataques nunca ferem seus companheiros, e companheiros do mesmo dono nunca se acertam. Um operador pode mudar isso: veja $(l:epicvanguard:reference/friendly_fire)Fogo Amigo$()."
+    }
+  ]
+}

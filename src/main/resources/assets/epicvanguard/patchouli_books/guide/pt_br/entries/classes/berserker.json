@@ -1,0 +1,19 @@
+{
+  "name": "Berserker",
+  "icon": "epicvanguard:berserker_companion_spawn_egg",
+  "category": "epicvanguard:classes",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:entity",
+      "entity": "epicvanguard:berserker_companion",
+      "scale": 0.9,
+      "name": "Berserker",
+      "text": "Ataque total. Bate mais forte que as outras classes e luta até 20% da vida antes de recuar."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(li)Causa 90% do dano da arma (as outras classes causam 75%).$(li)$(thing)Críticos$(): 20% de chance de causar 1,5x de dano.$(li)$(thing)Fúria$(): abaixo de 40% da vida, causa 20% mais dano.$(br2)$(thing)Grito de guerra$(): Grito de Sangue Feroz. Veja $(l:epicvanguard:classes/warcries)Gritos de Guerra$()."
+    }
+  ]
+}

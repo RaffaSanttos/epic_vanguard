@@ -1,0 +1,21 @@
+{
+  "name": "Gear and Backpack",
+  "icon": "minecraft:bundle",
+  "category": "epicvanguard:commanding",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Every companion has $(thing)4 armor slots$(), a $(thing)main weapon$() slot, an $(thing)off-hand$() slot for a shield or second weapon, and a $(thing)15-slot backpack$().$(br2)Swords, axes, Epic Fight weapons and most modded weapons fit the weapon slots. Shift-click sends armor and weapons to the right slot."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Weapon enchantments work: $(thing)Sharpness$(), $(thing)Smite$(), $(thing)Knockback$(), $(thing)Fire Aspect$() and others. Weapons lose durability like yours and break when worn out.$(br2)Recruited companions $(thing)pick up items$() they walk over and store them in the backpack."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "If They Fall",
+      "text": "When a companion dies, everything they carried drops on the ground. The companion is gone for good, so keep them fed and well armored."
+    }
+  ]
+}

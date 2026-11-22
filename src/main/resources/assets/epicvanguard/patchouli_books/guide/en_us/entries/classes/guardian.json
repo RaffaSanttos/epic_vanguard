@@ -1,0 +1,19 @@
+{
+  "name": "Guardian",
+  "icon": "epicvanguard:guardian_companion_spawn_egg",
+  "category": "epicvanguard:classes",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:entity",
+      "entity": "epicvanguard:guardian_companion",
+      "scale": 0.9,
+      "name": "Guardian",
+      "text": "A living wall. Takes the hits so you do not have to. Give them a shield."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(li)+30% max health.$(li)+6 natural armor and +2 armor toughness.$(li)40% knockback resistance.$(li)Pairs best with a shield, which stops attacks from creatures (not falls, fire or lava).$(br2)$(thing)Warcry$(): Bastion's Roar, which pulls every nearby monster onto the Guardian."
+    }
+  ]
+}

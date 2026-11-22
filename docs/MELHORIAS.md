@@ -106,6 +106,10 @@ Sugestões:
 A regeneração fora de combate usa `getLastHurtByMobTimestamp()`. Dano de queda, fogo e veneno não reiniciam a contagem.
 **Sugestão:** guardar o tick do último dano de qualquer fonte em `hurt()`.
 
+### 🟠 3.7 Duelo nunca é ativado
+Toda a lógica de duelo existe (`DUEL_MODE`, recrutar quem vence o duelo em `hurt()`, exceções em fogo amigo e IA), mas nada chama `setDuelMode(true)`. É uma mecânica morta.
+**Decidir:** implementar um jeito de desafiar (ex.: agachar + clicar com arma no mercenário não contratado) ou remover o código. Enquanto isso, o livro do Patchouli não menciona o duelo.
+
 ---
 
 ## 4. Persistência
@@ -179,6 +183,7 @@ Chama `setItemSlot` 6 vezes por tick. Daria para marcar o inventário como "sujo
   - jogador que não é dono não comanda nem abre o inventário;
   - cópia de geração menor é descartada; UUID em `Retired` não reaparece.
 - 🟢 **Testes unitários de lógica pura:** `getXpForNextLevel`, `rollRandomTier`, `FriendlyFireMode.fromString`.
+- ✅ **Guia dentro do jogo:** livro do Patchouli (opcional) em inglês e português, gerado por `tools/patchouli/build_book.js`.
 - 🟢 **README.md:** o que o mod faz, como recrutar (moedas, duelo, prisioneiro), modos de combate, classes, comandos `/vanguard` e `/fogoamigo`, dependências, como compilar.
 - 🟢 **Revisar as traduções em inglês dentro do jogo** (pendente da auditoria).
 

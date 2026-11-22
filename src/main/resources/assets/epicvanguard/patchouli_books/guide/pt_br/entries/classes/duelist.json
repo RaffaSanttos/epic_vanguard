@@ -1,0 +1,19 @@
+{
+  "name": "Duelista",
+  "icon": "epicvanguard:duelist_companion_spawn_egg",
+  "category": "epicvanguard:classes",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:entity",
+      "entity": "epicvanguard:duelist_companion",
+      "scale": 0.9,
+      "name": "Duelista",
+      "text": "Rápido e escorregadio. Desvia dos golpes em vez de bloqueá-los."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(li)+15% de velocidade.$(li)$(thing)Esquiva Perfeita$(): 18% de chance de evitar todo o dano de um ataque ou projétil.$(li)Pode rolar para esquivar duas vezes mais que as outras classes.$(br2)$(thing)Grito de guerra$(): Grito da Tempestade, que desestabiliza inimigos próximos e acelera você e o Duelista."
+    }
+  ]
+}

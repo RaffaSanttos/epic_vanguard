@@ -1,0 +1,16 @@
+{
+  "name": "Commands",
+  "icon": "minecraft:command_block",
+  "category": "epicvanguard:reference",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(thing)/companions$(): lists your companions with clickable buttons.$(li)$(thing)call$(): brings every companion to you.$(li)$(thing)bring <target>$(): brings one companion.$(li)$(thing)goto <target>$(): teleports you to one.$(li)$(thing)rename <target> <name>$()$(li)$(thing)dismiss <target>$(): releases a companion.$(li)$(thing)clean$(): removes missing entries."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "The $(thing)<target>$() can be the number from the list (like $(thing)#1$()), the name or the ID.$(br2)$(thing)/vanguard$() and $(thing)/companion$() work the same way, and the Portuguese names ($(thing)/companhias chamar$() and others) also work.$(br2)Only operators can use these commands on companions of other players."
+    }
+  ]
+}

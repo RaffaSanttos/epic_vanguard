@@ -1,0 +1,17 @@
+{
+  "name": "Protecting You",
+  "icon": "minecraft:totem_of_undying",
+  "category": "epicvanguard:commanding",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Companions in $(thing)Follow$() or $(thing)Guard$() attack whatever hurts you.$(br2)$(thing)Heroic Intervention$(): if your health drops to 3 hearts or less, a nearby companion rushes to the creature attacking you.$(br2)Companions holding a $(item)shield$() raise it against arrows and incoming blows, and everyone tries to get away from creepers about to explode."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Friendly Fire",
+      "text": "By default your attacks never hurt your own companions, and companions of the same owner never hit each other. An operator can change this: see $(l:epicvanguard:reference/friendly_fire)Friendly Fire$()."
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "Duelist",
+  "icon": "epicvanguard:duelist_companion_spawn_egg",
+  "category": "epicvanguard:classes",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:entity",
+      "entity": "epicvanguard:duelist_companion",
+      "scale": 0.9,
+      "name": "Duelist",
+      "text": "Fast and slippery. Dodges blows instead of blocking them."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(li)+15% movement speed.$(li)$(thing)Perfect Dodge$(): 18% chance to avoid all damage from an attack or projectile.$(li)Can dodge-roll twice as often as other classes.$(br2)$(thing)Warcry$(): Storm Cry, which staggers nearby enemies and speeds up you and the Duelist."
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Warcries",
+  "icon": "minecraft:goat_horn",
+  "category": "epicvanguard:classes",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "From $(thing)level 5$(), companions shout a warcry in tough fights: when you or they drop below 40% health, or when 2 or more monsters are within 10 blocks. It recharges in $(thing)50 seconds$(). Buffs reach you within ~16 blocks.$(br2)$(thing)Berserker$(): nearby monsters get Weakness for 10 s. The Berserker gets Strength II and you get Strength I."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(thing)Guardian$(): every monster within 12 blocks targets the Guardian. The Guardian gets Resistance II, and you get Strength I and Resistance I for 15 s.$(br2)$(thing)Duelist$(): enemies within 6 blocks are slowed and weakened for a moment. You and the Duelist get Speed II and Strength I for 12 s."
+    }
+  ]
+}

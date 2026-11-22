@@ -1,0 +1,23 @@
+{
+  "name": "Contratando um Companheiro",
+  "icon": "minecraft:writable_book",
+  "category": "epicvanguard:getting_started",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "title": "Contrato de Honra",
+      "text": "Clique com o $(thing)botão direito$() num mercenário para abrir o $(thing)Contrato de Honra$(). Ele mostra o nome, a patente e o preço.$(br2)Se você tiver $(item)Moedas de Ouro$() suficientes, aperte $(thing)Selar Pacto$(). As moedas saem do seu inventário e o mercenário jura lealdade a você."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Patentes e Preços",
+      "text": "O preço depende do equipamento com que ele vem:$(br)$(li)$(thing)Recruta$(): couro e madeira, nível 1, 20 a 30 moedas.$(li)$(thing)Veterano$(): cota de malha, pedra e escudo, nível 2, 40 a 50 moedas.$(li)$(thing)Elite$(): ferro e escudo, nível 3, 60 a 80 moedas.$(br2)O equipamento inicial passa a ser seu para melhorar."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Resgatando um Prisioneiro",
+      "text": "Um prisioneiro se junta a você de graça. Clique nele com o $(thing)botão direito$() segurando $(item)comida$(), uma $(item)poção$() ou uma $(item)espada ou machado$().$(br2)Ele é curado, perde a fraqueza e jura lealdade. A arma que você entregar vai direto para a mão principal dele."
+    }
+  ]
+}

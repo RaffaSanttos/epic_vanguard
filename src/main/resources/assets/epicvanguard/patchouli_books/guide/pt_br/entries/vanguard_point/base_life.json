@@ -1,0 +1,12 @@
+{
+  "name": "Vida na Base",
+  "icon": "minecraft:campfire",
+  "category": "epicvanguard:vanguard_point",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Seus companheiros em $(thing)Guarda$() ou $(thing)Parado$() perto de um $(item)Vanguard Point$() patrulham em volta dele quando não há nada para enfrentar.$(br2)Perto de uma $(item)fogueira$() acesa, companheiros descansando sentam em volta do fogo.$(br2)Mercenários ainda não contratados ficam pelo Vanguard Point mais próximo."
+    }
+  ]
+}

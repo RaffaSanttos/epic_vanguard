@@ -1,0 +1,12 @@
+{
+  "name": "Life at the Base",
+  "icon": "minecraft:campfire",
+  "category": "epicvanguard:vanguard_point",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Your companions in $(thing)Guard$() or $(thing)Stay$() near a $(item)Vanguard Point$() patrol around it when there is nothing to fight.$(br2)Near a lit $(item)campfire$(), resting companions sit down around the fire.$(br2)Mercenaries who are not hired yet hang around the closest Vanguard Point."
+    }
+  ]
+}
