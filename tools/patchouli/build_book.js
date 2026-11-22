@@ -24,8 +24,8 @@ const categories = [
     en: ['The Vanguard Point', 'Summon new mercenary companies to your base.'],
     pt: ['O Vanguard Point', 'Convoque novas companhias de mercenários para a sua base.'] },
   { id: 'reference', icon: 'minecraft:command_block', sortnum: 4,
-    en: ['Commands & Settings', 'Chat commands and the friendly fire setting.'],
-    pt: ['Comandos e Configurações', 'Comandos de chat e o modo de fogo amigo.'] },
+    en: ['Commands & Settings', 'Chat commands, friendly fire and the server config file.'],
+    pt: ['Comandos e Configurações', 'Comandos de chat, fogo amigo e o arquivo de config do servidor.'] },
 ];
 
 // ── Entradas ───────────────────────────────────────────────────────────────
@@ -233,6 +233,13 @@ const entries = [
       { type: 'text', text: t(
         '$(thing)/friendlyfire$() shows the current mode. Operators can change it for the whole server:$(li)$(thing)off$(): your attacks never hurt your companions (default).$(li)$(thing)melee$(): only physical hits and Epic Fight attacks hurt.$(li)$(thing)spells$(): only spells and magic hurt.$(li)$(thing)all$(): everything hurts.',
         '$(thing)/fogoamigo$() mostra o modo atual. Operadores podem mudá-lo para o servidor inteiro:$(li)$(thing)livre$(): seus ataques nunca ferem seus companheiros (padrão).$(li)$(thing)fisico$(): só golpes físicos e ataques do Epic Fight ferem.$(li)$(thing)magias$(): só magias ferem.$(li)$(thing)total$(): tudo fere.') },
+    ] },
+  { category: 'reference', id: 'server_config', icon: 'minecraft:comparator', sortnum: 2,
+    name: t('Server Settings', 'Configurações do Servidor'),
+    pages: [
+      { type: 'text', text: t(
+        'The file $(thing)config/epicvanguard-common.toml$() lets the server owner change:$(li)recruit cost and XP gain;$(li)warcry cooldown;$(li)how long a Vanguard Point request takes;$(li)the follow teleport distances.$(br2)Values in this book are the defaults.',
+        'O arquivo $(thing)config/epicvanguard-common.toml$() deixa o dono do servidor mudar:$(li)custo de contratação e ganho de XP;$(li)recarga do grito de guerra;$(li)quanto tempo leva um edital do Vanguard Point;$(li)as distâncias do teleporte de seguir.$(br2)Os valores deste livro são os padrões.') },
     ] },
 ];
 

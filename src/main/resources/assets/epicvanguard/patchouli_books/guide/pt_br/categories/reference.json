@@ -1,6 +1,6 @@
 {
   "name": "Comandos e Configurações",
-  "description": "Comandos de chat e o modo de fogo amigo.",
+  "description": "Comandos de chat, fogo amigo e o arquivo de config do servidor.",
   "icon": "minecraft:command_block",
   "sortnum": 4
 }

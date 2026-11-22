@@ -1,6 +1,6 @@
 {
   "name": "Commands & Settings",
-  "description": "Chat commands and the friendly fire setting.",
+  "description": "Chat commands, friendly fire and the server config file.",
   "icon": "minecraft:command_block",
   "sortnum": 4
 }

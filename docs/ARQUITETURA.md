@@ -1,6 +1,6 @@
 # Arquitetura — Epic Vanguard
 
-Mapa do código para quem for mexer no mod. Pacote base: `com.example.epicvanguard` (em `src/main/java`).
+Mapa do código para quem for mexer no mod. Pacote base: `io.github.raffasanttos.epicvanguard` (em `src/main/java`).
 
 ## Entidade do guerreiro
 
@@ -9,8 +9,8 @@ Mapa do código para quem for mexer no mod. Pacote base: `com.example.epicvangua
 | Classe | O que faz |
 |---|---|
 | `WarriorInteraction` | Clique do jogador: resgate de prisioneiro, tela de contrato, name tag, abrir a tela do dono. Coleta de itens do chão (botão ✋, ignora o que o dono jogou). |
-| `WarriorTeleport` | Teleporte seguro (chão firme, sem lava, sem sufocar) e a regra do modo Seguir: 13 blocos + 2 s fora de combate, ou 32 blocos sempre. |
-| `WarriorThreatSensor` | Creeper prestes a explodir e projéteis vindo na direção do guerreiro ou do dono. |
+| `WarriorTeleport` | Teleporte seguro (chão firme, sem lava, sem sufocar) e a regra do modo Seguir: 13 blocos + 2 s fora de combate, ou 32 blocos sempre (valores da config). |
+| `WarriorThreatSensor` | Creeper prestes a explodir e projéteis vindo na direção do guerreiro ou do dono. Guarda a última varredura num cache por guerreiro (projéteis a cada 2 ticks, creepers a cada 5). |
 | `WarriorWarcry` | Grito de guerra de cada classe (efeitos, partículas, sons). |
 | `WarriorProgression` | Escolha de classe no nível 5 (recria a entidade com o tipo da classe). |
 | `WarriorCombatHelper` | Fogo amigo, esquiva do Duelista, bloqueio com escudo. |
@@ -25,8 +25,10 @@ IA: `entity/ai` tem os goals (combate tático, seguir, guarda, comer, fugir, gri
 ## Registro e persistência
 
 - `CompanionSavedData` (arquivo `epicvanguard_companions.dat` no overworld): registro de todos os companheiros recrutados, com snapshot do NBT, geração (contra cópias antigas), `Retired` (mortos) e `Dismissed` (dispensados descarregados). Migra o antigo `grimal_companions.dat` sozinho.
+  - Só marca o arquivo para salvar quando algo mudou.
+  - `Retired`/`Dismissed` guardam quando o UUID entrou; `pruneForgotten` (a cada minuto, pelo `CompanionTeleportHandler`) apaga os mais velhos que `registryMemoryDays`.
 - `event/CompanionTeleportHandler`: resgata companheiros no modo Seguir que ficaram em outra dimensão, longe demais ou em chunk descarregado; descarta cópias antigas ao carregar.
-- `VillageWarriorSavedData`: estruturas que já geraram guerreiros (casa, prisão do posto de saqueadores).
+- `VillageWarriorSavedData`: estruturas que já geraram guerreiros (casa, prisão do posto de saqueadores), por dimensão + chunk.
 
 ## Rede
 
@@ -52,6 +54,22 @@ IA: `entity/ai` tem os goals (combate tático, seguir, guarda, comer, fugir, gri
 ## Posto da Vanguarda
 
 `block/VanguardPointBlock` + `block/entity/VanguardPointBlockEntity`: slot de moedas (do depositante, sem funis), edital de 7 dias que traz um mercenário. Só quem depositou, quem pagou ou um operador quebra o bloco.
+
+## Config
+
+`config/EpicVanguardConfig.java` define `config/epicvanguard-common.toml` (ForgeConfigSpec COMMON, registrado no construtor do mod). Os getters devolvem o padrão se a config ainda não carregou.
+
+| Seção | Chave | Padrão | Onde é usada |
+|---|---|---|---|
+| progression | `recruitCostMultiplier` | 1.0 | custo sorteado em `WarriorCompanionEntity` |
+| progression | `xpMultiplier` | 1.0 | `VanguardCombatEvents` |
+| progression | `playerKillXpRadius` | 24 | XP dividido quando o dono mata |
+| progression | `warcryCooldownSeconds` | 50 | `WarriorWarcry` |
+| vanguardPoint | `contractDays` | 7 | novos editais em `VanguardPointBlockEntity` |
+| follow | `followTeleportDistance` | 13 | `WarriorTeleport` |
+| follow | `combatLeashDistance` | 32 | `WarriorTeleport`, `CompanionTeleportHandler` |
+| follow | `followTeleportDelayTicks` | 40 | `WarriorTeleport` |
+| registry | `registryMemoryDays` | 100 | `CompanionSavedData.pruneForgotten` |
 
 ## Integrações opcionais
 

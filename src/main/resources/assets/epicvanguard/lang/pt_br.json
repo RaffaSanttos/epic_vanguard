@@ -160,7 +160,7 @@
   "epicvanguard.text.packet_open_warrior_g_u_i.1": "%s - Inventário",
   "epicvanguard.text.packet_open_warrior_g_u_i.2": "Contrato de Honra: %s",
   "epicvanguard.text.packet_post_vanguard_contract.1": "§e⚡ [Criativo] Marcha da Vanguarda acelerada instantaneamente!",
-  "epicvanguard.text.packet_post_vanguard_contract.2": "§6✦ [Posto da Vanguarda] §aEdital publicado! Uma companhia da Vanguarda (Berserker, Guardião ou Duelista) marchará até o posto. Chegada estimada em 7 dias.",
+  "epicvanguard.text.packet_post_vanguard_contract.2": "§6✦ [Posto da Vanguarda] §aEdital publicado! Uma companhia da Vanguarda (Berserker, Guardião ou Duelista) marchará até o posto. Chegada estimada em %s dias.",
   "epicvanguard.text.packet_post_vanguard_contract.3": "§cVocê precisa depositar 20 Moedas de Ouro no posto para convocar uma nova companhia.",
   "epicvanguard.text.packet_recruit_warrior.1": "§6[%s] §aPacto de honra selado! Estou às suas ordens.",
   "epicvanguard.text.packet_recruit_warrior.2": "§cVocê precisa de %s Moedas de Ouro para contratar %s.",

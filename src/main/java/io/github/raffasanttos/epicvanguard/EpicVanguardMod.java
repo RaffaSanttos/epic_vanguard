@@ -1,0 +1,59 @@
+package io.github.raffasanttos.epicvanguard;
+
+import io.github.raffasanttos.epicvanguard.init.ModBlockEntities;
+import io.github.raffasanttos.epicvanguard.init.ModBlocks;
+import io.github.raffasanttos.epicvanguard.init.ModCreativeModeTabs;
+import io.github.raffasanttos.epicvanguard.init.ModEntityTypes;
+import io.github.raffasanttos.epicvanguard.init.ModItems;
+import io.github.raffasanttos.epicvanguard.init.ModMenus;
+import io.github.raffasanttos.epicvanguard.init.ModPoiTypes;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+@Mod(EpicVanguardMod.MOD_ID)
+public class EpicVanguardMod {
+    public static final String MOD_ID = "epicvanguard";
+    public static final Logger LOGGER = LogManager.getLogger();
+
+    public EpicVanguardMod() {
+        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+
+        ModBlocks.BLOCKS.register(modEventBus);
+        ModBlockEntities.BLOCK_ENTITIES.register(modEventBus);
+        ModItems.ITEMS.register(modEventBus);
+        ModPoiTypes.POI_TYPES.register(modEventBus);
+        ModEntityTypes.ENTITY_TYPES.register(modEventBus);
+        ModMenus.MENUS.register(modEventBus);
+        ModCreativeModeTabs.CREATIVE_MODE_TABS.register(modEventBus);
+
+        modEventBus.addListener(this::commonSetup);
+        net.minecraftforge.fml.ModLoadingContext.get().registerConfig(
+                net.minecraftforge.fml.config.ModConfig.Type.COMMON, io.github.raffasanttos.epicvanguard.config.EpicVanguardConfig.SPEC);
+
+        // Epic Fight é opcional: a integração só é registrada (e suas classes só são carregadas) se ele estiver instalado
+        if (isEpicFightLoaded()) {
+            io.github.raffasanttos.epicvanguard.compat.epicfight.EpicFightCompat.register(modEventBus);
+        }
+
+        MinecraftForge.EVENT_BUS.register(this);
+    }
+
+    private static Boolean epicFightLoaded;
+
+    public static boolean isEpicFightLoaded() {
+        if (epicFightLoaded == null) {
+            epicFightLoaded = ModList.get().isLoaded("epicfight");
+        }
+        return epicFightLoaded;
+    }
+
+    private void commonSetup(final FMLCommonSetupEvent event) {
+        LOGGER.info("Epic Vanguard initialized.");
+    }
+}

@@ -1,5 +1,39 @@
 # Changelog — Epic Vanguard
 
+## 1.0.19 (Minecraft 1.20.1, Forge 47.x) — not released yet
+
+### English
+
+**New**
+- **Config file** `config/epicvanguard-common.toml`: recruit cost, XP gain, war cry cooldown, Vanguard Point request time, follow teleport distances and how long the save remembers dead/dismissed companions. Defaults are the same as before.
+- Guide book: new "Server Settings" page.
+
+**Changes**
+- Less work per tick: companions share one scan for incoming arrows and creepers instead of several, only update their equipment slots when the gear actually changes, and the follow rescue finds loaded companions faster.
+- The companion save file is only rewritten when something changed, and old dead/dismissed entries are cleaned up after 100 in-game days (configurable).
+- Warrior houses and pillager outposts are now tracked per dimension (old worlds are converted automatically).
+- English texts reviewed: "Vanguard Point" everywhere, smoother dialogue lines.
+
+**Notes**
+- The Java package changed (`io.github.raffasanttos.epicvanguard`). The mod id is still `epicvanguard`, so worlds and items are not affected.
+
+### Português
+
+**Novidades**
+- **Arquivo de config** `config/epicvanguard-common.toml`: custo de contratação, ganho de XP, recarga do grito de guerra, tempo do edital do Posto, distâncias do teleporte de seguir e por quanto tempo o save lembra companheiros mortos/dispensados. Os padrões são os mesmos de antes.
+- Livro guia: página nova "Configurações do Servidor".
+
+**Mudanças**
+- Menos trabalho por tick: os companheiros fazem uma varredura só para flechas e creepers em vez de várias, só atualizam os slots de equipamento quando o equipamento muda de fato, e o resgate do modo Seguir acha companheiros carregados mais rápido.
+- O arquivo de companheiros só é regravado quando algo mudou, e registros antigos de mortos/dispensados são limpos depois de 100 dias de jogo (configurável).
+- Casas de guerreiro e postos de saqueadores agora são marcados por dimensão (mundos antigos são convertidos sozinhos).
+- Textos em inglês revisados: "Vanguard Point" em todo lugar e falas mais naturais.
+
+**Observações**
+- O pacote Java mudou (`io.github.raffasanttos.epicvanguard`). O mod id continua `epicvanguard`, então mundos e itens não são afetados.
+
+---
+
 ## 1.0.18 (Minecraft 1.20.1, Forge 47.x)
 
 ### English

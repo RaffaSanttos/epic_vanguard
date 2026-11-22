@@ -18,7 +18,7 @@ O servidor não pode confiar no cliente: um cliente modificado envia qualquer pa
 | `WarriorCompanionMenu.stillValid` | Não checava dono | ✅ fecha a tela se quem está com ela aberta não for o dono |
 | `PacketRecruitWarrior`, `PacketRenameWarrior`, `PacketPostVanguardContract` | — | já validavam (distância/dono) |
 
-As validações ficam em [`networking/PacketGuards.java`](../src/main/java/com/example/epicvanguard/networking/PacketGuards.java). **Todo pacote novo que mexa num guerreiro deve usar `PacketGuards.ownedWarrior(...)` ou `nearbyWarrior(...)`.**
+As validações ficam em [`networking/PacketGuards.java`](../src/main/java/io/github/raffasanttos/epicvanguard/networking/PacketGuards.java). **Todo pacote novo que mexa num guerreiro deve usar `PacketGuards.ownedWarrior(...)` ou `nearbyWarrior(...)`.**
 
 ## 2. Persistência dos companheiros (`CompanionSavedData`)
 
@@ -47,7 +47,7 @@ As validações ficam em [`networking/PacketGuards.java`](../src/main/java/com/e
 ## 5. Organização do código
 
 - ⏳ `WarriorCompanionEntity.java` tem ~1.850 linhas. Sugestão de divisão: `WarriorPersistence` (save/load/snapshot), `WarriorInteraction` (`mobInteract`, contrato, prisioneiro), `WarriorThreatSensor` (creepers/projéteis/ameaças), progressão (nível/XP/especialização).
-- ⏳ Pacote `com.example.epicvanguard` — trocar por um domínio seu (ex.: `io.github.raffasanttos.epicvanguard`) antes de publicar.
+- ✅ Pacote `com.example.epicvanguard` trocado por `io.github.raffasanttos.epicvanguard` (22/11/2026).
 - ⏳ `scratch_test_nbt.java` na raiz (ferramenta de debug que procura `tavern.nbt`, que não existe mais) — mover para uma pasta `tools/` ou apagar.
 - ✅ `.gitgnore` (cópia com erro de digitação do `.gitignore`) removido; `.gitignore` agora ignora `.idea/`, `*.iml`, `.vscode/`, `*.class`.
 - ⏳ `build_jar.bat` anuncia `build\libs\epicvanguard-1.0.0.jar`, mas o jar real se chama `EpicVanguard <versão> [1.20.1].jar`.

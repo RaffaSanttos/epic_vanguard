@@ -1,0 +1,12 @@
+{
+  "name": "Configurações do Servidor",
+  "icon": "minecraft:comparator",
+  "category": "epicvanguard:reference",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "O arquivo $(thing)config/epicvanguard-common.toml$() deixa o dono do servidor mudar:$(li)custo de contratação e ganho de XP;$(li)recarga do grito de guerra;$(li)quanto tempo leva um edital do Vanguard Point;$(li)as distâncias do teleporte de seguir.$(br2)Os valores deste livro são os padrões."
+    }
+  ]
+}

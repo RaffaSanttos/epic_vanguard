@@ -17,8 +17,8 @@ Nada aqui foi testado em jogo. Prioridades:
 ### ✅ 1.1 Renomear por comando com o guerreiro descarregado não funciona — corrigido (21/11/2026)
 A auditoria (seção 8) registra isso como corrigido, mas a correção não funciona:
 
-1. `/vanguard renomear` grava o nome novo só em `CompanionInfo.name` ([VanguardCommand.java:585](../src/main/java/com/example/epicvanguard/command/VanguardCommand.java)).
-2. Quando o chunk carrega, `readAdditionalSaveData` chama `setWarriorName(nome antigo do NBT)`, que também chama `CompanionSavedData.updateName(...)` ([WarriorCompanionEntity.java:638](../src/main/java/com/example/epicvanguard/entity/WarriorCompanionEntity.java)).
+1. `/vanguard renomear` grava o nome novo só em `CompanionInfo.name` ([VanguardCommand.java:585](../src/main/java/io/github/raffasanttos/epicvanguard/command/VanguardCommand.java)).
+2. Quando o chunk carrega, `readAdditionalSaveData` chama `setWarriorName(nome antigo do NBT)`, que também chama `CompanionSavedData.updateName(...)` ([WarriorCompanionEntity.java:638](../src/main/java/io/github/raffasanttos/epicvanguard/entity/WarriorCompanionEntity.java)).
 3. Quando `CompanionTeleportHandler.onEntityJoinLevel` compara os nomes, o registro já tem o nome antigo e o rename se perde.
 
 Também por isso, uma **cópia antiga** (geração menor) sobrescreve o nome no registro antes de ser descartada.
@@ -26,7 +26,7 @@ Também por isso, uma **cópia antiga** (geração menor) sobrescreve o nome no 
 **Correção:** separar o "aplicar nome na entidade" do "gravar no registro". Durante `readAdditionalSaveData`, só aplicar na entidade, sem chamar `updateName`. Gravar no registro só em ações do jogador (name tag, pacote de rename, comando).
 
 ### ✅ 1.2 Ataque do guerreiro ignora encantamentos e a arma nunca gasta — corrigido (21/11/2026)
-`doHurtTarget` ([WarriorCompanionEntity.java:1436](../src/main/java/com/example/epicvanguard/entity/WarriorCompanionEntity.java)) só chama `target.hurt(...)`. O que falta:
+`doHurtTarget` ([WarriorCompanionEntity.java:1436](../src/main/java/io/github/raffasanttos/epicvanguard/entity/WarriorCompanionEntity.java)) só chama `target.hurt(...)`. O que falta:
 - Bônus de encantamento (`EnchantmentHelper.getDamageBonus`): Afiação, Julgamento, Ruína dos Artrópodes.
 - Aspecto Flamejante e Repulsão (empurrão do golpe).
 - `EnchantmentHelper.doPostHurtEffects` / `doPostDamageEffects` (Espinhos, efeitos de mods).
@@ -157,32 +157,29 @@ Toda a lógica de duelo existe (`DUEL_MODE`, recrutar quem vence o duelo em `hur
 ### ✅ 4.1 `DATA_NAME = "grimal_companions"` — corrigido (22/11/2026): agora `epicvanguard_companions`, com migração automática
 Trocar para `epicvanguard_companions` **com migração**: se o arquivo novo não existir, ler o antigo e marcar `setDirty()`.
 
-### 🟢 4.2 Conjuntos `Retired` e `Dismissed` só crescem
-Num mundo antigo, o save cresce sem limite. Sugestões:
-- Guardar junto o `gameTime` em que o UUID entrou e limpar depois de, por exemplo, 30 dias de jogo.
-- Ou limpar quando a cópia antiga for de fato encontrada e descartada.
+### ✅ 4.2 Conjuntos `Retired` e `Dismissed` só crescem — corrigido (22/11/2026)
+Cada UUID agora guarda o `gameTime` em que entrou. A cada minuto `CompanionSavedData.pruneForgotten` apaga os que passaram de `registryMemoryDays` (config, padrão **100 dias de jogo**). Entradas de saves antigos (sem data) começam a contar na primeira manutenção.
+Não dá para limpar "quando a cópia antiga for descartada": cada resgate de chunk descarregado pode deixar uma cópia para trás, então o UUID precisa ficar marcado por um tempo. Uma cópia achada depois do prazo já não é reconhecida.
 
-### 🟢 4.3 Snapshot com NBT inteiro de cada guerreiro no SavedData
-Cada companheiro guarda o NBT completo (inventário incluído) no arquivo do overworld, e isso é salvo a cada 10 s quando há mudança. Com muitos companheiros, o arquivo fica pesado.
-**Sugestão:** só marcar `setDirty()` quando o NBT mudar de fato. Dá para comparar um hash do inventário e do estado relevante.
+### ✅ 4.3 Snapshot com NBT inteiro de cada guerreiro no SavedData — corrigido (22/11/2026)
+`registerOrUpdate` e os `update*` só chamam `setDirty()` (e só copiam o NBT) quando algo mudou de fato. Um guerreiro parado (modo Parado no posto, fogueira) não regrava o arquivo a cada 10 s. Quem anda continua mudando o snapshot (posição), o que é esperado.
 
-### 🟢 4.4 `VillageWarriorSavedData` não separa dimensões
-A chave é só `ChunkPos.toLong()`, mas `VillageWarriorSpawner.tick` roda em todas as dimensões.
-**Sugestão:** incluir a dimensão na chave, ou rodar o spawner só no overworld (o comentário já diz isso).
+### ✅ 4.4 `VillageWarriorSavedData` não separa dimensões — corrigido (22/11/2026)
+A chave agora é dimensão + chunk (`SpawnedByDimension` no NBT). A lista antiga (`SpawnedVillages`) é lida como overworld e regravada no formato novo.
 
 ---
 
 ## 5. Desempenho
 
-### 🟢 5.1 Varreduras de entidades por tick
-~~`pickUpGroundItems` faz `getEntitiesOfClass(ItemEntity)` todo tick~~ (agora a cada 5 ticks). As checagens de projétil e creeper ainda varrem a área com frequência.
-**Sugestão:** rodar a cada 5–10 ticks, com o `tickCount` deslocado pelo `getId()` para espalhar a carga entre guerreiros.
+### ✅ 5.1 Varreduras de entidades por tick — corrigido (22/11/2026)
+- Coleta de itens: a cada 5 ticks, espalhada pelo id.
+- Projéteis e creepers (`WarriorThreatSensor`): cada guerreiro guarda a última lista num cache. Projéteis são varridos a cada 2 ticks num raio de 18 (12 pedidos + o que a flecha anda em 2 ticks) e creepers a cada 5 ticks num raio de 9. Os goals pedem várias vezes por tick com raios diferentes; agora todos usam a mesma lista, filtrando posição, movimento e pavio na hora.
 
-### 🟢 5.2 `syncEquipmentWithInventory()` todo tick
-Chama `setItemSlot` 6 vezes por tick. Daria para marcar o inventário como "sujo" em `setChanged()` e sincronizar só quando mudar.
+### ✅ 5.2 `syncEquipmentWithInventory()` todo tick — corrigido (22/11/2026)
+Continua rodando todo tick (é barato), mas só chama `setItemSlot` quando o slot aponta para outro `ItemStack`. O slot guarda a mesma instância do inventário, então durabilidade e encantamentos já ficam iguais sem copiar nada.
 
-### 🟢 5.3 Resgate de companheiros a cada segundo por jogador
-`rescueFollowingCompanions` roda a cada 20 ticks e varre todos os níveis para cada companheiro. Com poucos companheiros não pesa; com muitos jogadores e companheiros, convém um cache UUID → entidade atualizado no join/leave.
+### ✅ 5.3 Resgate de companheiros a cada segundo por jogador — corrigido (22/11/2026)
+`findLoadedCompanion(server, info, nívelDoJogador)` procura primeiro na dimensão onde o registro viu o companheiro por último e na do jogador; só depois nas outras. Quase sempre acha na primeira. Um cache UUID → entidade ficou de fora: teria de ser mantido em join/leave/troca de dimensão e o ganho é pequeno.
 
 ---
 
@@ -195,25 +192,27 @@ Chama `setItemSlot` 6 vezes por tick. Daria para marcar o inventário como "sujo
   - `WarriorWarcry` (gritos de guerra)
   - `WarriorProgression` (escolha de classe)
   - 🟢 Falta: `WarriorPersistence` (save/load/snapshot) e a parte de XP/nível.
-- 🟢 **Constantes de balanceamento num lugar só.** Custos de recrutamento, curva de XP, cooldowns, raios e porcentagens estão espalhados como números mágicos. Melhor ainda: um `ForgeConfigSpec` (`epicvanguard-common.toml`), para donos de servidor ajustarem sem recompilar.
-- 🟢 ~~Import duplicado de `ShieldItem`~~ (removido). Falta a indentação quebrada em `isSpellOrMagicDamage`.
-- 🟢 **Código morto:**
-  - `NEXT_TAVERN_SPAWN` / `MIN_TAVERN_INTERVAL` / `checkTavernRespawn` comentado em `VillageWarriorSpawner`
-  - `findOrLoadCompanion`, que hoje é igual a `findLoadedCompanion`
+- ✅ **Config `epicvanguard-common.toml`** — feito (22/11/2026): `config/EpicVanguardConfig` (ForgeConfigSpec COMMON) com custo de contratação, XP, raio do XP compartilhado, recarga do grito, duração do edital, distâncias/tempo do Seguir e memória do registro. Ver [ARQUITETURA.md](ARQUITETURA.md#config).
+  - 🟢 Falta: porcentagens das classes (crítico, esquiva, fúria) e a curva de XP por nível. Os textos das árvores ainda mostram "50s" fixo.
+  - 🟢 O talento de nível 20 promete "recarga do grito em 40 s", mas o código não reduz a recarga. Implementar ou corrigir o texto.
+- ✅ Indentação de `isSpellOrMagicDamage` arrumada (22/11/2026).
+- ✅ **Código morto** — removido (22/11/2026):
+  - ~~`NEXT_TAVERN_SPAWN` / `MIN_TAVERN_INTERVAL` / `checkTavernRespawn` / `findImmersiveSpawnPos`~~ em `VillageWarriorSpawner` (e os imports que só eles usavam)
+  - ~~`findOrLoadCompanion`~~ (os comandos chamam `findLoadedCompanion`)
   - ~~`teleportFollowingCompanions` (alias)~~ (removido)
   - ~~`consumeHealingItem(ItemStack, int)`~~ (removido)
   - ~~`VillageCompanionSavedData`~~ (removido)
-- 🟢 **Pacote `com.example.epicvanguard`** → trocar por um domínio seu antes de publicar (pendente da auditoria).
-- 🟢 **Registro de pacotes:** `Messages` mistura imports e nomes totalmente qualificados. Padronizar com imports.
+- ✅ **Pacote** — trocado (22/11/2026): `com.example.epicvanguard` → `io.github.raffasanttos.epicvanguard` (main e gametest; `mod_group_id` no `gradle.properties`). O mod id `epicvanguard` não mudou, então mundos e configs continuam valendo.
+- ✅ **Registro de pacotes:** `Messages` só com imports (22/11/2026).
 
 ---
 
 ## 7. Build e projeto
 
 - ✅ **Jar do Epic Fight versionado em `libs/`** — corrigido (22/11/2026): o Gradle baixa pelo CurseMaven (`curse.maven:epic-fight-mod-405076:8049910`, Epic Fight 20.14.17). O jar saiu do repositório.
-- 🟢 `build_jar.bat` anuncia `build\libs\epicvanguard-1.0.0.jar`, mas o jar real é `EpicVanguard <versão> [1.20.1].jar`.
-- 🟢 Apagar `scratch_test_nbt.java` da raiz, ou mover para `tools/`.
-- 🟢 Mudar `forge.logging.console.level` de `debug` para `info` nas runs, para deixar o log legível.
+- ✅ `build_jar.bat` (22/11/2026): lista o jar gerado de verdade (`EpicVanguard <versão> [1.20.1].jar`) e o `PATH` do Java do launcher agora funciona (antes a variável era expandida antes de ser definida).
+- ✅ `scratch_test_nbt.java` movido para `tools/dev/InspectStructureNbt.java.txt` (22/11/2026) (ferramenta de inspeção de NBT de estruturas; não compila com o mod).
+- ✅ `forge.logging.console.level` em `info` (22/11/2026).
 - 🟢 CI no GitHub Actions rodando `./gradlew build` e `./gradlew runGameTestServer` a cada push. Agora dá: o Epic Fight vem do CurseMaven.
 
 ---
@@ -223,8 +222,8 @@ Chama `setItemSlot` 6 vezes por tick. Daria para marcar o inventário como "sujo
 - ✅ **GameTests:** 22 testes em `src/gametest` (combate, persistência, segurança multiplayer, XP, fogo amigo, traduções, livro). Como rodar em [TESTES.md](TESTES.md).
 - 🟢 **Mais testes:** `rollRandomTier`, IA seguindo/guardando, teleporte, duelo (quando 3.7 for feito).
 - ✅ **Guia dentro do jogo:** livro do Patchouli (opcional) em inglês e português, gerado por `tools/patchouli/build_book.js`.
-- 🟢 **README.md:** o que o mod faz, como recrutar (moedas, duelo, prisioneiro), modos de combate, classes, comandos `/vanguard` e `/fogoamigo`, dependências, como compilar.
-- 🟢 **Revisar as traduções em inglês dentro do jogo** (pendente da auditoria).
+- ✅ **README.md** (22/11/2026): o que o mod faz, recrutamento, posturas, classes, comandos, config, dependências e como compilar (inglês e português).
+- ✅ **Traduções em inglês revisadas** (22/11/2026): "Vanguard Post" → "Vanguard Point" nos títulos, "Elite (Iron/Iron)", frases das falas mais naturais, maiúsculas padronizadas nos talentos. O aviso do edital mostra os dias da config.
 
 ---
 
