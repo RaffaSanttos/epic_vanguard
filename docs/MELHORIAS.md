@@ -177,12 +177,8 @@ Chama `setItemSlot` 6 vezes por tick. Daria para marcar o inventário como "sujo
 
 ## 8. Testes e documentação
 
-- 🟠 **GameTests** (plano da auditoria), começando pelos bugs desta lista:
-  - rename com o guerreiro descarregado mantém o nome novo (1.1);
-  - golpe com espada encantada causa mais dano e gasta durabilidade (1.2);
-  - jogador que não é dono não comanda nem abre o inventário;
-  - cópia de geração menor é descartada; UUID em `Retired` não reaparece.
-- 🟢 **Testes unitários de lógica pura:** `getXpForNextLevel`, `rollRandomTier`, `FriendlyFireMode.fromString`.
+- ✅ **GameTests:** 18 testes em `src/gametest` (combate, persistência, segurança multiplayer, XP, fogo amigo, traduções, livro). Como rodar em [TESTES.md](TESTES.md).
+- 🟢 **Mais testes:** `rollRandomTier`, IA seguindo/guardando, teleporte, duelo (quando 3.7 for feito).
 - ✅ **Guia dentro do jogo:** livro do Patchouli (opcional) em inglês e português, gerado por `tools/patchouli/build_book.js`.
 - 🟢 **README.md:** o que o mod faz, como recrutar (moedas, duelo, prisioneiro), modos de combate, classes, comandos `/vanguard` e `/fogoamigo`, dependências, como compilar.
 - 🟢 **Revisar as traduções em inglês dentro do jogo** (pendente da auditoria).

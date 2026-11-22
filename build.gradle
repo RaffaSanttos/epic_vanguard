@@ -14,6 +14,14 @@ base {
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
+// Testes automáticos (GameTest do Forge). Ficam fora do jar publicado.
+sourceSets {
+    gametest {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+    }
+}
+
 println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
 minecraft {
     mappings channel: mapping_channel, version: mapping_version
@@ -36,6 +44,16 @@ minecraft {
 
         client {
             property 'forge.enabledGameTestNamespaces', mod_id
+        }
+
+        gameTestServer {
+            property 'forge.enabledGameTestNamespaces', mod_id
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                    source sourceSets.gametest
+                }
+            }
         }
 
         server {
@@ -64,8 +82,18 @@ repositories {
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
-    // Epic Fight (Local flatDir)
-    implementation fg.deobf("local:epic-fight:20.14.17-mc1.20.1-forge")
+    // Epic Fight (Local flatDir). É opcional para o mod: compila contra ele e, nas runs de desenvolvimento,
+    // carrega junto, a menos que se passe -PnoEpicFight (para testar o mod sem o Epic Fight).
+    compileOnly fg.deobf("local:epic-fight:20.14.17-mc1.20.1-forge")
+    if (!project.hasProperty('noEpicFight')) {
+        runtimeOnly fg.deobf("local:epic-fight:20.14.17-mc1.20.1-forge")
+    }
+
+    // Patchouli: só para testar o livro-guia nas runs de desenvolvimento (o mod não depende dele para compilar)
+    // -PnoPatchouli roda sem ele
+    if (!project.hasProperty('noPatchouli')) {
+        runtimeOnly fg.deobf("vazkii.patchouli:Patchouli:1.20.1-85-FORGE")
+    }
 }
 
 tasks.withType(JavaCompile).configureEach {
