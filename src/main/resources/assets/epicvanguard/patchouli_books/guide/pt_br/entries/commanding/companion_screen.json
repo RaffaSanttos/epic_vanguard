@@ -6,7 +6,12 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "Clique com o $(thing)botão direito$() no seu companheiro para abrir a tela dele (só o dono).$(br)No lado direito:$(li)$(thing)Postura$(): alterna entre $(l:epicvanguard:commanding/stances)Seguir, Guarda e Parado$().$(li)$(thing)Parar$(): encerra a luta atual e limpa o alvo.$(li)$(thing)Espada$(): liga/desliga atacar monstros hostis (desligado ao recrutar).$(li)$(thing)Carne$(): liga/desliga caçar animais adultos para comida."
+      "text": "Clique com o $(thing)botão direito$() no seu companheiro para abrir a tela dele (só o dono).$(br)No lado direito:$(li)$(thing)Postura$(): alterna entre $(l:epicvanguard:commanding/stances)Seguir, Guarda e Parado$().$(li)$(thing)Parar$(): encerra a luta atual e limpa o alvo.$(li)Três $(thing)botões de tática$(), explicados na próxima página."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Táticas",
+      "text": "Botão aceso está ligado, cinza está desligado.$(li)$(thing)Espada$(): atacar monstros hostis. Desligado ao recrutar.$(li)$(thing)Carne$(): caçar animais adultos para comida.$(li)$(thing)Mão$(): pegar itens do chão. Ligado por padrão; nunca pega o que você mesmo jogou."
     },
     {
       "type": "patchouli:text",

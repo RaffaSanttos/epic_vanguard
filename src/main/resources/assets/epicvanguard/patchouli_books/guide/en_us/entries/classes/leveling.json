@@ -12,6 +12,11 @@
       "type": "patchouli:text",
       "title": "Per Level",
       "text": "Every level adds:$(li)+1.5 max health$(li)+0.25 base damage$(li)+0.5 natural armor$(li)a little armor toughness and speed$(br2)From $(thing)level 5$() they unlock their class $(l:epicvanguard:classes/warcries)warcry$()."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Choosing a Class",
+      "text": "A plain $(thing)Warrior$() can pick a class at $(thing)level 5$(). Open the $(thing)Talents$() tab, press $(thing)⇄$() to preview the $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardian$() or $(l:epicvanguard:classes/duelist)Duelist$() tree, then $(thing)Choose class$() and $(thing)Confirm$().$(br2)It is permanent. Level, XP, name and gear are kept."
     }
   ]
 }

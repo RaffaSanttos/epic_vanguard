@@ -86,8 +86,11 @@ const entries = [
     name: t('The Companion Screen', 'A Tela do Companheiro'),
     pages: [
       { type: 'text', text: t(
-        '$(thing)Right-click$() your companion to open their screen (owner only).$(br)On the right side:$(li)$(thing)Stance$(): cycles between $(l:epicvanguard:commanding/stances)Follow, Guard and Stay$().$(li)$(thing)Stop$(): ends the current fight and clears the target.$(li)$(thing)Sword$(): attack hostile monsters on/off (off for new recruits).$(li)$(thing)Meat$(): hunt adult animals for food on/off.',
-        'Clique com o $(thing)botão direito$() no seu companheiro para abrir a tela dele (só o dono).$(br)No lado direito:$(li)$(thing)Postura$(): alterna entre $(l:epicvanguard:commanding/stances)Seguir, Guarda e Parado$().$(li)$(thing)Parar$(): encerra a luta atual e limpa o alvo.$(li)$(thing)Espada$(): liga/desliga atacar monstros hostis (desligado ao recrutar).$(li)$(thing)Carne$(): liga/desliga caçar animais adultos para comida.') },
+        '$(thing)Right-click$() your companion to open their screen (owner only).$(br)On the right side:$(li)$(thing)Stance$(): cycles between $(l:epicvanguard:commanding/stances)Follow, Guard and Stay$().$(li)$(thing)Stop$(): ends the current fight and clears the target.$(li)Three $(thing)tactic buttons$(), explained on the next page.',
+        'Clique com o $(thing)botão direito$() no seu companheiro para abrir a tela dele (só o dono).$(br)No lado direito:$(li)$(thing)Postura$(): alterna entre $(l:epicvanguard:commanding/stances)Seguir, Guarda e Parado$().$(li)$(thing)Parar$(): encerra a luta atual e limpa o alvo.$(li)Três $(thing)botões de tática$(), explicados na próxima página.') },
+      { type: 'text', title: t('Tactics', 'Táticas'), text: t(
+        'Lit buttons are on, grey ones are off.$(li)$(thing)Sword$(): attack hostile monsters. Off for new recruits.$(li)$(thing)Meat$(): hunt adult animals for food.$(li)$(thing)Hand$(): pick up items from the ground. On by default; they never take items you dropped yourself.',
+        'Botão aceso está ligado, cinza está desligado.$(li)$(thing)Espada$(): atacar monstros hostis. Desligado ao recrutar.$(li)$(thing)Carne$(): caçar animais adultos para comida.$(li)$(thing)Mão$(): pegar itens do chão. Ligado por padrão; nunca pega o que você mesmo jogou.') },
       { type: 'text', title: t('Tabs and Name', 'Abas e Nome'), text: t(
         'The $(thing)Backpack$() tab shows their gear and health; the $(thing)Talents$() tab shows their level, XP and class bonuses.$(br2)To rename a companion, press the $(thing)pencil$(), use a named $(item)Name Tag$() on them, or the $(l:epicvanguard:reference/commands)rename command$().',
         'A aba $(thing)Mochila$() mostra o equipamento e a vida; a aba $(thing)Talentos$() mostra o nível, o XP e os bônus da classe.$(br2)Para renomear um companheiro, aperte o $(thing)lápis$(), use uma $(item)Etiqueta$() com nome nele, ou o $(l:epicvanguard:reference/commands)comando de renomear$().') },
@@ -96,11 +99,11 @@ const entries = [
     name: t('Stances', 'Posturas'),
     pages: [
       { type: 'text', text: t(
-        '$(thing)Follow$() (default): walks with you and fights what threatens you. If they fall more than 13 blocks behind, they teleport to your side, even across dimensions or from unloaded chunks.$(br2)$(thing)Guard$(): defends the spot where you set the stance, staying within about 6 blocks of it.',
-        '$(thing)Seguir$() (padrão): anda com você e luta contra o que te ameaça. Se ficar mais de 13 blocos para trás, se teleporta para o seu lado, até entre dimensões ou de chunks descarregados.$(br2)$(thing)Guarda$(): defende o ponto onde você escolheu a postura, ficando a uns 6 blocos dele.') },
+        '$(thing)Follow$() (default): walks with you and fights what threatens you. More than 13 blocks behind for 2 seconds, they teleport to your side, even across dimensions or from unloaded chunks. In a fight they finish it, unless you get over 32 blocks away.',
+        '$(thing)Seguir$() (padrão): anda com você e luta contra o que te ameaça. Mais de 13 blocos para trás por 2 segundos, se teleporta para o seu lado, até entre dimensões ou de chunks descarregados. Numa luta, termina a luta, a menos que você passe de 32 blocos.') },
       { type: 'text', text: t(
-        '$(thing)Stay$(): stands still and does not hunt or chase anything. They still defend themselves if attacked.$(br2)Companions in $(thing)Guard$() or $(thing)Stay$() never teleport to you. Use the $(l:epicvanguard:reference/commands)call command$() to bring them back.',
-        '$(thing)Parado$(): fica imóvel e não caça nem persegue nada. Ainda se defende se for atacado.$(br2)Companheiros em $(thing)Guarda$() ou $(thing)Parado$() nunca se teleportam até você. Use o $(l:epicvanguard:reference/commands)comando de chamar$() para trazê-los de volta.') },
+        '$(thing)Guard$(): defends the spot where you set it, within about 6 blocks.$(br2)$(thing)Stay$(): stands still and chases nothing, but defends themselves.$(br2)In $(thing)Guard$() or $(thing)Stay$() they never teleport to you. Use the $(l:epicvanguard:reference/commands)call command$() to bring them back.',
+        '$(thing)Guarda$(): defende o ponto escolhido, a uns 6 blocos dele.$(br2)$(thing)Parado$(): fica imóvel e não persegue nada, mas se defende.$(br2)Em $(thing)Guarda$() ou $(thing)Parado$() eles nunca se teleportam até você. Use o $(l:epicvanguard:reference/commands)comando de chamar$() para trazê-los de volta.') },
     ] },
   { category: 'commanding', id: 'inventory', icon: 'minecraft:bundle', sortnum: 2,
     name: t('Gear and Backpack', 'Equipamento e Mochila'),
@@ -109,8 +112,8 @@ const entries = [
         'Every companion has $(thing)4 armor slots$(), a $(thing)main weapon$() slot, an $(thing)off-hand$() slot for a shield or second weapon, and a $(thing)15-slot backpack$().$(br2)Swords, axes, Epic Fight weapons and most modded weapons fit the weapon slots. Shift-click sends armor and weapons to the right slot.',
         'Todo companheiro tem $(thing)4 slots de armadura$(), um slot de $(thing)arma principal$(), um slot de $(thing)mão secundária$() para escudo ou segunda arma, e uma $(thing)mochila de 15 slots$().$(br2)Espadas, machados, armas do Epic Fight e a maioria das armas de outros mods cabem nos slots de arma. Shift + clique manda armadura e armas para o slot certo.') },
       { type: 'text', text: t(
-        'Weapon enchantments work: $(thing)Sharpness$(), $(thing)Smite$(), $(thing)Knockback$(), $(thing)Fire Aspect$() and others. Weapons lose durability like yours and break when worn out.$(br2)Recruited companions $(thing)pick up items$() they walk over and store them in the backpack.',
-        'Os encantamentos da arma funcionam: $(thing)Afiação$(), $(thing)Julgamento$(), $(thing)Repulsão$(), $(thing)Aspecto Flamejante$() e outros. As armas gastam como as suas e quebram quando acabam.$(br2)Companheiros recrutados $(thing)pegam itens$() do chão ao passar por cima e guardam na mochila.') },
+        'Weapon enchantments work: $(thing)Sharpness$(), $(thing)Smite$(), $(thing)Knockback$(), $(thing)Fire Aspect$() and others. Weapons lose durability like yours and break when worn out.$(br2)Companions $(thing)pick up items$() they walk over, except what you drop. Turn it off with the $(thing)Hand$() button.',
+        'Os encantamentos da arma funcionam: $(thing)Afiação$(), $(thing)Julgamento$(), $(thing)Repulsão$(), $(thing)Aspecto Flamejante$() e outros. As armas gastam como as suas e quebram quando acabam.$(br2)Companheiros $(thing)pegam itens$() do chão ao passar por cima, menos o que você joga. Desligue no botão $(thing)Mão$().') },
       { type: 'text', title: t('If They Fall', 'Se Ele Cair'), text: t(
         'When a companion dies, everything they carried drops on the ground. The companion is gone for good, so keep them fed and well armored.',
         'Quando um companheiro morre, tudo o que ele carregava cai no chão. Ele não volta, então mantenha-o alimentado e bem protegido.') },
@@ -146,6 +149,9 @@ const entries = [
       { type: 'text', title: t('Per Level', 'Por Nível'), text: t(
         'Every level adds:$(li)+1.5 max health$(li)+0.25 base damage$(li)+0.5 natural armor$(li)a little armor toughness and speed$(br2)From $(thing)level 5$() they unlock their class $(l:epicvanguard:classes/warcries)warcry$().',
         'Cada nível adiciona:$(li)+1,5 de vida máxima$(li)+0,25 de dano base$(li)+0,5 de armadura natural$(li)um pouco de resistência de armadura e velocidade$(br2)A partir do $(thing)nível 5$() eles liberam o $(l:epicvanguard:classes/warcries)grito de guerra$() da classe.') },
+      { type: 'text', title: t('Choosing a Class', 'Escolhendo a Classe'), text: t(
+        'A plain $(thing)Warrior$() can pick a class at $(thing)level 5$(). Open the $(thing)Talents$() tab, press $(thing)⇄$() to preview the $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardian$() or $(l:epicvanguard:classes/duelist)Duelist$() tree, then $(thing)Choose class$() and $(thing)Confirm$().$(br2)It is permanent. Level, XP, name and gear are kept.',
+        'Um $(thing)Guerreiro$() comum pode escolher a classe no $(thing)nível 5$(). Abra a aba $(thing)Talentos$(), aperte $(thing)⇄$() para ver a árvore de $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardião$() ou $(l:epicvanguard:classes/duelist)Duelista$(), depois $(thing)Escolher classe$() e $(thing)Confirmar$().$(br2)É permanente. Nível, XP, nome e equipamento continuam.') },
     ] },
   { category: 'classes', id: 'berserker', icon: 'epicvanguard:berserker_companion_spawn_egg', sortnum: 1,
     name: t('Berserker', 'Berserker'),

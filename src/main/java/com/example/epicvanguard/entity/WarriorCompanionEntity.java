@@ -13,6 +13,11 @@ import com.example.epicvanguard.dialogue.WarriorSpeechSystem;
 import com.example.epicvanguard.entity.ai.*;
 import com.example.epicvanguard.entity.util.WarriorCombatHelper;
 import com.example.epicvanguard.entity.util.WarriorHealingHelper;
+import com.example.epicvanguard.entity.util.WarriorInteraction;
+import com.example.epicvanguard.entity.util.WarriorTeleport;
+import com.example.epicvanguard.entity.util.WarriorThreatSensor;
+import com.example.epicvanguard.entity.util.WarriorWarcry;
+import com.example.epicvanguard.entity.util.WarriorProgression;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ShieldItem;
@@ -126,6 +131,8 @@ public class WarriorCompanionEntity extends PathfinderMob {
     private static final EntityDataAccessor<Boolean> TARGET_HOSTILES =
             SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> TARGET_PASSIVES =
+            SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> PICKUP_ITEMS =
             SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> RECRUITED =
             SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.BOOLEAN);
@@ -297,52 +304,16 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
     @Nullable
     public Creeper getImminentCreeperThreat(double radius) {
-        List<Creeper> creepers = this.level().getEntitiesOfClass(
-                Creeper.class,
-                this.getBoundingBox().inflate(radius),
-                c -> c.isAlive() && (c.isIgnited() || c.getSwellDir() > 0)
-        );
-        return creepers.isEmpty() ? null : creepers.get(0);
+        return WarriorThreatSensor.imminentCreeper(this, radius);
     }
 
     public boolean isThreatenedByProjectiles(double radius) {
-        List<Projectile> projectiles = this.level().getEntitiesOfClass(
-                Projectile.class,
-                this.getBoundingBox().inflate(radius),
-                p -> p.isAlive() && p.getDeltaMovement().lengthSqr() > 0.05D
-        );
-        for (Projectile p : projectiles) {
-            Vec3 projMotion = p.getDeltaMovement().normalize();
-            Vec3 toWarrior = this.position().subtract(p.position()).normalize();
-            if (projMotion.dot(toWarrior) > 0.65D) {
-                return true;
-            }
-            Player owner = getOwner();
-            if (owner != null && this.distanceToSqr(owner) < 64.0D) {
-                Vec3 toOwner = owner.position().subtract(p.position()).normalize();
-                if (projMotion.dot(toOwner) > 0.65D) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return WarriorThreatSensor.threatenedByProjectiles(this, radius);
     }
 
     @Nullable
     public Entity getIncomingProjectileThreat(double radius) {
-        List<Projectile> projectiles = this.level().getEntitiesOfClass(
-                Projectile.class,
-                this.getBoundingBox().inflate(radius),
-                p -> p.isAlive() && p.getDeltaMovement().lengthSqr() > 0.05D
-        );
-        for (Projectile p : projectiles) {
-            Vec3 projMotion = p.getDeltaMovement().normalize();
-            Vec3 toWarrior = this.position().subtract(p.position()).normalize();
-            if (projMotion.dot(toWarrior) > 0.65D) {
-                return p;
-            }
-        }
-        return null;
+        return WarriorThreatSensor.incomingProjectile(this, radius);
     }
 
     public boolean isOwnerInCriticalDanger() {
@@ -488,6 +459,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
         this.entityData.define(COMBAT_MODE, 0); // 0=Seguir (padrão inicial), 1=Guarda, 2=Parado
         this.entityData.define(TARGET_HOSTILES, true);
         this.entityData.define(TARGET_PASSIVES, false);
+        this.entityData.define(PICKUP_ITEMS, true);
         this.entityData.define(RECRUITED, false);
         this.entityData.define(WARRIOR_NAME, "");
         this.entityData.define(DUEL_MODE, false);
@@ -518,6 +490,26 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
     public void setTargetPassives(boolean targetPassives) {
         this.entityData.set(TARGET_PASSIVES, targetPassives);
+    }
+
+    /** Coleta automática de itens do chão (botão ✋ da tela). Ligada por padrão. */
+    public boolean isPickupItems() {
+        return this.entityData.get(PICKUP_ITEMS);
+    }
+
+    public void setPickupItems(boolean pickupItems) {
+        this.entityData.set(PICKUP_ITEMS, pickupItems);
+    }
+
+    /** Ticks seguidos longe do dono fora de combate (usado por {@link WarriorTeleport#tickFollowTeleport}). */
+    private int farFromOwnerTicks = 0;
+
+    public int getFarFromOwnerTicks() {
+        return farFromOwnerTicks;
+    }
+
+    public void setFarFromOwnerTicks(int ticks) {
+        this.farFromOwnerTicks = ticks;
     }
 
     /** Modos de combate (posturas). */
@@ -879,126 +871,13 @@ public class WarriorCompanionEntity extends PathfinderMob {
     }
 
     public void triggerWarcry() {
-        if (this.level().isClientSide) return;
-        this.setWarcryCooldown(1000); // 50 segundos de recarga
-
-        switch (getSpecialization()) {
-            case SPEC_BERSERKER -> executeBerserkerWarcry();
-            case SPEC_GUARDIAN  -> executeGuardianWarcry();
-            case SPEC_DUELIST   -> executeDuelistWarcry();
-            default             -> executeBaseWarcry();
-        }
+        WarriorWarcry.trigger(this);
     }
 
-    private void spawnParticleRing(ServerLevel serverLevel, ParticleOptions particle, double radius, int count) {
-        for (int i = 0; i < count; i++) {
-            double angle = (2 * Math.PI / count) * i;
-            double px = this.getX() + Math.cos(angle) * radius;
-            double pz = this.getZ() + Math.sin(angle) * radius;
-            serverLevel.sendParticles(particle, px, this.getY() + 0.2D, pz, 1, 0.0D, 0.1D, 0.0D, 0.02D);
-        }
-    }
 
-    private void executeBerserkerWarcry() {
-        if (!(this.level() instanceof ServerLevel serverLevel)) return;
-        this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                SoundEvents.RAVAGER_ROAR, SoundSource.PLAYERS, 1.5F, 1.2F);
-        spawnParticleRing(serverLevel, ParticleTypes.FLAME, 3.0D, 24);
-        spawnParticleRing(serverLevel, ParticleTypes.ANGRY_VILLAGER, 2.0D, 12);
 
-        // 1. Monstros em 10 blocos ganham Fraqueza I por 10s (200 ticks)
-        List<Monster> enemies = serverLevel.getEntitiesOfClass(Monster.class, this.getBoundingBox().inflate(10.0D), LivingEntity::isAlive);
-        for (Monster enemy : enemies) {
-            enemy.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 200, 0, false, true));
-        }
 
-        // 2. Berserker ganha Força II por 10s
-        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 200, 1, false, true));
 
-        // 3. Jogador e equipe ganham Força I por 10s
-        Player owner = getOwner();
-        if (owner != null && owner.distanceToSqr(this) <= 256.0D) {
-            owner.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 200, 0, false, true));
-            owner.displayClientMessage(
-                    Component.translatable("epicvanguard.text.warrior_companion_entity.2", this.getWarriorName()),
-                    false);
-        }
-    }
-
-    private void executeGuardianWarcry() {
-        if (!(this.level() instanceof ServerLevel serverLevel)) return;
-        this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 1.2F, 0.8F);
-        this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                SoundEvents.RAVAGER_ROAR, SoundSource.PLAYERS, 1.3F, 0.7F);
-        spawnParticleRing(serverLevel, ParticleTypes.FLASH, 4.0D, 16);
-        spawnParticleRing(serverLevel, ParticleTypes.ENCHANTED_HIT, 3.0D, 32);
-
-        // 1. Taunt absoluto (100%) em monstros num raio de 12 blocos
-        List<Monster> enemies = serverLevel.getEntitiesOfClass(Monster.class, this.getBoundingBox().inflate(12.0D), LivingEntity::isAlive);
-        for (Monster enemy : enemies) {
-            enemy.setTarget(this);
-        }
-
-        // 2. Guardião ganha Resistência II por 15s (300 ticks)
-        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 300, 1, false, true));
-
-        // 3. Jogador e equipe ganham Força I e Resistência I por 15s
-        Player owner = getOwner();
-        if (owner != null && owner.distanceToSqr(this) <= 324.0D) {
-            owner.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 300, 0, false, true));
-            owner.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 300, 0, false, true));
-            owner.displayClientMessage(
-                    Component.translatable("epicvanguard.text.warrior_companion_entity.3", this.getWarriorName()),
-                    false);
-        }
-    }
-
-    private void executeDuelistWarcry() {
-        if (!(this.level() instanceof ServerLevel serverLevel)) return;
-        this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.5F, 0.5F);
-        this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 0.6F, 1.8F);
-        spawnParticleRing(serverLevel, ParticleTypes.SWEEP_ATTACK, 2.5D, 16);
-        spawnParticleRing(serverLevel, ParticleTypes.CLOUD, 3.5D, 24);
-
-        // 1. Desestabiliza inimigos em 6 blocos com quebra de postura breve (Lentidão IV / atordoamento por 1.5s)
-        List<Monster> enemies = serverLevel.getEntitiesOfClass(Monster.class, this.getBoundingBox().inflate(6.0D), LivingEntity::isAlive);
-        for (Monster enemy : enemies) {
-            enemy.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 30, 3, false, true));
-            enemy.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 30, 0, false, true));
-        }
-
-        // 2. Jogador e equipe ganham Força I e Velocidade II (+40%) por 12s (240 ticks)
-        this.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 240, 1, false, true));
-        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 240, 0, false, true));
-
-        Player owner = getOwner();
-        if (owner != null && owner.distanceToSqr(this) <= 256.0D) {
-            owner.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 240, 1, false, true));
-            owner.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 240, 0, false, true));
-            owner.displayClientMessage(
-                    Component.translatable("epicvanguard.text.warrior_companion_entity.4", this.getWarriorName()),
-                    false);
-        }
-    }
-
-    private void executeBaseWarcry() {
-        if (!(this.level() instanceof ServerLevel serverLevel)) return;
-        this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                SoundEvents.RAVAGER_ROAR, SoundSource.PLAYERS, 1.0F, 1.0F);
-        spawnParticleRing(serverLevel, ParticleTypes.CRIT, 2.5D, 16);
-
-        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 160, 0, false, true));
-        Player owner = getOwner();
-        if (owner != null && owner.distanceToSqr(this) <= 256.0D) {
-            owner.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 160, 0, false, true));
-            owner.displayClientMessage(
-                    Component.translatable("epicvanguard.text.warrior_companion_entity.5", this.getWarriorName()),
-                    false);
-        }
-    }
 
     /**
      * Recalcula dinamicamente todos os atributos escalonáveis com base no Nível e Especialização.
@@ -1260,14 +1139,8 @@ public class WarriorCompanionEntity extends PathfinderMob {
             // Sync Warrior Inventory equipment to entity equipment slots for rendering
             syncEquipmentWithInventory();
 
-            // Follow Owner distance safeguard (modo 0 = Seguir: teleporta ao ultrapassar 13 blocos de distância)
-            if (isRecruited() && getCombatMode() == 0) {
-                Player owner = getOwner();
-                if (owner != null && !owner.isSpectator() && this.distanceToSqr(owner) >= 169.0D) { // >= 13 blocks (13^2 = 169)
-                    this.setTarget(null);
-                    this.safeTeleportTo(owner);
-                }
-            }
+            // Modo Seguir: teleporta até o dono quando fica para trás, sem largar uma luta perto dele
+            WarriorTeleport.tickFollowTeleport(this);
 
             // Modo Parado (2): Garante imobilidade quando sem ameaças, permitindo relaxar na fogueira ou patrulhar no Ponto de Vanguarda
             if (isRecruited() && getCombatMode() == 2) {
@@ -1320,34 +1193,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
     }
 
     private void pickUpGroundItems() {
-        if (!this.isAlive() || this.level().isClientSide() || !this.isRecruited() || this.isPrisoner()) {
-            return;
-        }
-
-        AABB pickupBox = this.getBoundingBox().inflate(1.0D, 0.5D, 1.0D);
-        List<ItemEntity> items = this.level().getEntitiesOfClass(ItemEntity.class, pickupBox, e -> !e.isRemoved() && !e.hasPickUpDelay());
-
-        for (ItemEntity itemEntity : items) {
-            ItemStack groundStack = itemEntity.getItem();
-            if (groundStack.isEmpty()) continue;
-
-            int originalCount = groundStack.getCount();
-            ItemStack remaining = this.warriorInventory.addItemToBackpack(groundStack);
-            int pickedUpCount = originalCount - remaining.getCount();
-
-            if (pickedUpCount > 0) {
-                this.take(itemEntity, pickedUpCount);
-                this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                        SoundEvents.ITEM_PICKUP, SoundSource.NEUTRAL,
-                        0.2F, (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
-
-                if (remaining.isEmpty()) {
-                    itemEntity.discard();
-                } else {
-                    itemEntity.setItem(remaining);
-                }
-            }
-        }
+        WarriorInteraction.pickUpGroundItems(this);
     }
 
     public void syncEquipmentWithInventory() {
@@ -1628,102 +1474,8 @@ public class WarriorCompanionEntity extends PathfinderMob {
     // ── Player Interaction ────────────────────────────────────────────────────
     @Override
     public InteractionResult mobInteract(Player pPlayer, InteractionHand pHand) {
-        if (pHand != InteractionHand.MAIN_HAND) {
-            return InteractionResult.PASS;
-        }
-
-        if (this.level().isClientSide) {
-            return InteractionResult.SUCCESS;
-        }
-
-        ServerPlayer serverPlayer = (ServerPlayer) pPlayer;
-        this.startTalkingWith(serverPlayer, 160);
-
-        if (this.isPrisoner()) {
-            ItemStack heldItem = pPlayer.getItemInHand(pHand);
-            boolean isFood = heldItem.isEdible();
-            boolean isPotion = heldItem.getItem() instanceof PotionItem;
-            boolean isWeapon = heldItem.getItem() instanceof SwordItem || heldItem.getItem() instanceof AxeItem;
-
-            if (isFood || isPotion || isWeapon) {
-                if (!pPlayer.isCreative()) {
-                    if (isWeapon) {
-                        this.getWarriorInventory().setItem(WarriorInventory.SLOT_WEAPON_MAIN, heldItem.copy());
-                        heldItem.shrink(1);
-                    } else {
-                        heldItem.shrink(1);
-                    }
-                } else if (isWeapon) {
-                    this.getWarriorInventory().setItem(WarriorInventory.SLOT_WEAPON_MAIN, heldItem.copy());
-                }
-
-                // Resgate com sucesso: cura vida, remove fraqueza, assina contrato de honra de graça!
-                this.setPrisoner(false);
-                this.removeEffect(MobEffects.WEAKNESS);
-                this.setHealth(this.getMaxHealth());
-                this.setOwnerUUID(pPlayer.getUUID());
-                this.setRecruited(true);
-                this.applyRecruitDefaults(); // Seguir + pacífico
-                this.setEquipmentTier(0);
-                this.syncEquipmentWithInventory();
-
-                if (this.level() instanceof ServerLevel serverLevel) {
-                    serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER,
-                            this.getX(), this.getY() + 1.0D, this.getZ(),
-                            25, 0.5D, 0.5D, 0.5D, 0.05D);
-                    serverLevel.sendParticles(ParticleTypes.HEART,
-                            this.getX(), this.getY() + 1.2D, this.getZ(),
-                            10, 0.4D, 0.4D, 0.4D, 0.05D);
-                    serverLevel.playSound(null, this.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1.0F, 1.0F);
-                }
-
-                pPlayer.sendSystemMessage(Component.translatable("epicvanguard.text.warrior_companion_entity.7", this.getWarriorName()));
-                return InteractionResult.SUCCESS;
-            } else {
-                pPlayer.sendSystemMessage(Component.translatable("epicvanguard.text.warrior_companion_entity.8", this.getWarriorName()));
-                return InteractionResult.SUCCESS;
-            }
-        }
-
-        if (!isRecruited()) {
-            // Abre a tela do Contrato de Honra para contratação manual pelo botão
-            this.setInventoryOpenPlayer(serverPlayer);
-            NetworkHooks.openScreen(serverPlayer, new SimpleMenuProvider(
-                    (id, inv, p) -> new HonorContractMenu(id, inv, this.getId()),
-                    Component.translatable("epicvanguard.text.warrior_companion_entity.9")
-            ), buf -> buf.writeInt(this.getId()));
-            return InteractionResult.SUCCESS;
-        } else {
-            // Check if player is the owner
-            if (this.isOwner(pPlayer)) {
-                ItemStack heldItem = pPlayer.getItemInHand(pHand);
-                if (heldItem.getItem() instanceof net.minecraft.world.item.NameTagItem && heldItem.hasCustomHoverName()) {
-                    String raw = heldItem.getHoverName().getString();
-                    String clean = raw.replaceAll("§[0-9a-fk-or]", "").trim();
-                    if (!clean.isEmpty()) {
-                        this.setWarriorName(clean);
-                        if (!pPlayer.isCreative()) {
-                            heldItem.shrink(1);
-                        }
-                        if (this.level() instanceof ServerLevel serverLevel) {
-                            serverLevel.playSound(null, this.blockPosition(), SoundEvents.ANVIL_USE, SoundSource.PLAYERS, 0.8F, 1.2F);
-                        }
-                        pPlayer.sendSystemMessage(Component.translatable("epicvanguard.text.warrior_companion_entity.10", clean));
-                        return InteractionResult.SUCCESS;
-                    }
-                }
-
-                // Open Warrior Companion Menu directly on click
-                this.setInventoryOpenPlayer(serverPlayer);
-                NetworkHooks.openScreen(serverPlayer, new SimpleMenuProvider(
-                        (id, inv, p) -> new WarriorCompanionMenu(id, inv, this.getId()),
-                        Component.translatable("epicvanguard.text.warrior_companion_entity.11", this.getWarriorName())
-                ), buf -> buf.writeInt(this.getId()));
-                return InteractionResult.SUCCESS;
-            }
-        }
-
-        return super.mobInteract(pPlayer, pHand);
+        InteractionResult result = WarriorInteraction.interact(this, pPlayer, pHand);
+        return result != null ? result : super.mobInteract(pPlayer, pHand);
     }
 
     // ── Save & Load NBT ───────────────────────────────────────────────────────
@@ -1734,6 +1486,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
         pCompound.putInt("SkinId", getSkinId());
         pCompound.putBoolean("TargetHostiles", isTargetHostiles());
         pCompound.putBoolean("TargetPassives", isTargetPassives());
+        pCompound.putBoolean("PickupItems", isPickupItems());
         pCompound.putInt("CombatMode", getCombatMode());
         pCompound.putBoolean("Recruited", isRecruited());
         pCompound.putString("WarriorName", getWarriorName());
@@ -1776,6 +1529,9 @@ public class WarriorCompanionEntity extends PathfinderMob {
         }
         if (pCompound.contains("TargetPassives")) {
             setTargetPassives(pCompound.getBoolean("TargetPassives"));
+        }
+        if (pCompound.contains("PickupItems")) {
+            setPickupItems(pCompound.getBoolean("PickupItems"));
         }
         if (pCompound.contains("CombatMode")) {
             setCombatMode(pCompound.getInt("CombatMode"));
@@ -1885,122 +1641,16 @@ public class WarriorCompanionEntity extends PathfinderMob {
         return copy;
     }
 
-    /**
-     * Teleporta com segurança para perto do alvo (inclusive entre dimensões).
-     * @return a entidade que está agora ao lado do alvo (é uma nova se mudou de dimensão)
-     */
+    /** Teleporta com segurança para perto do alvo (inclusive entre dimensões); devolve a entidade que ficou ao lado dele. */
     public WarriorCompanionEntity safeTeleportTo(Entity target) {
-        if (target == null) return this;
-
-        // Outra dimensão: transfere e continua o teleporte seguro na entidade nova
-        if (this.level() != target.level() && target.level() instanceof ServerLevel targetLevel) {
-            WarriorCompanionEntity moved = this.moveToLevel(targetLevel, target.getX(), target.getY(), target.getZ());
-            return moved == this ? this : moved.safeTeleportTo(target);
-        }
-
-        // 1. Proteção contra o Void: se o alvo estiver no void ou abaixo da altura mínima, NÃO teletransporta
-        if (target.getY() < target.level().getMinBuildHeight()) {
-            return this;
-        }
-
-        // 2. Proteção contra Voo / Elytra:
-        // Se o jogador estiver voando ativamente ou planando com Elytra, aguarda
-        if (target instanceof Player player) {
-            if (player.isFallFlying() || player.getAbilities().flying) {
-                return this;
-            }
-        }
-
-        BlockPos targetPos = target.blockPosition();
-
-        // 3. Procura blocos sólidos seguros ao redor do alvo (raio horizontal de 3 blocos, dy entre +2 e -2)
-        for (int dy = 2; dy >= -2; dy--) {
-            for (int dx = -3; dx <= 3; dx++) {
-                for (int dz = -3; dz <= 3; dz++) {
-                    if (dx == 0 && dz == 0 && dy == 0) continue;
-                    BlockPos candidate = targetPos.offset(dx, dy, dz);
-                    if (isSafeTeleportBlock(candidate)) {
-                        doTeleport(candidate.getX() + 0.5D, candidate.getY(), candidate.getZ() + 0.5D);
-                        return this;
-                    }
-                }
-            }
-        }
-
-        // 4. Fallback: se o bloco onde o alvo está pisando for seguro
-        if (isSafeTeleportBlock(targetPos)) {
-            doTeleport(target.getX(), target.getY(), target.getZ());
-            return this;
-        }
-
-        // 5. Fallback secundário: se o jogador estiver em bloco especial (ex: Waystone, slab),
-        // desde que não esteja no void/lava/fogo, teletransporta diretamente para a posição do jogador
-        if (target.getY() >= target.level().getMinBuildHeight() && !target.isInLava()) {
-            doTeleport(target.getX(), target.getY(), target.getZ());
-        }
-        return this;
+        return WarriorTeleport.safeTeleportTo(this, target);
     }
 
     public void safeTeleportTo(BlockPos targetPos) {
-        if (targetPos == null) return;
-        if (targetPos.getY() < this.level().getMinBuildHeight()) return;
-
-        for (int dy = 2; dy >= -2; dy--) {
-            for (int dx = -3; dx <= 3; dx++) {
-                for (int dz = -3; dz <= 3; dz++) {
-                    BlockPos candidate = targetPos.offset(dx, dy, dz);
-                    if (isSafeTeleportBlock(candidate)) {
-                        doTeleport(candidate.getX() + 0.5D, candidate.getY(), candidate.getZ() + 0.5D);
-                        return;
-                    }
-                }
-            }
-        }
-        if (isSafeTeleportBlock(targetPos)) {
-            doTeleport(targetPos.getX() + 0.5D, targetPos.getY(), targetPos.getZ() + 0.5D);
-        }
+        WarriorTeleport.safeTeleportTo(this, targetPos);
     }
 
-    private boolean isSafeTeleportBlock(BlockPos pos) {
-        if (pos.getY() < this.level().getMinBuildHeight()) return false;
 
-        BlockState below = this.level().getBlockState(pos.below());
-        BlockState at = this.level().getBlockState(pos);
-        BlockState above = this.level().getBlockState(pos.above());
-
-        // O chão abaixo deve ser sólido ou ter colisão resistente para pisar (suporta blocos de mods, waystones, slabs, etc.)
-        if (!below.isSolid() && !below.isFaceSturdy(this.level(), pos.below(), net.minecraft.core.Direction.UP) && below.getCollisionShape(this.level(), pos.below()).isEmpty()) {
-            return false;
-        }
-
-        if (below.is(Blocks.LAVA) || below.is(Blocks.MAGMA_BLOCK) || below.is(Blocks.CACTUS) || below.is(Blocks.FIRE) || below.isAir()) {
-            return false;
-        }
-
-        // Os blocos onde o corpo/cabeça vão ficar não podem ser sufocantes nem perigosos
-        if (at.isSuffocating(this.level(), pos) || above.isSuffocating(this.level(), pos.above())) {
-            return false;
-        }
-
-        if (at.is(Blocks.LAVA) || at.is(Blocks.FIRE) || above.is(Blocks.LAVA) || above.is(Blocks.FIRE)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    private void doTeleport(double x, double y, double z) {
-        this.teleportTo(x, y, z);
-        this.resetFallDistance();
-        this.fallDistance = 0.0F; // Reseta inércia e distância de queda acumulada antes do teleporte
-        this.setDeltaMovement(Vec3.ZERO);
-        this.hasImpulse = true;
-        this.getNavigation().stop();
-        if (this.level() instanceof ServerLevel serverLevel) {
-            serverLevel.sendParticles(ParticleTypes.PORTAL, this.getX(), this.getY() + 0.5D, this.getZ(),
-                    15, 0.3D, 0.5D, 0.3D, 0.1D);
-        }
-    }
 
 
     // ── Sobrevivência Autônoma & Consumíveis ───────────────────────────────────

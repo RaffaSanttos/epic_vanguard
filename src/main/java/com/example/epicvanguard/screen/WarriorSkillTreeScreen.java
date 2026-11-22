@@ -9,6 +9,9 @@ import com.example.epicvanguard.entity.GuardianCompanionEntity;
 import com.example.epicvanguard.entity.WarriorCompanionEntity;
 import com.example.epicvanguard.networking.Messages;
 import com.example.epicvanguard.networking.packet.PacketOpenWarriorGUI;
+import com.example.epicvanguard.networking.packet.PacketChooseSpecialization;
+import com.example.epicvanguard.entity.util.WarriorProgression;
+import com.example.epicvanguard.init.ModEntityTypes;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -36,6 +39,11 @@ public class WarriorSkillTreeScreen extends Screen {
 
     private Button tabMochilaButton;
     private Button tabHabilidadesButton;
+    /** Guerreiro base: alterna a classe mostrada na árvore (prévia). */
+    private Button previewSpecButton;
+    /** Guerreiro base no nível 5+: escolhe a classe mostrada (dois cliques: escolher e confirmar). */
+    private Button chooseSpecButton;
+    private boolean confirmingChoice = false;
 
     public static class SkillNode {
         public final int level;
@@ -95,6 +103,47 @@ public class WarriorSkillTreeScreen extends Screen {
 
         this.addRenderableWidget(tabMochilaButton);
         this.addRenderableWidget(tabHabilidadesButton);
+
+        // Guerreiro base (sem classe): prévia das 3 árvores e, a partir do nível 5, a escolha da classe
+        WarriorCompanionEntity warrior = getCompanion();
+        boolean isBase = warrior != null && warrior.getType() == ModEntityTypes.WARRIOR_COMPANION.get()
+                && warrior.getSpecialization() == WarriorCompanionEntity.SPEC_NONE;
+        if (isBase) {
+            this.previewSpecButton = Button.builder(Component.literal("⇄"), btn -> {
+                        selectedSpec = selectedSpec % 3 + 1;
+                        confirmingChoice = false;
+                        updateChooseButton();
+                    })
+                    .bounds(leftPos + 172, topPos - 18, 16, 18)
+                    .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.specialization.preview")))
+                    .build();
+            this.chooseSpecButton = Button.builder(Component.empty(), btn -> {
+                        if (!confirmingChoice) {
+                            confirmingChoice = true;
+                            updateChooseButton();
+                            return;
+                        }
+                        Messages.sendToServer(new PacketChooseSpecialization(entityId, selectedSpec));
+                        this.onClose();
+                    })
+                    .bounds(leftPos + 190, topPos - 18, 66, 18)
+                    .build();
+            boolean ready = warrior.getWarriorLevel() >= WarriorProgression.SPEC_CHOICE_LEVEL && warrior.isRecruited();
+            this.chooseSpecButton.active = ready;
+            this.chooseSpecButton.setTooltip(Tooltip.create(ready
+                    ? Component.translatable("epicvanguard.text.specialization.choose_tooltip")
+                    : Component.translatable("epicvanguard.text.specialization.not_ready", WarriorProgression.SPEC_CHOICE_LEVEL)));
+            updateChooseButton();
+            this.addRenderableWidget(previewSpecButton);
+            this.addRenderableWidget(chooseSpecButton);
+        }
+    }
+
+    private void updateChooseButton() {
+        if (chooseSpecButton == null) return;
+        chooseSpecButton.setMessage(confirmingChoice
+                ? Component.translatable("epicvanguard.text.specialization.confirm")
+                : Component.translatable("epicvanguard.text.specialization.choose"));
     }
 
     @Override

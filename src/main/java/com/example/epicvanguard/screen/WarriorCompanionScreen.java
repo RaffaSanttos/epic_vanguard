@@ -38,11 +38,13 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
     private int currentMode = 0;
     private boolean targetHostiles = true;
     private boolean targetPassives = false;
+    private boolean pickupItems = true;
 
     private Button modeButton;
     private Button cancelButton;
     private Button hostilesButton;
     private Button passivesButton;
+    private Button pickupButton;
     private Button tabMochilaButton;
     private Button tabHabilidadesButton;
     private Button pencilButton;
@@ -67,6 +69,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
                 this.currentMode = warrior.getCombatMode() % 3;
                 this.targetHostiles = warrior.isTargetHostiles();
                 this.targetPassives = warrior.isTargetPassives();
+                this.pickupItems = warrior.isPickupItems();
             }
         }
     }
@@ -97,28 +100,38 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
                 .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.warrior_companion_screen.3")))
                 .build();
 
-        // Painel Direito: Botão 3 - Ícone Monstros Hostis (Y = 73, 22x18)
+        // Painel Direito: linha de 3 táticas (Y = 73, 14x18 cada): monstros, caça, coleta de itens
         hostilesButton = Button.builder(
                 Component.literal(targetHostiles ? "§c⚔" : "§8⚔"),
                 btn -> {
                     targetHostiles = !targetHostiles;
                     btn.setMessage(Component.literal(targetHostiles ? "§c⚔" : "§8⚔"));
-                    Messages.sendToServer(new PacketWarriorTactics(menu.getEntityId(), targetHostiles, targetPassives));
+                    Messages.sendToServer(new PacketWarriorTactics(menu.getEntityId(), targetHostiles, targetPassives, pickupItems));
                 })
-                .bounds(leftPos + 163, topPos + 73, 22, 18)
+                .bounds(leftPos + 163, topPos + 73, 14, 18)
                 .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.warrior_companion_screen.4")))
                 .build();
 
-        // Painel Direito: Botão 4 - Ícone Caça de Comida / Passivos (Y = 73, 22x18)
         passivesButton = Button.builder(
                 Component.literal(targetPassives ? "§6🍖" : "§8🍖"),
                 btn -> {
                     targetPassives = !targetPassives;
                     btn.setMessage(Component.literal(targetPassives ? "§6🍖" : "§8🍖"));
-                    Messages.sendToServer(new PacketWarriorTactics(menu.getEntityId(), targetHostiles, targetPassives));
+                    Messages.sendToServer(new PacketWarriorTactics(menu.getEntityId(), targetHostiles, targetPassives, pickupItems));
                 })
-                .bounds(leftPos + 187, topPos + 73, 22, 18)
+                .bounds(leftPos + 179, topPos + 73, 14, 18)
                 .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.warrior_companion_screen.5")))
+                .build();
+
+        pickupButton = Button.builder(
+                Component.literal(pickupItems ? "§a✋" : "§8✋"),
+                btn -> {
+                    pickupItems = !pickupItems;
+                    btn.setMessage(Component.literal(pickupItems ? "§a✋" : "§8✋"));
+                    Messages.sendToServer(new PacketWarriorTactics(menu.getEntityId(), targetHostiles, targetPassives, pickupItems));
+                })
+                .bounds(leftPos + 195, topPos + 73, 14, 18)
+                .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.warrior_companion_screen.pickup")))
                 .build();
 
         // Abas superiores de navegação (somente 2 abas limpas)
@@ -187,6 +200,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
         this.addRenderableWidget(cancelButton);
         this.addRenderableWidget(hostilesButton);
         this.addRenderableWidget(passivesButton);
+        this.addRenderableWidget(pickupButton);
 
         this.addRenderableWidget(this.renameEditBox);
         this.addRenderableWidget(this.renameConfirmButton);
@@ -401,6 +415,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
         this.cancelButton.visible = false;
         this.hostilesButton.visible = false;
         this.passivesButton.visible = false;
+        this.pickupButton.visible = false;
         if (this.pencilButton != null) this.pencilButton.visible = false;
         if (this.tabMochilaButton != null) this.tabMochilaButton.visible = false;
         if (this.tabHabilidadesButton != null) this.tabHabilidadesButton.visible = false;
@@ -424,6 +439,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
         this.cancelButton.visible = true;
         this.hostilesButton.visible = true;
         this.passivesButton.visible = true;
+        this.pickupButton.visible = true;
         if (this.pencilButton != null) {
             this.pencilButton.visible = true;
             updatePencilPosition();

@@ -212,9 +212,11 @@ public class CompanionTeleportHandler {
             WarriorCompanionEntity warrior = findLoadedCompanion(server, info.companionUUID);
             if (warrior != null) {
                 // Caso 1: A entidade está atualmente carregada em algum chunk/dimensão
-                // SÓ teletransporta se estiver em outra dimensão ou se a distância ultrapassar 13 blocos (> 169.0D)!
-                if (warrior.level() == targetLevel && warrior.distanceToSqr(player) <= 169.0D) {
-                    continue; // Está a 13 blocos ou menos: segue a pé normalmente!
+                // Na mesma dimensão e a menos de 32 blocos quem decide é o próprio guerreiro
+                // (WarriorTeleport.tickFollowTeleport): espera 2 s e não larga uma luta perto do dono.
+                // Aqui só entra outra dimensão ou distância maior que essa.
+                if (warrior.level() == targetLevel && warrior.distanceToSqr(player) < com.example.epicvanguard.entity.util.WarriorTeleport.COMBAT_LEASH_DISTANCE * com.example.epicvanguard.entity.util.WarriorTeleport.COMBAT_LEASH_DISTANCE) {
+                    continue;
                 }
 
                 warrior.stopRiding();

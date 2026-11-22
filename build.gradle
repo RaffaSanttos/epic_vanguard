@@ -71,22 +71,28 @@ repositories {
         name = "MinecraftForge"
         url = "https://maven.minecraftforge.net/"
     }
-    flatDir {
-        dir 'libs'
-    }
     maven {
         url = "https://maven.blamejared.com"
     }
+    // CurseMaven: baixa mods do CurseForge pelo id do projeto e do arquivo (usado para o Epic Fight)
+    maven {
+        url = "https://cursemaven.com"
+        content { includeGroup "curse.maven" }
+    }
 }
+
+// Epic Fight 20.14.17 (MC 1.20.1, Forge): projeto 405076, arquivo 8049910 no CurseForge.
+// Antes o jar ficava versionado em libs/; agora o Gradle baixa sozinho.
+def epicFightDep = "curse.maven:epic-fight-mod-405076:8049910"
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
-    // Epic Fight (Local flatDir). É opcional para o mod: compila contra ele e, nas runs de desenvolvimento,
+    // Epic Fight é opcional para o mod: compila contra ele e, nas runs de desenvolvimento,
     // carrega junto, a menos que se passe -PnoEpicFight (para testar o mod sem o Epic Fight).
-    compileOnly fg.deobf("local:epic-fight:20.14.17-mc1.20.1-forge")
+    compileOnly fg.deobf(epicFightDep)
     if (!project.hasProperty('noEpicFight')) {
-        runtimeOnly fg.deobf("local:epic-fight:20.14.17-mc1.20.1-forge")
+        runtimeOnly fg.deobf(epicFightDep)
     }
 
     // Patchouli: só para testar o livro-guia nas runs de desenvolvimento (o mod não depende dele para compilar)

@@ -20,6 +20,8 @@ Para testar sem as dependências opcionais (garante que o mod carrega sozinho):
 .\gradlew.bat runGameTestServer -PnoEpicFight -PnoPatchouli
 ```
 
+Na primeira vez o Gradle baixa o Epic Fight pelo CurseMaven (não precisa mais de jar em `libs/`).
+
 ## O que é testado
 
 | Arquivo | Testes |

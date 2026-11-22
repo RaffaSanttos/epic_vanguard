@@ -6,7 +6,12 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(thing)Right-click$() your companion to open their screen (owner only).$(br)On the right side:$(li)$(thing)Stance$(): cycles between $(l:epicvanguard:commanding/stances)Follow, Guard and Stay$().$(li)$(thing)Stop$(): ends the current fight and clears the target.$(li)$(thing)Sword$(): attack hostile monsters on/off (off for new recruits).$(li)$(thing)Meat$(): hunt adult animals for food on/off."
+      "text": "$(thing)Right-click$() your companion to open their screen (owner only).$(br)On the right side:$(li)$(thing)Stance$(): cycles between $(l:epicvanguard:commanding/stances)Follow, Guard and Stay$().$(li)$(thing)Stop$(): ends the current fight and clears the target.$(li)Three $(thing)tactic buttons$(), explained on the next page."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Tactics",
+      "text": "Lit buttons are on, grey ones are off.$(li)$(thing)Sword$(): attack hostile monsters. Off for new recruits.$(li)$(thing)Meat$(): hunt adult animals for food.$(li)$(thing)Hand$(): pick up items from the ground. On by default; they never take items you dropped yourself."
     },
     {
       "type": "patchouli:text",

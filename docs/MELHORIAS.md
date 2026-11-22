@@ -70,6 +70,7 @@ Em `Messages.register`, `clientAcceptedVersions(s -> true)` e `serverAcceptedVer
 **Correção:** `PROTOCOL_VERSION::equals`, e aumentar `PROTOCOL_VERSION` sempre que algum pacote mudar.
 
 ### 🟢 2.3 Pacote de abrir GUI manda um `boolean recruited` inútil
+(O protocolo foi para "3" na 1.0.18 por causa da coleta e da escolha de classe; dá para aproveitar o próximo aumento.)
 `PacketOpenWarriorGUI` já ignora o flag e usa o estado do servidor. Dá para remover o campo e economizar o byte. Isso exige aumentar a versão do protocolo (2.2).
 
 ### ✅ 2.4 Criativo mexe nas moedas depositadas por outro jogador no Posto da Vanguarda — corrigido (22/11/2026)
@@ -95,25 +96,27 @@ Quem paga 20 moedas no Posto espera 7 dias, mas o mercenário que chega é neutr
 
 ## 3. Comportamento da IA e gameplay
 
-### 🟠 3.1 Teleporte do modo Seguir interrompe o combate
-Em `tick()`, a partir de 13 blocos do dono o guerreiro limpa o alvo e se teleporta, verificando a cada tick. Isso tira o guerreiro de qualquer perseguição.
-**Sugestões:**
-- Não teleportar enquanto `isFighting()` e o dono estiver a menos de ~24 blocos.
-- Teleportar só depois de N ticks seguidos longe, como o lobo vanilla.
-- Unificar essa lógica com `CompanionTeleportHandler.rescueFollowingCompanions`, que faz a mesma coisa por outro caminho.
+### ✅ 3.1 Teleporte do modo Seguir interrompe o combate — corrigido (22/11/2026)
+Antes, a partir de 13 blocos do dono o guerreiro largava o alvo e se teleportava na hora, todo tick.
+Agora a regra fica em `WarriorTeleport.tickFollowTeleport`:
+- dono a mais de **32 blocos**: teleporta na hora, mesmo lutando;
+- dono entre **13 e 32 blocos**: teleporta só **fora de combate** e depois de **2 s seguidos** longe (como o lobo vanilla);
+- lutando com o dono a menos de 32 blocos: termina a luta.
 
-### 🟠 3.2 Coleta automática pega qualquer item do chão
-`pickUpGroundItems` recolhe tudo num raio de 1 bloco, inclusive o loot que o dono quer pegar.
-**Sugestões:**
-- Botão na GUI para ligar ou desligar a coleta.
-- Ignorar itens jogados pelo dono (`ItemEntity#getOwner` / `thrower`).
-- Filtrar: só comida, poções e equipamento melhor que o atual.
+O `CompanionTeleportHandler` passou a cuidar só do que o guerreiro não resolve sozinho: outra dimensão, mais de 32 blocos ou chunk descarregado.
 
-### 🟠 3.3 Especialização não pode ser escolhida
-Nenhum pacote chama `setSpecialization`. A classe vem só do tipo de entidade em que o guerreiro nasceu, e a árvore de habilidades ([WarriorSkillTreeScreen.java](../src/main/java/com/example/epicvanguard/screen/WarriorSkillTreeScreen.java)) só mostra informação.
-**Sugestão:** permitir que um Guerreiro base escolha a classe ao chegar num nível (ex.: 5). Para isso:
-- um pacote `PacketChooseSpecialization` com `PacketGuards.ownedWarrior`;
-- uma troca de entidade (Guerreiro → Berserker/Guardião/Duelista) mantendo UUID, NBT e geração, usando o mesmo caminho do `moveToLevel`.
+### ✅ 3.2 Coleta automática pega qualquer item do chão — corrigido (22/11/2026)
+- Botão **✋** na tela do guerreiro liga/desliga a coleta (ligada por padrão; salvo no NBT como `PickupItems`).
+- Itens jogados pelo dono (`ItemEntity#getOwner`) são ignorados.
+- A varredura roda a cada 5 ticks, espalhada entre guerreiros pelo id (parte do 5.1).
+- Falta (🟢): filtro por tipo (só comida, poções e equipamento melhor).
+
+### ✅ 3.3 Especialização não pode ser escolhida — corrigido (22/11/2026)
+Um Guerreiro base (sem classe) no **nível 5** pode virar Berserker, Guardião ou Duelista pela aba **Talentos**:
+- botão **⇄** alterna a árvore mostrada; **Escolher classe** e depois **Confirmar?** (dois cliques, porque é permanente);
+- `PacketChooseSpecialization` (só o dono, perto) chama `WarriorProgression.chooseSpecialization`;
+- a classe é o tipo de entidade (o Epic Fight registra atributos por tipo), então o guerreiro é recriado no lugar com o mesmo UUID e NBT (nível, XP, nome, inventário, personalidade) e uma geração nova no registro, para nenhuma cópia antiga voltar;
+- a vida é mantida em porcentagem da vida máxima nova.
 
 ### 🟢 3.4 Guerreiro equipa melhor equipamento sozinho
 Hoje ele só usa o que está nos slots 0–5. Ele poderia trocar sozinho por armadura ou arma melhor que estiver na mochila, comparando armadura/dano. Seria um botão "auto-equipar" ou um comportamento padrão.
@@ -172,7 +175,7 @@ A chave é só `ChunkPos.toLong()`, mas `VillageWarriorSpawner.tick` roda em tod
 ## 5. Desempenho
 
 ### 🟢 5.1 Varreduras de entidades por tick
-Em `tick()`, `pickUpGroundItems` faz `getEntitiesOfClass(ItemEntity)` todo tick para cada guerreiro recrutado. As checagens de projétil e creeper também varrem a área com frequência.
+~~`pickUpGroundItems` faz `getEntitiesOfClass(ItemEntity)` todo tick~~ (agora a cada 5 ticks). As checagens de projétil e creeper ainda varrem a área com frequência.
 **Sugestão:** rodar a cada 5–10 ticks, com o `tickCount` deslocado pelo `getId()` para espalhar a carga entre guerreiros.
 
 ### 🟢 5.2 `syncEquipmentWithInventory()` todo tick
@@ -185,11 +188,13 @@ Chama `setItemSlot` 6 vezes por tick. Daria para marcar o inventário como "sujo
 
 ## 6. Organização do código
 
-- 🟠 **Dividir `WarriorCompanionEntity`** (~1.930 linhas), como a auditoria sugere:
-  - `WarriorPersistence` (save/load/snapshot)
-  - `WarriorInteraction` (`mobInteract`, contrato, prisioneiro)
-  - `WarriorThreatSensor` (creeper/projéteis)
-  - `WarriorProgression` (nível/XP/especialização/grito de guerra)
+- ✅ **Dividir `WarriorCompanionEntity`** — feito (22/11/2026): de ~2.030 para ~1.680 linhas. Partes novas em `entity/util` (ver [ARQUITETURA.md](ARQUITETURA.md)):
+  - `WarriorInteraction` (clique do jogador: resgate, contrato, name tag, abrir tela; coleta de itens)
+  - `WarriorTeleport` (teleporte seguro e a regra de seguir o dono)
+  - `WarriorThreatSensor` (creeper e projéteis)
+  - `WarriorWarcry` (gritos de guerra)
+  - `WarriorProgression` (escolha de classe)
+  - 🟢 Falta: `WarriorPersistence` (save/load/snapshot) e a parte de XP/nível.
 - 🟢 **Constantes de balanceamento num lugar só.** Custos de recrutamento, curva de XP, cooldowns, raios e porcentagens estão espalhados como números mágicos. Melhor ainda: um `ForgeConfigSpec` (`epicvanguard-common.toml`), para donos de servidor ajustarem sem recompilar.
 - 🟢 ~~Import duplicado de `ShieldItem`~~ (removido). Falta a indentação quebrada em `isSpellOrMagicDamage`.
 - 🟢 **Código morto:**
@@ -205,11 +210,11 @@ Chama `setItemSlot` 6 vezes por tick. Daria para marcar o inventário como "sujo
 
 ## 7. Build e projeto
 
-- 🟠 **Jar do Epic Fight versionado em `libs/`**: trocar por CurseMaven ou Modrinth Maven (pendente da auditoria; ver a licença do Epic Fight).
+- ✅ **Jar do Epic Fight versionado em `libs/`** — corrigido (22/11/2026): o Gradle baixa pelo CurseMaven (`curse.maven:epic-fight-mod-405076:8049910`, Epic Fight 20.14.17). O jar saiu do repositório.
 - 🟢 `build_jar.bat` anuncia `build\libs\epicvanguard-1.0.0.jar`, mas o jar real é `EpicVanguard <versão> [1.20.1].jar`.
 - 🟢 Apagar `scratch_test_nbt.java` da raiz, ou mover para `tools/`.
 - 🟢 Mudar `forge.logging.console.level` de `debug` para `info` nas runs, para deixar o log legível.
-- 🟢 CI no GitHub Actions rodando `./gradlew build` e `./gradlew runGameTestServer` a cada push. Os testes precisam do jar do Epic Fight em `libs/` ou do flag `-PnoEpicFight`.
+- 🟢 CI no GitHub Actions rodando `./gradlew build` e `./gradlew runGameTestServer` a cada push. Agora dá: o Epic Fight vem do CurseMaven.
 
 ---
 

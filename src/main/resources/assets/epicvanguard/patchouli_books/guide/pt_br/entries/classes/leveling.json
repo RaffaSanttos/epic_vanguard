@@ -12,6 +12,11 @@
       "type": "patchouli:text",
       "title": "Por Nível",
       "text": "Cada nível adiciona:$(li)+1,5 de vida máxima$(li)+0,25 de dano base$(li)+0,5 de armadura natural$(li)um pouco de resistência de armadura e velocidade$(br2)A partir do $(thing)nível 5$() eles liberam o $(l:epicvanguard:classes/warcries)grito de guerra$() da classe."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Escolhendo a Classe",
+      "text": "Um $(thing)Guerreiro$() comum pode escolher a classe no $(thing)nível 5$(). Abra a aba $(thing)Talentos$(), aperte $(thing)⇄$() para ver a árvore de $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardião$() ou $(l:epicvanguard:classes/duelist)Duelista$(), depois $(thing)Escolher classe$() e $(thing)Confirmar$().$(br2)É permanente. Nível, XP, nome e equipamento continuam."
     }
   ]
 }

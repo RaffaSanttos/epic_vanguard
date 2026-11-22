@@ -6,11 +6,11 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(thing)Seguir$() (padrão): anda com você e luta contra o que te ameaça. Se ficar mais de 13 blocos para trás, se teleporta para o seu lado, até entre dimensões ou de chunks descarregados.$(br2)$(thing)Guarda$(): defende o ponto onde você escolheu a postura, ficando a uns 6 blocos dele."
+      "text": "$(thing)Seguir$() (padrão): anda com você e luta contra o que te ameaça. Mais de 13 blocos para trás por 2 segundos, se teleporta para o seu lado, até entre dimensões ou de chunks descarregados. Numa luta, termina a luta, a menos que você passe de 32 blocos."
     },
     {
       "type": "patchouli:text",
-      "text": "$(thing)Parado$(): fica imóvel e não caça nem persegue nada. Ainda se defende se for atacado.$(br2)Companheiros em $(thing)Guarda$() ou $(thing)Parado$() nunca se teleportam até você. Use o $(l:epicvanguard:reference/commands)comando de chamar$() para trazê-los de volta."
+      "text": "$(thing)Guarda$(): defende o ponto escolhido, a uns 6 blocos dele.$(br2)$(thing)Parado$(): fica imóvel e não persegue nada, mas se defende.$(br2)Em $(thing)Guarda$() ou $(thing)Parado$() eles nunca se teleportam até você. Use o $(l:epicvanguard:reference/commands)comando de chamar$() para trazê-los de volta."
     }
   ]
 }

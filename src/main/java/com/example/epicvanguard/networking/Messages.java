@@ -17,7 +17,7 @@ public class Messages {
      * Versão do protocolo de rede. Cliente e servidor precisam ter a mesma; aumente sempre que
      * um pacote mudar de formato ou for adicionado/removido.
      */
-    private static final String PROTOCOL_VERSION = "2";
+    private static final String PROTOCOL_VERSION = "3"; // 3: coleta de itens nas táticas + escolha de classe
 
     private static SimpleChannel INSTANCE;
     private static int packetId = 0;
@@ -76,6 +76,12 @@ public class Messages {
                 .decoder(com.example.epicvanguard.networking.packet.PacketRenameWarrior::new)
                 .encoder(com.example.epicvanguard.networking.packet.PacketRenameWarrior::toBytes)
                 .consumerMainThread(com.example.epicvanguard.networking.packet.PacketRenameWarrior::handle)
+                .add();
+
+        net.messageBuilder(com.example.epicvanguard.networking.packet.PacketChooseSpecialization.class, id(), NetworkDirection.PLAY_TO_SERVER)
+                .decoder(com.example.epicvanguard.networking.packet.PacketChooseSpecialization::new)
+                .encoder(com.example.epicvanguard.networking.packet.PacketChooseSpecialization::toBytes)
+                .consumerMainThread(com.example.epicvanguard.networking.packet.PacketChooseSpecialization::handle)
                 .add();
     }
 

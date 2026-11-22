@@ -7,27 +7,32 @@ import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
+/** Botões de tática da tela do guerreiro: atacar monstros, caçar animais e coletar itens do chão. */
 public class PacketWarriorTactics {
     private final int entityId;
     private final boolean targetHostiles;
     private final boolean targetPassives;
+    private final boolean pickupItems;
 
-    public PacketWarriorTactics(int entityId, boolean targetHostiles, boolean targetPassives) {
+    public PacketWarriorTactics(int entityId, boolean targetHostiles, boolean targetPassives, boolean pickupItems) {
         this.entityId = entityId;
         this.targetHostiles = targetHostiles;
         this.targetPassives = targetPassives;
+        this.pickupItems = pickupItems;
     }
 
     public PacketWarriorTactics(FriendlyByteBuf buf) {
         this.entityId = buf.readInt();
         this.targetHostiles = buf.readBoolean();
         this.targetPassives = buf.readBoolean();
+        this.pickupItems = buf.readBoolean();
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeInt(entityId);
         buf.writeBoolean(targetHostiles);
         buf.writeBoolean(targetPassives);
+        buf.writeBoolean(pickupItems);
     }
 
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
@@ -38,6 +43,7 @@ public class PacketWarriorTactics {
 
             warrior.setTargetHostiles(targetHostiles);
             warrior.setTargetPassives(targetPassives);
+            warrior.setPickupItems(pickupItems);
 
             // Se o alvo atual não for mais compatível com as regras ativas, limpa o alvo
             if (warrior.getTarget() != null) {

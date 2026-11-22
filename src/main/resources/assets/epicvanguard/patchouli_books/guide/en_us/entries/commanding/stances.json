@@ -6,11 +6,11 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(thing)Follow$() (default): walks with you and fights what threatens you. If they fall more than 13 blocks behind, they teleport to your side, even across dimensions or from unloaded chunks.$(br2)$(thing)Guard$(): defends the spot where you set the stance, staying within about 6 blocks of it."
+      "text": "$(thing)Follow$() (default): walks with you and fights what threatens you. More than 13 blocks behind for 2 seconds, they teleport to your side, even across dimensions or from unloaded chunks. In a fight they finish it, unless you get over 32 blocks away."
     },
     {
       "type": "patchouli:text",
-      "text": "$(thing)Stay$(): stands still and does not hunt or chase anything. They still defend themselves if attacked.$(br2)Companions in $(thing)Guard$() or $(thing)Stay$() never teleport to you. Use the $(l:epicvanguard:reference/commands)call command$() to bring them back."
+      "text": "$(thing)Guard$(): defends the spot where you set it, within about 6 blocks.$(br2)$(thing)Stay$(): stands still and chases nothing, but defends themselves.$(br2)In $(thing)Guard$() or $(thing)Stay$() they never teleport to you. Use the $(l:epicvanguard:reference/commands)call command$() to bring them back."
     }
   ]
 }

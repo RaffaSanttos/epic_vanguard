@@ -334,5 +334,12 @@
   "book.epicvanguard.guide.name": "Vanguard Field Guide",
   "book.epicvanguard.guide.subtitle": "Epic Vanguard",
   "book.epicvanguard.guide.landing_text": "Commander,$(br2)this guide explains how to find, hire and lead your $(thing)mercenary companions$().$(br2)New here? Start with $(l:epicvanguard:getting_started/introduction)Getting Started$().",
-  "epicvanguard.text.guide_book.given": "§6✦ [Vanguard] §aYou received the §eVanguard Field Guide§a. Open it to learn how to hire companions!"
+  "epicvanguard.text.guide_book.given": "§6✦ [Vanguard] §aYou received the §eVanguard Field Guide§a. Open it to learn how to hire companions!",
+  "epicvanguard.text.warrior_companion_screen.pickup": "Pick Up Items: ON / OFF (Store items they walk over; never takes what you drop)",
+  "epicvanguard.text.specialization.preview": "Preview another class tree",
+  "epicvanguard.text.specialization.choose": "Choose class",
+  "epicvanguard.text.specialization.confirm": "§6Confirm?",
+  "epicvanguard.text.specialization.choose_tooltip": "Turn this warrior into the class shown. Permanent: level, XP, name and gear are kept.",
+  "epicvanguard.text.specialization.not_ready": "A warrior can choose a class at level %s.",
+  "epicvanguard.text.specialization.chosen": "§6⚔ %s is now %s§6!"
 }

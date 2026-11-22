@@ -1,5 +1,35 @@
 # Changelog — Epic Vanguard
 
+## 1.0.18 (Minecraft 1.20.1, Forge 47.x)
+
+### English
+
+**New**
+- **Choose a class:** a plain Warrior that reaches **level 5** can become a Berserker, Guardian or Duelist. Open the Talents tab, press ⇄ to preview each class tree, then "Choose class" and "Confirm?". It's permanent; level, XP, name and gear are kept.
+- **Pick-up button (✋)** in the companion screen: turn automatic item pick-up on or off. Companions also never pick up items you dropped yourself anymore.
+
+**Changes**
+- Follow stance no longer drags companions out of a fight. They teleport to you only after being 13+ blocks behind for 2 seconds while not fighting, or right away if you're more than 32 blocks away.
+- Guide book (Patchouli) updated: tactic buttons, the new follow rule, item pick-up and choosing a class.
+
+**Notes**
+- Client and server must both be on 1.0.18 (network protocol changed).
+
+### Português
+
+**Novidades**
+- **Escolha de classe:** um Guerreiro comum que chega ao **nível 5** pode virar Berserker, Guardião ou Duelista. Abra a aba Talentos, aperte ⇄ para ver a árvore de cada classe, depois "Escolher classe" e "Confirmar?". É permanente; nível, XP, nome e equipamento continuam.
+- **Botão de coleta (✋)** na tela do companheiro: liga ou desliga pegar itens do chão. E os companheiros não pegam mais os itens que você mesmo jogou.
+
+**Mudanças**
+- A postura Seguir não tira mais o companheiro do meio da luta. Ele se teleporta até você só depois de ficar 13+ blocos para trás por 2 segundos fora de combate, ou na hora se você estiver a mais de 32 blocos.
+- Livro guia (Patchouli) atualizado: botões de tática, a nova regra de seguir, coleta de itens e escolha de classe.
+
+**Observações**
+- Cliente e servidor precisam estar os dois na 1.0.18 (o protocolo de rede mudou).
+
+---
+
 ## 1.0.17 (Minecraft 1.20.1, Forge 47.x)
 
 ### English
