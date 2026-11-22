@@ -8,12 +8,13 @@ Nada aqui foi testado em jogo. Prioridades:
 - 🔴 **Alta**: bug confirmado ou risco em multiplayer
 - 🟠 **Média**: comportamento estranho para o jogador ou mecânica incompleta
 - 🟢 **Baixa**: organização, desempenho ou acabamento
+- ✅ **Corrigido** no código (compila, ainda não testado em jogo)
 
 ---
 
 ## 1. Bugs
 
-### 🔴 1.1 Renomear por comando com o guerreiro descarregado não funciona
+### ✅ 1.1 Renomear por comando com o guerreiro descarregado não funciona — corrigido (21/11/2026)
 A auditoria (seção 8) registra isso como corrigido, mas a correção não funciona:
 
 1. `/vanguard renomear` grava o nome novo só em `CompanionInfo.name` ([VanguardCommand.java:585](../src/main/java/com/example/epicvanguard/command/VanguardCommand.java)).
@@ -24,7 +25,7 @@ Também por isso, uma **cópia antiga** (geração menor) sobrescreve o nome no 
 
 **Correção:** separar o "aplicar nome na entidade" do "gravar no registro". Durante `readAdditionalSaveData`, só aplicar na entidade, sem chamar `updateName`. Gravar no registro só em ações do jogador (name tag, pacote de rename, comando).
 
-### 🔴 1.2 Ataque do guerreiro ignora encantamentos e a arma nunca gasta
+### ✅ 1.2 Ataque do guerreiro ignora encantamentos e a arma nunca gasta — corrigido (21/11/2026)
 `doHurtTarget` ([WarriorCompanionEntity.java:1436](../src/main/java/com/example/epicvanguard/entity/WarriorCompanionEntity.java)) só chama `target.hurt(...)`. O que falta:
 - Bônus de encantamento (`EnchantmentHelper.getDamageBonus`): Afiação, Julgamento, Ruína dos Artrópodes.
 - Aspecto Flamejante e Repulsão (empurrão do golpe).
@@ -40,7 +41,7 @@ Também por isso, uma **cópia antiga** (geração menor) sobrescreve o nome no 
 - Atualizar o comentário de `CompanionInfo.combatMode`, que ainda descreve 4 modos antigos.
 - Apagar as chaves sem uso `gui.epicvanguard.warrior.mode.aggressive/defensive/guard/stay` dos lang.
 
-### 🟠 1.4 Recrutar por moedas sem checar o estado do guerreiro
+### ✅ 1.4 Recrutar por moedas sem checar o estado do guerreiro — corrigido (21/11/2026)
 `PacketRecruitWarrior` não verifica `isAlive()` nem `isDuelMode()`, e não usa `PacketGuards.nearbyWarrior`.
 **Correção:** usar `PacketGuards.nearbyWarrior(...)` e recusar o recrutamento durante um duelo.
 
@@ -50,13 +51,19 @@ Também por isso, uma **cópia antiga** (geração menor) sobrescreve o nome no 
 
 ---
 
+### 🟠 1.6 Armadura do guerreiro nunca gasta
+O `LivingEntity#hurtArmor` vanilla não faz nada para mobs (só o jogador sobrescreve). A armadura do guerreiro nunca perde durabilidade.
+**Correção:** sobrescrever `hurtArmor` e `hurtHelmet` em `WarriorCompanionEntity`, desgastando os slots de armadura como o `Inventory#hurtArmor` do jogador. Decidir se o desgaste deve ser igual ao do jogador ou menor.
+
+---
+
 ## 2. Segurança e multiplayer
 
-### 🔴 2.1 Jogador em criativo é tratado como admin nos comandos
+### ✅ 2.1 Jogador em criativo é tratado como admin nos comandos — corrigido (21/11/2026)
 `VanguardCommand.hasAdminAccess` aceita `player.isCreative()`. Num servidor com criativo liberado, qualquer um pode trazer, renomear, dispensar ou ir até os companheiros dos outros.
 **Correção:** exigir só `hasPermission(2)`, ou criar uma opção de config `allowCreativeAdmin` (padrão `false`).
 
-### 🟠 2.2 Canal de rede aceita qualquer versão
+### ✅ 2.2 Canal de rede aceita qualquer versão — corrigido (21/11/2026)
 Em `Messages.register`, `clientAcceptedVersions(s -> true)` e `serverAcceptedVersions(s -> true)` deixam versões diferentes do mod se conectarem. O resultado são pacotes com layout diferente e erros estranhos.
 **Correção:** `PROTOCOL_VERSION::equals`, e aumentar `PROTOCOL_VERSION` sempre que algum pacote mudar.
 

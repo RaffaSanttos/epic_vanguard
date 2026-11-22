@@ -635,8 +635,24 @@ public class WarriorCompanionEntity extends PathfinderMob {
         String prefix = this.isRecruited() ? "§f" : "§7";
         super.setCustomName(Component.literal(prefix + clean));
         this.setCustomNameVisible(true);
-        if (!this.level().isClientSide() && this.getServer() != null) {
+        // Durante o carregamento do NBT o nome vem do disco e pode estar desatualizado (rename por
+        // comando com o guerreiro descarregado, ou cópia antiga). Nesse caso o registro é a fonte oficial
+        // e não pode ser sobrescrito; o EntityJoinLevelEvent aplica o nome do registro depois.
+        if (!this.loadingFromNbt && !this.level().isClientSide() && this.getServer() != null) {
             CompanionSavedData.get(this.getServer()).updateName(this.getUUID(), clean);
+        }
+    }
+
+    /** True enquanto {@link #load(CompoundTag)} está lendo o NBT (inclui CustomName e readAdditionalSaveData). */
+    private boolean loadingFromNbt = false;
+
+    @Override
+    public void load(CompoundTag pCompound) {
+        this.loadingFromNbt = true;
+        try {
+            super.load(pCompound);
+        } finally {
+            this.loadingFromNbt = false;
         }
     }
 
@@ -1452,8 +1468,34 @@ public class WarriorCompanionEntity extends PathfinderMob {
             }
         }
 
+        // Encantamentos da arma, como no Mob#doHurtTarget vanilla: Afiação/Julgamento/Ruína, Repulsão e Aspecto Flamejante
+        ItemStack weapon = this.getMainHandItem();
+        float knockback = (float) this.getAttributeValue(Attributes.ATTACK_KNOCKBACK);
+        if (target instanceof LivingEntity livingTarget) {
+            damage += net.minecraft.world.item.enchantment.EnchantmentHelper.getDamageBonus(weapon, livingTarget.getMobType());
+            knockback += (float) net.minecraft.world.item.enchantment.EnchantmentHelper.getKnockbackBonus(this);
+        }
+        int fireAspect = net.minecraft.world.item.enchantment.EnchantmentHelper.getFireAspect(this);
+        if (fireAspect > 0) {
+            target.setSecondsOnFire(fireAspect * 4);
+        }
+
         DamageSource source = this.damageSources().mobAttack(this);
         boolean success = target.hurt(source, damage);
+        if (success) {
+            if (knockback > 0.0F && target instanceof LivingEntity livingTarget) {
+                float yawRad = this.getYRot() * ((float) Math.PI / 180F);
+                livingTarget.knockback(knockback * 0.5F, Mth.sin(yawRad), -Mth.cos(yawRad));
+                this.setDeltaMovement(this.getDeltaMovement().multiply(0.6D, 1.0D, 0.6D));
+            }
+            this.doEnchantDamageEffects(this, target);
+            this.setLastHurtMob(target);
+            // Desgasta a arma como no jogador (espada -1, machado -2); antes a durabilidade era infinita.
+            // A pilha é a mesma do slot do WarriorInventory, então a arma quebrada some do inventário também.
+            if (!weapon.isEmpty() && target instanceof LivingEntity livingTarget) {
+                weapon.getItem().hurtEnemy(weapon, livingTarget, this);
+            }
+        }
         if (success && isCrit && this.level() instanceof ServerLevel serverLevel) {
             serverLevel.sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + 0.8D, target.getZ(),
                     12, 0.3D, 0.4D, 0.3D, 0.15D);

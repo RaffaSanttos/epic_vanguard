@@ -39,10 +39,11 @@ public class PacketRecruitWarrior {
             ServerPlayer player = context.getSender();
             if (player == null) return;
 
-            Entity entity = player.serverLevel().getEntity(entityId);
-            if (!(entity instanceof WarriorCompanionEntity warrior)) return;
+            // Precisa existir, estar vivo e perto; durante um duelo só vale vencer o duelo
+            WarriorCompanionEntity warrior = com.example.epicvanguard.networking.PacketGuards.nearbyWarrior(player, entityId);
+            if (warrior == null) return;
 
-            if (warrior.isRecruited() || warrior.distanceTo(player) > 8.0F) return;
+            if (warrior.isRecruited() || warrior.isDuelMode() || warrior.distanceTo(player) > 8.0F) return;
 
             int cost = warrior.getRecruitCost();
             if (cost <= 0 || consumeGoldCoins(player, cost)) {

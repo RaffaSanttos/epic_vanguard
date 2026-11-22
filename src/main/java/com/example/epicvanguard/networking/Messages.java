@@ -13,6 +13,12 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public class Messages {
+    /**
+     * Versão do protocolo de rede. Cliente e servidor precisam ter a mesma; aumente sempre que
+     * um pacote mudar de formato ou for adicionado/removido.
+     */
+    private static final String PROTOCOL_VERSION = "2";
+
     private static SimpleChannel INSTANCE;
     private static int packetId = 0;
 
@@ -23,9 +29,9 @@ public class Messages {
     public static void register() {
         SimpleChannel net = NetworkRegistry.ChannelBuilder
                 .named(new ResourceLocation(EpicVanguardMod.MOD_ID, "messages"))
-                .networkProtocolVersion(() -> "1.0")
-                .clientAcceptedVersions(s -> true)
-                .serverAcceptedVersions(s -> true)
+                .networkProtocolVersion(() -> PROTOCOL_VERSION)
+                .clientAcceptedVersions(PROTOCOL_VERSION::equals)
+                .serverAcceptedVersions(PROTOCOL_VERSION::equals)
                 .simpleChannel();
 
         INSTANCE = net;

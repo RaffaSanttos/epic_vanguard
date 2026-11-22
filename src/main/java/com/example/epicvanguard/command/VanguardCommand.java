@@ -150,10 +150,12 @@ public class VanguardCommand {
                                 .executes(context -> setFriendlyFire(context.getSource(), StringArgumentType.getString(context, "mode")))));
     }
 
+    /**
+     * Pode mexer nos companheiros de outros jogadores. Só operadores: antes qualquer jogador em criativo
+     * passava, e num servidor com criativo liberado isso deixava trazer/renomear/dispensar companheiros alheios.
+     */
     public static boolean hasAdminAccess(CommandSourceStack source) {
-        if (source.hasPermission(2)) return true;
-        if (source.getEntity() instanceof ServerPlayer player && player.isCreative()) return true;
-        return false;
+        return source.hasPermission(2);
     }
 
     private static int getFriendlyFire(CommandSourceStack source) {
