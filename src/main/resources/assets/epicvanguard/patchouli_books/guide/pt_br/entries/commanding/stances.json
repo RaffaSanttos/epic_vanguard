@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(thing)Seguir$(): anda com você e luta contra o que te ameaça. Se ficar mais de 13 blocos para trás, se teleporta para o seu lado, até entre dimensões ou de chunks descarregados.$(br2)$(thing)Guarda$(): defende o ponto onde você escolheu a postura, ficando a uns 6 blocos dele."
+      "text": "$(thing)Seguir$() (padrão): anda com você e luta contra o que te ameaça. Se ficar mais de 13 blocos para trás, se teleporta para o seu lado, até entre dimensões ou de chunks descarregados.$(br2)$(thing)Guarda$(): defende o ponto onde você escolheu a postura, ficando a uns 6 blocos dele."
     },
     {
       "type": "patchouli:text",

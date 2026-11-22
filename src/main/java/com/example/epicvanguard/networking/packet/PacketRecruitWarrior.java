@@ -49,7 +49,7 @@ public class PacketRecruitWarrior {
             if (cost <= 0 || consumeGoldCoins(player, cost)) {
                 warrior.setOwnerUUID(player.getUUID());
                 warrior.setRecruited(true);
-                warrior.setCombatMode(1); // Defensivo por padrao
+                warrior.applyRecruitDefaults(); // Seguir + pacífico
                 if (warrior.isPrisoner()) {
                     warrior.setPrisoner(false);
                     warrior.removeEffect(net.minecraft.world.effect.MobEffects.WEAKNESS);

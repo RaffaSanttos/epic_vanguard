@@ -127,6 +127,8 @@ public class SecurityTests {
             check(!prisoner.isPrisoner(), "deveria deixar de ser prisioneiro");
             check(prisoner.isRecruited() && prisoner.isOwner(rescuer), "deveria jurar lealdade a quem o resgatou");
             checkEquals(2, rescuer.getMainHandItem().getCount(), "pães depois de entregar 1");
+            checkEquals(WarriorCompanionEntity.MODE_FOLLOW, prisoner.getCombatMode(), "postura ao ser recrutado");
+            check(!prisoner.isTargetHostiles() && !prisoner.isTargetPassives(), "recrutado deveria começar pacífico");
 
             data(helper).unregister(prisoner.getUUID());
         }, rescuer);

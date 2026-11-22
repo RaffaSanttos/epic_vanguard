@@ -6,7 +6,6 @@ import com.example.epicvanguard.init.ModBlockEntities;
 import com.example.epicvanguard.init.ModItems;
 import com.example.epicvanguard.screen.VanguardPointMenu;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -27,10 +26,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,8 +54,6 @@ public class VanguardPointBlockEntity extends BlockEntity implements MenuProvide
             }
         }
     };
-
-    private LazyOptional<IItemHandler> lazyItemHandler = LazyOptional.empty();
 
     private boolean contractActive = false;
     private int remainingTicks = 0;
@@ -151,6 +144,16 @@ public class VanguardPointBlockEntity extends BlockEntity implements MenuProvide
     public boolean canAccessCoins(Player player) {
         return depositorUUID == null || depositorUUID.equals(player.getUUID())
                 || player.hasPermissions(2);
+    }
+
+    /**
+     * Quebrar o bloco dropa as moedas e cancela o edital. Só pode quem depositou as moedas que estão lá,
+     * quem pagou o edital em andamento, ou um operador. Assim ninguém rouba moedas nem cancela o edital alheio.
+     */
+    public boolean canBreak(Player player) {
+        if (player.hasPermissions(2)) return true;
+        if (contractActive && requesterUUID != null && !requesterUUID.equals(player.getUUID())) return false;
+        return getStoredCoins() == 0 || canAccessCoins(player);
     }
 
     public boolean canStartContract(Player player) {
@@ -305,22 +308,8 @@ public class VanguardPointBlockEntity extends BlockEntity implements MenuProvide
         serverLevel.sendBlockUpdated(pos, getBlockState(), getBlockState(), 3);
     }
 
-    @Override
-    public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
-        if (cap == ForgeCapabilities.ITEM_HANDLER) {
-            if (!lazyItemHandler.isPresent()) {
-                lazyItemHandler = LazyOptional.of(() -> itemHandler);
-            }
-            return lazyItemHandler.cast();
-        }
-        return super.getCapability(cap, side);
-    }
-
-    @Override
-    public void invalidateCaps() {
-        super.invalidateCaps();
-        lazyItemHandler.invalidate();
-    }
+    // O slot de moedas não é exposto a funis e canos (sem ITEM_HANDLER): por eles qualquer um tiraria
+    // as moedas de outro jogador, passando por cima da checagem de dono do menu.
 
     @Override
     protected void saveAdditional(CompoundTag tag) {

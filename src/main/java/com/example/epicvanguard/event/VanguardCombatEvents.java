@@ -98,8 +98,9 @@ public class VanguardCombatEvents {
             else if (victim.getLastHurtByMob() instanceof WarriorCompanionEntity assistWarrior) {
                 assistWarrior.addWarriorExperience(Math.max(10, xp));
             }
-            // 3. Jogador abateu monstro: companheiros recrutados próximos (raio de 24 blocos) ganham XP de combate conjunto
-            else if (attacker instanceof Player player) {
+            // 3. Jogador abateu monstro: companheiros recrutados próximos (raio de 24 blocos) ganham XP de combate conjunto.
+            // Só monstros: antes matar galinhas ou aldeões também dava XP aos companheiros (farm fácil de nível).
+            else if (attacker instanceof Player player && victim instanceof net.minecraft.world.entity.monster.Enemy) {
                 java.util.List<WarriorCompanionEntity> nearbyCompanions = serverLevel.getEntitiesOfClass(
                         WarriorCompanionEntity.class,
                         player.getBoundingBox().inflate(24.0D),

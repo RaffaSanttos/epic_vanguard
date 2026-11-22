@@ -520,6 +520,22 @@ public class WarriorCompanionEntity extends PathfinderMob {
         this.entityData.set(TARGET_PASSIVES, targetPassives);
     }
 
+    /** Modos de combate (posturas). */
+    public static final int MODE_FOLLOW = 0;
+    public static final int MODE_GUARD = 1;
+    public static final int MODE_STAY = 2;
+
+    /**
+     * Estado de quem acabou de ser recrutado (moedas, resgate ou duelo): segue o dono e fica pacífico, sem caçar
+     * monstros nem animais. Continua defendendo o dono e a si mesmo. O jogador liga o ataque pela tela.
+     */
+    public void applyRecruitDefaults() {
+        this.setCombatMode(MODE_FOLLOW);
+        this.setTargetHostiles(false);
+        this.setTargetPassives(false);
+        this.setTarget(null);
+    }
+
     public int getEquipmentTier() {
         return this.entityData.get(EQUIPMENT_TIER);
     }
@@ -1419,9 +1435,9 @@ public class WarriorCompanionEntity extends PathfinderMob {
             if (this.getHealth() - pAmount <= 1.0F) {
                 this.setHealth(1.0F);
                 this.setDuelMode(false);
-                this.setTarget(null);
                 this.duelTarget = null;
                 this.setRecruited(true);
+                this.applyRecruitDefaults();
 
                 this.setOwnerUUID(duelist.getUUID());
                 duelist.displayClientMessage(
@@ -1647,7 +1663,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
                 this.setHealth(this.getMaxHealth());
                 this.setOwnerUUID(pPlayer.getUUID());
                 this.setRecruited(true);
-                this.setCombatMode(1); // Defensivo
+                this.applyRecruitDefaults(); // Seguir + pacífico
                 this.setEquipmentTier(0);
                 this.syncEquipmentWithInventory();
 

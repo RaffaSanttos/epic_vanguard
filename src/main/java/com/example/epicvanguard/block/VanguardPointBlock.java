@@ -85,6 +85,16 @@ public class VanguardPointBlock extends HorizontalDirectionalBlock implements En
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
+    /** Jogador que não pode quebrar (moedas ou edital de outro) não consegue minerar o bloco. */
+    @Override
+    @SuppressWarnings("deprecation")
+    public float getDestroyProgress(BlockState state, Player player, BlockGetter level, BlockPos pos) {
+        if (level.getBlockEntity(pos) instanceof VanguardPointBlockEntity vanguardEntity && !vanguardEntity.canBreak(player)) {
+            return 0.0F;
+        }
+        return super.getDestroyProgress(state, player, level, pos);
+    }
+
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (!state.is(newState.getBlock())) {

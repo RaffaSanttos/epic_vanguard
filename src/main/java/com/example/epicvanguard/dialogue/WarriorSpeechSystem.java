@@ -69,19 +69,19 @@ public class WarriorSpeechSystem {
 
         if (ownerUUID != null) {
             Long lastSquadSpeak = SQUAD_LAST_SPEAK_TIME.get(ownerUUID);
-            if (lastSquadSpeak != null && (currentTick - lastSquadSpeak) < SQUAD_GLOBAL_COOLDOWN_TICKS) {
+            if (onCooldown(lastSquadSpeak, currentTick, SQUAD_GLOBAL_COOLDOWN_TICKS)) {
                 return false;
             }
 
             String triggerKey = ownerUUID + ":" + trigger.name();
             Long lastTriggerSpeak = SQUAD_TRIGGER_LAST_TIME.get(triggerKey);
-            if (lastTriggerSpeak != null && (currentTick - lastTriggerSpeak) < SQUAD_TRIGGER_COOLDOWN_TICKS) {
+            if (onCooldown(lastTriggerSpeak, currentTick, SQUAD_TRIGGER_COOLDOWN_TICKS)) {
                 return false;
             }
         } else {
             int chunkHash = (warrior.blockPosition().getX() >> 4) ^ (warrior.blockPosition().getZ() >> 4);
             Long lastUnowned = UNOWNED_LAST_SPEAK_TIME.get(chunkHash);
-            if (lastUnowned != null && (currentTick - lastUnowned) < 300L) {
+            if (onCooldown(lastUnowned, currentTick, 300L)) {
                 return false;
             }
         }
@@ -166,5 +166,15 @@ public class WarriorSpeechSystem {
 
     public static void onBaseWelcome(WarriorCompanionEntity warrior) {
         trySpeak(warrior, SpeechTrigger.BASE_WELCOME);
+    }
+
+    /**
+     * Os mapas guardam o gameTime do mundo. Ao trocar de mundo no singleplayer (mesma JVM), o mundo novo pode ter
+     * gameTime menor: a diferença fica negativa e, sem esta checagem, os guerreiros ficavam mudos por dias de jogo.
+     */
+    private static boolean onCooldown(Long last, long now, long cooldown) {
+        if (last == null) return false;
+        long since = now - last;
+        return since >= 0 && since < cooldown;
     }
 }

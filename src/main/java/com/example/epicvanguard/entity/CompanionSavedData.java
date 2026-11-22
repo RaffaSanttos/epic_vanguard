@@ -56,7 +56,7 @@ public class CompanionSavedData extends SavedData {
         public String name;
         public String dimension;
         public BlockPos pos;
-        public int combatMode; // 0: Agressivo, 1: Defensivo, 2: Guarda, 3: Ficar
+        public int combatMode; // WarriorCompanionEntity.MODE_FOLLOW (0), MODE_GUARD (1), MODE_STAY (2)
         public float health;
         public float maxHealth;
         public int level;

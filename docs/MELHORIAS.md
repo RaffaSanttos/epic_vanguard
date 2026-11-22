@@ -34,12 +34,10 @@ Também por isso, uma **cópia antiga** (geração menor) sobrescreve o nome no 
 
 **Correção:** seguir a estrutura do `Mob#doHurtTarget` vanilla e aplicar os multiplicadores de especialização em cima dele. Conferir também o que acontece quando o golpe vem pelas animações do Epic Fight.
 
-### 🟠 1.3 Guerreiro recém-recrutado fica em modo Guarda
-`PacketRecruitWarrior`, o resgate de prisioneiro e `VillageWarriorSpawner` chamam `setCombatMode(1)` com o comentário "Defensivo". Mas o modo 1 é **Guarda**: o guerreiro fica parado onde foi contratado.
-- Decidir o modo padrão ao recrutar (provavelmente 0 = Seguir).
-- Trocar os números mágicos 0/1/2 por um `enum CombatMode { FOLLOW, GUARD, STAY }`.
-- Atualizar o comentário de `CompanionInfo.combatMode`, que ainda descreve 4 modos antigos.
-- Apagar as chaves sem uso `gui.epicvanguard.warrior.mode.aggressive/defensive/guard/stay` dos lang.
+### ✅ 1.3 Guerreiro recém-recrutado fica em modo Guarda — corrigido (22/11/2026)
+Agora quem é recrutado (moedas, resgate ou duelo) passa por `applyRecruitDefaults()`: postura **Seguir** e **pacífico** (Espada e Carne desligadas). Ele continua defendendo o dono e a si mesmo; o jogador liga o ataque a monstros pela tela.
+- Constantes `MODE_FOLLOW/GUARD/STAY` em `WarriorCompanionEntity`; comentário de `CompanionInfo.combatMode` atualizado; chaves sem uso apagadas dos lang.
+- Falta: trocar os `setCombatMode(1)` dos guerreiros **não recrutados** (casa, prisão, Posto) pelas constantes. Eles ficam de guarda de propósito.
 
 ### ✅ 1.4 Recrutar por moedas sem checar o estado do guerreiro — corrigido (21/11/2026)
 `PacketRecruitWarrior` não verifica `isAlive()` nem `isDuelMode()`, e não usa `PacketGuards.nearbyWarrior`.
@@ -80,6 +78,21 @@ Em `Messages.register`, `clientAcceptedVersions(s -> true)` e `serverAcceptedVer
 
 ---
 
+### ✅ 2.5 Funil tirava as moedas de outro jogador do Posto da Vanguarda — corrigido (22/11/2026)
+O bloco expunha o slot de moedas como `ITEM_HANDLER` em todos os lados. Um funil embaixo puxava as moedas depositadas por outro jogador, passando por cima da checagem de dono do menu. Agora o slot não é exposto a funis e canos.
+
+### ✅ 2.6 Quebrar o Posto roubava moedas ou cancelava o edital alheio — corrigido (22/11/2026)
+Qualquer um podia quebrar o bloco: as moedas de outro jogador caíam no chão e um edital pago em andamento se perdia. Agora só quem depositou, quem pagou o edital ou um operador consegue minerar o bloco (`canBreak`). Explosões ainda quebram.
+
+### 🟢 2.7 Recruta que chega pelo edital pode ser contratado por qualquer um
+Quem paga 20 moedas no Posto espera 7 dias, mas o mercenário que chega é neutro: outro jogador pode contratá-lo primeiro.
+**Sugestão:** reservar o recruta para quem pagou por alguns minutos (ou para sempre), mostrando o nome dele na tela de contrato.
+
+### 🟢 2.8 Fechar a tela de contrato limpa a "tela aberta" de outro jogador
+`HonorContractMenu.removed` sempre chama `setInventoryOpenPlayer(null)`, mesmo quando outro jogador também está com a tela aberta. O guerreiro volta a andar enquanto o segundo jogador ainda olha. Só zerar se for o mesmo jogador.
+
+---
+
 ## 3. Comportamento da IA e gameplay
 
 ### 🟠 3.1 Teleporte do modo Seguir interrompe o combate
@@ -110,13 +123,29 @@ Sugestões:
 - Agachar + clicar: alternar Seguir/Parado.
 - Item "Corneta de comando": ordenar a todos os companheiros próximos que ataquem o alvo apontado.
 
+### ✅ 3.8 Guerreiros ficavam mudos depois de trocar de mundo — corrigido (22/11/2026)
+Os cooldowns de fala de esquadrão ficam em mapas estáticos com o `gameTime`. No singleplayer, ao abrir um mundo com `gameTime` menor que o anterior, a diferença ficava negativa e a fala ficava bloqueada até o tempo alcançar o valor antigo (podia levar dias de jogo). Agora diferença negativa conta como cooldown vencido.
+
+### ✅ 3.9 Matar animais e aldeões dava XP aos companheiros — corrigido (22/11/2026)
+Qualquer abate do jogador dava XP (mínimo 10) aos companheiros num raio de 24 blocos, inclusive galinhas e aldeões: um farm de nível trivial. Agora só abates de monstros contam. Caçadas feitas pelo próprio guerreiro continuam dando XP.
+
 ### 🟢 3.6 Regeneração natural só considera dano de mob
 A regeneração fora de combate usa `getLastHurtByMobTimestamp()`. Dano de queda, fogo e veneno não reiniciam a contagem.
 **Sugestão:** guardar o tick do último dano de qualquer fonte em `hurt()`.
 
-### 🟠 3.7 Duelo nunca é ativado
-Toda a lógica de duelo existe (`DUEL_MODE`, recrutar quem vence o duelo em `hurt()`, exceções em fogo amigo e IA), mas nada chama `setDuelMode(true)`. É uma mecânica morta.
-**Decidir:** implementar um jeito de desafiar (ex.: agachar + clicar com arma no mercenário não contratado) ou remover o código. Enquanto isso, o livro do Patchouli não menciona o duelo.
+### 🟠 3.7 Duelo nunca é ativado (a desenvolver)
+Toda a lógica de duelo existe (`DUEL_MODE`, recrutar quem vence o duelo em `hurt()`, exceções em fogo amigo e IA), mas nada chama `setDuelMode(true)`. É uma mecânica morta. Decisão (22/11/2026): **manter e desenvolver mais para frente**. O livro do Patchouli não menciona o duelo até lá.
+
+**Ideias para desenvolver:**
+- **Como desafiar:** agachar + clicar com uma arma num mercenário não contratado abre uma tela de desafio (aceitar/recusar, regras). Alternativa: um item "Luva de Desafio" jogado aos pés dele.
+- **Quem aceita:** mercenários orgulhosos (personalidade) aceitam sempre; outros só se o jogador tiver nível/equipamento parecido. Recusa com fala própria.
+- **Arena:** círculo de partículas de ~8 blocos ao redor do ponto do desafio. Sair do círculo = derrota. Ninguém de fora pode interferir (outros mobs e jogadores não acertam os duelistas; companheiros do jogador ficam parados).
+- **Regras:** até 1 HP (ninguém morre). Escolher no desafio: só corpo a corpo, sem poções, sem escudo.
+- **Recompensa:** vencer recruta de graça, ou com desconto, e o guerreiro começa com mais lealdade/XP. Perder custa moedas (aposta) e ele não aceita novo desafio por um dia de jogo.
+- **Duelo amistoso com o próprio companheiro:** treino que dá XP aos dois, sem risco. Bom para subir de nível fora de combate.
+- **Epic Fight:** usar a postura de duelo (guarda alta, esquivas) e um som/animação de saudação no início.
+- **Torneio no Posto da Vanguarda:** chaveamento de 3 mercenários seguidos; o campeão vira um recruta raro (tier alto ou especialização garantida).
+- **Testes:** GameTest para o duelo terminar em 1 HP, para o recrutamento do vencedor e para interferência externa ser bloqueada.
 
 ---
 
@@ -197,7 +226,7 @@ Chama `setItemSlot` 6 vezes por tick. Daria para marcar o inventário como "sujo
 ## Ordem sugerida
 
 1. 1.1 (rename), 1.2 (dano/durabilidade), 2.1 (admin em criativo), 2.2 (versão de rede)
-2. 1.3 (modo padrão ao recrutar + enum de modos), 1.4, 3.1 (teleporte em combate)
+2. 3.1 (teleporte em combate), 2.7 (reserva do recruta do edital)
 3. 4.1 (migração do `DATA_NAME`) e config com `ForgeConfigSpec`
 4. Divisão da `WarriorCompanionEntity`, GameTests e README
 5. Novas mecânicas: escolha de especialização (3.3), auto-equipar (3.4), ordens rápidas (3.5)

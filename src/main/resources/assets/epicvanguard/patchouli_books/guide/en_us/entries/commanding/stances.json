@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(thing)Follow$(): walks with you and fights what threatens you. If they fall more than 13 blocks behind, they teleport to your side, even across dimensions or from unloaded chunks.$(br2)$(thing)Guard$(): defends the spot where you set the stance, staying within about 6 blocks of it."
+      "text": "$(thing)Follow$() (default): walks with you and fights what threatens you. If they fall more than 13 blocks behind, they teleport to your side, even across dimensions or from unloaded chunks.$(br2)$(thing)Guard$(): defends the spot where you set the stance, staying within about 6 blocks of it."
     },
     {
       "type": "patchouli:text",
