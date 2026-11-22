@@ -21,7 +21,7 @@ public class Messages {
      * Versão do protocolo de rede. Cliente e servidor precisam ter a mesma; aumente sempre que
      * um pacote mudar de formato ou for adicionado/removido.
      */
-    private static final String PROTOCOL_VERSION = "3"; // 3: coleta de itens nas táticas + escolha de classe
+    private static final String PROTOCOL_VERSION = "4"; // 4: coleta com 3 modos (desligada / úteis / tudo)
 
     private static SimpleChannel INSTANCE;
     private static int packetId = 0;

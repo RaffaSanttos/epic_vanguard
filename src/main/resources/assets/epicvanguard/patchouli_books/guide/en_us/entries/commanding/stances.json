@@ -11,6 +11,11 @@
     {
       "type": "patchouli:text",
       "text": "$(thing)Guard$(): defends the spot where you set it, within about 6 blocks.$(br2)$(thing)Stay$(): stands still and chases nothing, but defends themselves.$(br2)In $(thing)Guard$() or $(thing)Stay$() they never teleport to you. Use the $(l:epicvanguard:reference/commands)call command$() to bring them back."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Quick Orders",
+      "text": "$(thing)Sneak + right-click$() your companion with an empty hand to switch between $(thing)Follow$() and $(thing)Stay$() without opening the screen.$(br2)To command everyone at once, use the $(l:epicvanguard:commanding/war_horn)Vanguard War Horn$()."
     }
   ]
 }

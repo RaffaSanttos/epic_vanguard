@@ -38,7 +38,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
     private int currentMode = 0;
     private boolean targetHostiles = true;
     private boolean targetPassives = false;
-    private boolean pickupItems = true;
+    private int pickupMode = WarriorCompanionEntity.PICKUP_USEFUL;
 
     private Button modeButton;
     private Button cancelButton;
@@ -69,7 +69,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
                 this.currentMode = warrior.getCombatMode() % 3;
                 this.targetHostiles = warrior.isTargetHostiles();
                 this.targetPassives = warrior.isTargetPassives();
-                this.pickupItems = warrior.isPickupItems();
+                this.pickupMode = warrior.getPickupMode();
             }
         }
     }
@@ -106,7 +106,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
                 btn -> {
                     targetHostiles = !targetHostiles;
                     btn.setMessage(Component.literal(targetHostiles ? "§c⚔" : "§8⚔"));
-                    Messages.sendToServer(new PacketWarriorTactics(menu.getEntityId(), targetHostiles, targetPassives, pickupItems));
+                    Messages.sendToServer(new PacketWarriorTactics(menu.getEntityId(), targetHostiles, targetPassives, pickupMode));
                 })
                 .bounds(leftPos + 163, topPos + 73, 14, 18)
                 .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.warrior_companion_screen.4")))
@@ -117,21 +117,22 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
                 btn -> {
                     targetPassives = !targetPassives;
                     btn.setMessage(Component.literal(targetPassives ? "§6🍖" : "§8🍖"));
-                    Messages.sendToServer(new PacketWarriorTactics(menu.getEntityId(), targetHostiles, targetPassives, pickupItems));
+                    Messages.sendToServer(new PacketWarriorTactics(menu.getEntityId(), targetHostiles, targetPassives, pickupMode));
                 })
                 .bounds(leftPos + 179, topPos + 73, 14, 18)
                 .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.warrior_companion_screen.5")))
                 .build();
 
         pickupButton = Button.builder(
-                Component.literal(pickupItems ? "§a✋" : "§8✋"),
+                Component.literal(pickupLabel(pickupMode)),
                 btn -> {
-                    pickupItems = !pickupItems;
-                    btn.setMessage(Component.literal(pickupItems ? "§a✋" : "§8✋"));
-                    Messages.sendToServer(new PacketWarriorTactics(menu.getEntityId(), targetHostiles, targetPassives, pickupItems));
+                    pickupMode = (pickupMode + 1) % 3; // desligada -> úteis -> tudo
+                    btn.setMessage(Component.literal(pickupLabel(pickupMode)));
+                    btn.setTooltip(pickupTooltip(pickupMode));
+                    Messages.sendToServer(new PacketWarriorTactics(menu.getEntityId(), targetHostiles, targetPassives, pickupMode));
                 })
                 .bounds(leftPos + 195, topPos + 73, 14, 18)
-                .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.warrior_companion_screen.pickup")))
+                .tooltip(pickupTooltip(pickupMode))
                 .build();
 
         // Abas superiores de navegação (somente 2 abas limpas)
@@ -537,5 +538,23 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
             return true;
         }
         return super.charTyped(codePoint, modifiers);
+    }
+
+    private static String pickupLabel(int mode) {
+        return switch (mode) {
+            case WarriorCompanionEntity.PICKUP_ALL -> "§a✋";
+            case WarriorCompanionEntity.PICKUP_USEFUL -> "§e✋";
+            default -> "§8✋";
+        };
+    }
+
+    private static Tooltip pickupTooltip(int mode) {
+        String state = switch (mode) {
+            case WarriorCompanionEntity.PICKUP_ALL -> "epicvanguard.text.warrior_companion_screen.pickup.all";
+            case WarriorCompanionEntity.PICKUP_USEFUL -> "epicvanguard.text.warrior_companion_screen.pickup.useful";
+            default -> "epicvanguard.text.warrior_companion_screen.pickup.off";
+        };
+        return Tooltip.create(Component.translatable("epicvanguard.text.warrior_companion_screen.pickup")
+                .append("\n").append(Component.translatable(state)));
     }
 }

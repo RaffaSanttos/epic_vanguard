@@ -11,7 +11,7 @@
     {
       "type": "patchouli:text",
       "title": "Tactics",
-      "text": "Lit buttons are on, grey ones are off.$(li)$(thing)Sword$(): attack hostile monsters. Off for new recruits.$(li)$(thing)Meat$(): hunt adult animals for food.$(li)$(thing)Hand$(): pick up items from the ground. On by default; they never take items you dropped yourself."
+      "text": "Lit buttons are on, grey ones are off.$(li)$(thing)Sword$(): attack hostile monsters. Off for new recruits.$(li)$(thing)Meat$(): hunt adult animals for food.$(li)$(thing)Hand$(): item pick-up. Click to cycle: off (grey), useful only (yellow, default) and everything (green)."
     },
     {
       "type": "patchouli:text",

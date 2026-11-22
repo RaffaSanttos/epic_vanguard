@@ -1,35 +1,51 @@
 # Changelog — Epic Vanguard
 
-## 1.0.19 (Minecraft 1.20.1, Forge 47.x) — not released yet
+## 1.0.19 (Minecraft 1.20.1, Forge 47.x)
 
 ### English
 
 **New**
+- **Vanguard War Horn** (4 copper ingots + 1 gold coin): aim at a creature and blow it, and all your companions within 32 blocks attack it, even if peaceful. Aim at nothing and they stop fighting and regroup.
+- **Quick order:** sneak + right-click your companion with an empty hand to switch between Follow and Stay without opening the screen.
+- **Auto-equip:** companions put on better armor, a stronger melee weapon or a shield from their backpack on their own (out of combat). The old piece goes back to the backpack. Bows and crossbows are never swapped.
+- **Item pick-up modes** (✋ button): off, **useful only** (food, healing potions, coins, arrows and better gear; new default) or everything.
 - **Config file** `config/epicvanguard-common.toml`: recruit cost, XP gain, war cry cooldown, Vanguard Point request time, follow teleport distances and how long the save remembers dead/dismissed companions. Defaults are the same as before.
 - Guide book: new "Server Settings" page.
 
 **Changes**
+- Natural regeneration now waits 5 seconds after any damage, including falls and fire (before, only damage from mobs counted).
+- Closing a companion's screen no longer lets them walk off while another player still has it open.
 - Less work per tick: companions share one scan for incoming arrows and creepers instead of several, only update their equipment slots when the gear actually changes, and the follow rescue finds loaded companions faster.
 - The companion save file is only rewritten when something changed, and old dead/dismissed entries are cleaned up after 100 in-game days (configurable).
 - Warrior houses and pillager outposts are now tracked per dimension (old worlds are converted automatically).
 - English texts reviewed: "Vanguard Point" everywhere, smoother dialogue lines.
 
 **Notes**
+- Client and server must both be on 1.0.19 (network protocol changed).
+- Companions from 1.0.18 keep their pick-up setting (on = everything, off = off).
 - The Java package changed (`io.github.raffasanttos.epicvanguard`). The mod id is still `epicvanguard`, so worlds and items are not affected.
 
 ### Português
 
 **Novidades**
+- **Corneta da Vanguarda** (4 barras de cobre + 1 moeda de ouro): mire numa criatura e toque, e todos os seus companheiros num raio de 32 blocos atacam, mesmo pacíficos. Mirando no nada, eles param de lutar e se reagrupam.
+- **Ordem rápida:** agachado + botão direito no companheiro de mão vazia alterna entre Seguir e Parado sem abrir a tela.
+- **Auto-equipar:** os companheiros vestem sozinhos armadura melhor, uma arma corpo a corpo mais forte ou um escudo que estiverem na mochila (fora de combate). A peça antiga volta para a mochila. Arcos e bestas nunca são trocados.
+- **Modos de coleta** (botão ✋): desligada, **só úteis** (comida, poções de cura, moedas, flechas e equipamento melhor; novo padrão) ou tudo.
 - **Arquivo de config** `config/epicvanguard-common.toml`: custo de contratação, ganho de XP, recarga do grito de guerra, tempo do edital do Posto, distâncias do teleporte de seguir e por quanto tempo o save lembra companheiros mortos/dispensados. Os padrões são os mesmos de antes.
 - Livro guia: página nova "Configurações do Servidor".
 
 **Mudanças**
+- A regeneração natural agora espera 5 segundos depois de qualquer dano, inclusive queda e fogo (antes só contava dano de mobs).
+- Fechar a tela de um companheiro não faz mais ele sair andando enquanto outro jogador ainda está com ela aberta.
 - Menos trabalho por tick: os companheiros fazem uma varredura só para flechas e creepers em vez de várias, só atualizam os slots de equipamento quando o equipamento muda de fato, e o resgate do modo Seguir acha companheiros carregados mais rápido.
 - O arquivo de companheiros só é regravado quando algo mudou, e registros antigos de mortos/dispensados são limpos depois de 100 dias de jogo (configurável).
 - Casas de guerreiro e postos de saqueadores agora são marcados por dimensão (mundos antigos são convertidos sozinhos).
 - Textos em inglês revisados: "Vanguard Point" em todo lugar e falas mais naturais.
 
 **Observações**
+- Cliente e servidor precisam estar os dois na 1.0.19 (o protocolo de rede mudou).
+- Companheiros da 1.0.18 mantêm a coleta como estava (ligada = tudo, desligada = desligada).
 - O pacote Java mudou (`io.github.raffasanttos.epicvanguard`). O mod id continua `epicvanguard`, então mundos e itens não são afetados.
 
 ---

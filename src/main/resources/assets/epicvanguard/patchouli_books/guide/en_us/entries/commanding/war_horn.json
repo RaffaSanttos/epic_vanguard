@@ -1,0 +1,17 @@
+{
+  "name": "Vanguard War Horn",
+  "icon": "epicvanguard:vanguard_horn",
+  "category": "epicvanguard:commanding",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Blow the horn ($(thing)right-click$()) to give an order to all your companions within 32 blocks:$(li)$(thing)aiming at a creature$(): they all attack it, even if peaceful;$(li)$(thing)aiming at nothing$(): they stop fighting and regroup.$(br2)Companions in $(thing)Stay$() hold their position. Players, companions and your own pets can't be targeted."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "epicvanguard:vanguard_horn",
+      "text": "Four copper ingots and a gold coin."
+    }
+  ]
+}

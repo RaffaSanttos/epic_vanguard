@@ -11,6 +11,11 @@
     {
       "type": "patchouli:text",
       "text": "$(thing)Guarda$(): defende o ponto escolhido, a uns 6 blocos dele.$(br2)$(thing)Parado$(): fica imóvel e não persegue nada, mas se defende.$(br2)Em $(thing)Guarda$() ou $(thing)Parado$() eles nunca se teleportam até você. Use o $(l:epicvanguard:reference/commands)comando de chamar$() para trazê-los de volta."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Ordens Rápidas",
+      "text": "$(thing)Agachado + botão direito$() no companheiro, de mão vazia, alterna entre $(thing)Seguir$() e $(thing)Parado$() sem abrir a tela.$(br2)Para comandar todos de uma vez, use a $(l:epicvanguard:commanding/war_horn)Corneta da Vanguarda$()."
     }
   ]
 }

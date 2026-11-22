@@ -103,6 +103,20 @@ public final class WarriorInteraction {
             // Check if player is the owner
             if (w.isOwner(pPlayer)) {
                 ItemStack heldItem = pPlayer.getItemInHand(pHand);
+
+                // Ordem rápida: agachado e de mão vazia alterna Seguir <-> Parado sem abrir a tela
+                if (pPlayer.isShiftKeyDown() && heldItem.isEmpty()) {
+                    boolean toStay = w.getCombatMode() != WarriorCompanionEntity.MODE_STAY;
+                    w.setCombatMode(toStay ? WarriorCompanionEntity.MODE_STAY : WarriorCompanionEntity.MODE_FOLLOW);
+                    if (toStay) w.clearCombatTarget();
+                    w.updateSavedData();
+                    pPlayer.displayClientMessage(Component.translatable(toStay
+                            ? "epicvanguard.text.quick_order.stay" : "epicvanguard.text.quick_order.follow", w.getWarriorName()), true);
+                    if (w.level() instanceof ServerLevel serverLevel) {
+                        serverLevel.playSound(null, w.blockPosition(), SoundEvents.ARMOR_EQUIP_IRON, SoundSource.NEUTRAL, 0.7F, toStay ? 0.8F : 1.2F);
+                    }
+                    return InteractionResult.SUCCESS;
+                }
                 if (heldItem.getItem() instanceof net.minecraft.world.item.NameTagItem && heldItem.hasCustomHoverName()) {
                     String raw = heldItem.getHoverName().getString();
                     String clean = raw.replaceAll("§[0-9a-fk-or]", "").trim();
@@ -134,7 +148,8 @@ public final class WarriorInteraction {
 
     /**
      * Coleta automática: guarda na mochila os itens do chão por onde o guerreiro passa.
-     * Pode ser desligada pelo botão da tela, e nunca pega o que o próprio dono jogou no chão
+     * Botão da tela: desligada, só úteis (comida, poções de cura, moedas, flechas, equipamento melhor) ou tudo.
+     * Nunca pega o que o próprio dono jogou no chão
      * (o dono pode largar itens perto dele sem perdê-los para a mochila).
      */
     public static void pickUpGroundItems(WarriorCompanionEntity w) {
@@ -147,8 +162,10 @@ public final class WarriorInteraction {
         Entity owner = w.getOwner();
         java.util.UUID ownerId = w.getOwnerUUID().orElse(null);
         AABB pickupBox = w.getBoundingBox().inflate(1.0D, 0.5D, 1.0D);
+        boolean usefulOnly = w.getPickupMode() == WarriorCompanionEntity.PICKUP_USEFUL;
         List<ItemEntity> items = w.level().getEntitiesOfClass(ItemEntity.class, pickupBox, e -> !e.isRemoved() && !e.hasPickUpDelay()
-                && !isThrownBy(e, owner, ownerId));
+                && !isThrownBy(e, owner, ownerId)
+                && (!usefulOnly || WarriorEquipment.isUseful(w, e.getItem())));
 
         for (ItemEntity itemEntity : items) {
             ItemStack groundStack = itemEntity.getItem();

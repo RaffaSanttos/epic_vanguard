@@ -15,6 +15,9 @@ public class ModItems {
     public static final RegistryObject<Item> GOLD_COIN = ITEMS.register("gold_coin",
             () -> new GoldCoinItem(new Item.Properties()));
 
+    public static final RegistryObject<Item> VANGUARD_HORN = ITEMS.register("vanguard_horn",
+            () -> new io.github.raffasanttos.epicvanguard.item.VanguardHornItem(new Item.Properties().stacksTo(1)));
+
     public static final RegistryObject<Item> VANGUARD_POINT = ITEMS.register("vanguard_point",
             () -> new net.minecraft.world.item.BlockItem(ModBlocks.VANGUARD_POINT.get(), new Item.Properties()));
 

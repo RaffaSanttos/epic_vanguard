@@ -132,8 +132,8 @@ public class WarriorCompanionEntity extends PathfinderMob {
             SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> TARGET_PASSIVES =
             SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> PICKUP_ITEMS =
-            SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> PICKUP_MODE =
+            SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> RECRUITED =
             SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<String> WARRIOR_NAME =
@@ -372,6 +372,13 @@ public class WarriorCompanionEntity extends PathfinderMob {
         return info != null && this.restoreGeneration < info.generation;
     }
 
+    /** Fecha a "tela aberta" só se quem fechou for quem abriu (dois jogadores podem olhar ao mesmo tempo). */
+    public void clearInventoryOpenPlayer(Player player) {
+        if (this.inventoryOpenPlayer == null || this.inventoryOpenPlayer == player) {
+            this.inventoryOpenPlayer = null;
+        }
+    }
+
     public void setInventoryOpenPlayer(@Nullable Player player) {
         this.inventoryOpenPlayer = player;
         if (player != null) {
@@ -464,7 +471,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
         this.entityData.define(COMBAT_MODE, 0); // 0=Seguir (padrão inicial), 1=Guarda, 2=Parado
         this.entityData.define(TARGET_HOSTILES, true);
         this.entityData.define(TARGET_PASSIVES, false);
-        this.entityData.define(PICKUP_ITEMS, true);
+        this.entityData.define(PICKUP_MODE, PICKUP_USEFUL);
         this.entityData.define(RECRUITED, false);
         this.entityData.define(WARRIOR_NAME, "");
         this.entityData.define(DUEL_MODE, false);
@@ -497,13 +504,28 @@ public class WarriorCompanionEntity extends PathfinderMob {
         this.entityData.set(TARGET_PASSIVES, targetPassives);
     }
 
-    /** Coleta automática de itens do chão (botão ✋ da tela). Ligada por padrão. */
-    public boolean isPickupItems() {
-        return this.entityData.get(PICKUP_ITEMS);
+    /** Coleta de itens do chão (botão ✋ da tela): desligada, só itens úteis (padrão) ou tudo. */
+    public static final int PICKUP_OFF = 0;
+    public static final int PICKUP_USEFUL = 1;
+    public static final int PICKUP_ALL = 2;
+
+    public int getPickupMode() {
+        return this.entityData.get(PICKUP_MODE);
     }
 
-    public void setPickupItems(boolean pickupItems) {
-        this.entityData.set(PICKUP_ITEMS, pickupItems);
+    public void setPickupMode(int mode) {
+        this.entityData.set(PICKUP_MODE, Math.max(PICKUP_OFF, Math.min(PICKUP_ALL, mode)));
+    }
+
+    public boolean isPickupItems() {
+        return getPickupMode() != PICKUP_OFF;
+    }
+
+    /** Tick do último dano de qualquer fonte (queda, fogo, veneno incluídos), para a regeneração natural. */
+    private int lastDamageTick = -10000;
+
+    public int getLastDamageTick() {
+        return lastDamageTick;
     }
 
     /** Ticks seguidos longe do dono fora de combate (usado por {@link WarriorTeleport#tickFollowTeleport}). */
@@ -1141,7 +1163,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
             // Regeneração natural lenta fora de combate (1 HP a cada 3 s, após 5 s sem levar dano)
             if (this.isAlive() && !this.isPrisoner() && this.getHealth() < this.getMaxHealth()
                     && this.tickCount % 60 == 0 && !this.isFighting()
-                    && (this.tickCount - this.getLastHurtByMobTimestamp()) > 100
+                    && (this.tickCount - this.lastDamageTick) > 100
                     && this.hurtTime == 0) {
                 this.heal(1.0F);
             }
@@ -1170,6 +1192,9 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
             // Coleta automática de itens do chão ao passar por cima
             pickUpGroundItems();
+
+            // Veste sozinho armadura/arma melhor que estiver na mochila
+            io.github.raffasanttos.epicvanguard.entity.util.WarriorEquipment.tickAutoEquip(this);
 
             // Update CompanionSavedData periodically (every 20 ticks = 1 second)
             // Snapshot completo a cada 10s; saída de chunk/mundo já salva na hora (CompanionTeleportHandler)
@@ -1319,6 +1344,9 @@ public class WarriorCompanionEntity extends PathfinderMob {
         }
 
         boolean hurtResult = super.hurt(pSource, pAmount);
+        if (hurtResult && pAmount > 0.0F) {
+            this.lastDamageTick = this.tickCount; // regeneração natural espera 5 s depois de qualquer dano
+        }
 
         // Se após o dano a vida cair para <= 30% e estiver vivo, executa rolamento de emergência
         if (hurtResult && this.isAlive() && !isDuelMode() && this.getHealth() <= (this.getMaxHealth() * 0.30F)) {
@@ -1506,7 +1534,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
         pCompound.putInt("SkinId", getSkinId());
         pCompound.putBoolean("TargetHostiles", isTargetHostiles());
         pCompound.putBoolean("TargetPassives", isTargetPassives());
-        pCompound.putBoolean("PickupItems", isPickupItems());
+        pCompound.putInt("PickupMode", getPickupMode());
         pCompound.putInt("CombatMode", getCombatMode());
         pCompound.putBoolean("Recruited", isRecruited());
         pCompound.putString("WarriorName", getWarriorName());
@@ -1550,8 +1578,11 @@ public class WarriorCompanionEntity extends PathfinderMob {
         if (pCompound.contains("TargetPassives")) {
             setTargetPassives(pCompound.getBoolean("TargetPassives"));
         }
-        if (pCompound.contains("PickupItems")) {
-            setPickupItems(pCompound.getBoolean("PickupItems"));
+        if (pCompound.contains("PickupMode")) {
+            setPickupMode(pCompound.getInt("PickupMode"));
+        } else if (pCompound.contains("PickupItems")) {
+            // 1.0.18 só tinha liga/desliga: "ligado" era pegar tudo
+            setPickupMode(pCompound.getBoolean("PickupItems") ? PICKUP_ALL : PICKUP_OFF);
         }
         if (pCompound.contains("CombatMode")) {
             setCombatMode(pCompound.getInt("CombatMode"));

@@ -85,12 +85,12 @@ O bloco expunha o slot de moedas como `ITEM_HANDLER` em todos os lados. Um funil
 ### ✅ 2.6 Quebrar o Posto roubava moedas ou cancelava o edital alheio — corrigido (22/11/2026)
 Qualquer um podia quebrar o bloco: as moedas de outro jogador caíam no chão e um edital pago em andamento se perdia. Agora só quem depositou, quem pagou o edital ou um operador consegue minerar o bloco (`canBreak`). Explosões ainda quebram.
 
-### 🟢 2.7 Recruta que chega pelo edital pode ser contratado por qualquer um
+### ➖ 2.7 Recruta que chega pelo edital pode ser contratado por qualquer um — mantido assim (22/11/2026)
 Quem paga 20 moedas no Posto espera 7 dias, mas o mercenário que chega é neutro: outro jogador pode contratá-lo primeiro.
-**Sugestão:** reservar o recruta para quem pagou por alguns minutos (ou para sempre), mostrando o nome dele na tela de contrato.
+**Decisão:** fica **sem reserva**, de propósito. O recruta do edital é de quem chegar primeiro e pagar.
 
-### 🟢 2.8 Fechar a tela de contrato limpa a "tela aberta" de outro jogador
-`HonorContractMenu.removed` sempre chama `setInventoryOpenPlayer(null)`, mesmo quando outro jogador também está com a tela aberta. O guerreiro volta a andar enquanto o segundo jogador ainda olha. Só zerar se for o mesmo jogador.
+### ✅ 2.8 Fechar a tela de contrato limpa a "tela aberta" de outro jogador — corrigido (22/11/2026)
+`HonorContractMenu.removed` e `WarriorCompanionMenu.removed` chamam `clearInventoryOpenPlayer(player)`, que só limpa se quem fechou for quem abriu.
 
 ---
 
@@ -109,7 +109,7 @@ O `CompanionTeleportHandler` passou a cuidar só do que o guerreiro não resolve
 - Botão **✋** na tela do guerreiro liga/desliga a coleta (ligada por padrão; salvo no NBT como `PickupItems`).
 - Itens jogados pelo dono (`ItemEntity#getOwner`) são ignorados.
 - A varredura roda a cada 5 ticks, espalhada entre guerreiros pelo id (parte do 5.1).
-- Falta (🟢): filtro por tipo (só comida, poções e equipamento melhor).
+- ✅ Filtro (22/11/2026): o botão ✋ agora tem 3 modos: **desligada** (cinza), **só úteis** (amarela, padrão) e **tudo** (verde). "Úteis" = comida, poções de Cura/Regeneração, moedas de ouro, flechas e armadura/arma/escudo melhor que o equipado (`WarriorEquipment.isUseful`). NBT `PickupMode`; o `PickupItems` da 1.0.18 vira "tudo" (ligado) ou "desligada".
 
 ### ✅ 3.3 Especialização não pode ser escolhida — corrigido (22/11/2026)
 Um Guerreiro base (sem classe) no **nível 5** pode virar Berserker, Guardião ou Duelista pela aba **Talentos**:
@@ -118,13 +118,17 @@ Um Guerreiro base (sem classe) no **nível 5** pode virar Berserker, Guardião o
 - a classe é o tipo de entidade (o Epic Fight registra atributos por tipo), então o guerreiro é recriado no lugar com o mesmo UUID e NBT (nível, XP, nome, inventário, personalidade) e uma geração nova no registro, para nenhuma cópia antiga voltar;
 - a vida é mantida em porcentagem da vida máxima nova.
 
-### 🟢 3.4 Guerreiro equipa melhor equipamento sozinho
-Hoje ele só usa o que está nos slots 0–5. Ele poderia trocar sozinho por armadura ou arma melhor que estiver na mochila, comparando armadura/dano. Seria um botão "auto-equipar" ou um comportamento padrão.
+### ✅ 3.4 Guerreiro equipa melhor equipamento sozinho — feito (22/11/2026)
+`WarriorEquipment.tickAutoEquip` (a cada 2 s, fora de combate, sem a tela aberta) troca pela melhor peça da mochila:
+- armadura: armadura + resistência/2 + Proteção/2;
+- arma principal: dano + Afiação; só arma corpo a corpo troca por corpo a corpo (arco, besta e tridente ficam);
+- escudo: só se a mão secundária estiver vazia;
+- ignora itens com menos de 10% de durabilidade; a peça antiga volta para a mochila.
+É o comportamento padrão, sem botão: para ele não usar algo, não deixe na mochila.
 
-### 🟢 3.5 Ordens rápidas sem abrir a GUI
-Sugestões:
-- Agachar + clicar: alternar Seguir/Parado.
-- Item "Corneta de comando": ordenar a todos os companheiros próximos que ataquem o alvo apontado.
+### ✅ 3.5 Ordens rápidas sem abrir a GUI — feito (22/11/2026)
+- **Agachado + clique de mão vazia** no próprio companheiro: alterna Seguir ↔ Parado (mensagem na action bar). Agachar + clique com arma fica livre para o duelo (3.7).
+- **Corneta da Vanguarda** (`vanguard_horn`, 4 cobres + 1 moeda): mirando numa criatura, todos os seus companheiros num raio de 32 blocos atacam (mesmo pacíficos; quem está em Parado não sai do lugar); mirando no nada, todos param de lutar. Não aceita jogadores, companheiros nem seus pets como alvo. Recarga de 2 s. Usa a textura da corneta de cabra vanilla.
 
 ### ✅ 3.8 Guerreiros ficavam mudos depois de trocar de mundo — corrigido (22/11/2026)
 Os cooldowns de fala de esquadrão ficam em mapas estáticos com o `gameTime`. No singleplayer, ao abrir um mundo com `gameTime` menor que o anterior, a diferença ficava negativa e a fala ficava bloqueada até o tempo alcançar o valor antigo (podia levar dias de jogo). Agora diferença negativa conta como cooldown vencido.
@@ -132,9 +136,8 @@ Os cooldowns de fala de esquadrão ficam em mapas estáticos com o `gameTime`. N
 ### ✅ 3.9 Matar animais e aldeões dava XP aos companheiros — corrigido (22/11/2026)
 Qualquer abate do jogador dava XP (mínimo 10) aos companheiros num raio de 24 blocos, inclusive galinhas e aldeões: um farm de nível trivial. Agora só abates de monstros contam. Caçadas feitas pelo próprio guerreiro continuam dando XP.
 
-### 🟢 3.6 Regeneração natural só considera dano de mob
-A regeneração fora de combate usa `getLastHurtByMobTimestamp()`. Dano de queda, fogo e veneno não reiniciam a contagem.
-**Sugestão:** guardar o tick do último dano de qualquer fonte em `hurt()`.
+### ✅ 3.6 Regeneração natural só considera dano de mob — corrigido (22/11/2026)
+`hurt()` guarda `lastDamageTick` para qualquer dano que entrou de fato; a regeneração espera 5 s a partir dele.
 
 ### 🟠 3.7 Duelo nunca é ativado (a desenvolver)
 Toda a lógica de duelo existe (`DUEL_MODE`, recrutar quem vence o duelo em `hurt()`, exceções em fogo amigo e IA), mas nada chama `setDuelMode(true)`. É uma mecânica morta. Decisão (22/11/2026): **manter e desenvolver mais para frente**. O livro do Patchouli não menciona o duelo até lá.

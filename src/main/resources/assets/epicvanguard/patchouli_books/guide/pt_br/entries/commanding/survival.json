@@ -11,7 +11,7 @@
     {
       "type": "patchouli:text",
       "title": "Recuo",
-      "text": "Quando a vida fica baixa e eles têm algo para se curar, eles $(thing)rolam para trás$(), recuam e comem antes de voltar à luta.$(br2)Sem nenhuma comida, continuam lutando. Fora de combate também se regeneram devagar sozinhos."
+      "text": "Quando a vida fica baixa e eles têm algo para se curar, eles $(thing)rolam para trás$(), recuam e comem antes de voltar à luta.$(br2)Sem nenhuma comida, continuam lutando. Fora de combate, 5 segundos depois de qualquer dano (queda e fogo também), se regeneram devagar sozinhos."
     }
   ]
 }

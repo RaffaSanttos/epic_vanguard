@@ -11,7 +11,7 @@
     {
       "type": "patchouli:text",
       "title": "Retreat",
-      "text": "When their health gets low and they carry something to heal with, they $(thing)roll away$(), retreat and eat before returning to the fight.$(br2)Without any food they keep fighting. Out of combat they also regenerate slowly on their own."
+      "text": "When their health gets low and they carry something to heal with, they $(thing)roll away$(), retreat and eat before returning to the fight.$(br2)Without any food they keep fighting. Out of combat, 5 seconds after any damage (falls and fire too), they also regenerate slowly on their own."
     }
   ]
 }

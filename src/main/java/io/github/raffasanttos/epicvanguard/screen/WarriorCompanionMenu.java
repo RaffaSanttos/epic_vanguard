@@ -180,7 +180,7 @@ public class WarriorCompanionMenu extends AbstractContainerMenu {
         if (!player.level().isClientSide) {
             Entity entity = player.level().getEntity(entityId);
             if (entity instanceof WarriorCompanionEntity warrior) {
-                warrior.setInventoryOpenPlayer(null);
+                warrior.clearInventoryOpenPlayer(player);
             }
         }
     }

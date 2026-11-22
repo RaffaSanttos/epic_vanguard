@@ -8,11 +8,12 @@ Mapa do código para quem for mexer no mod. Pacote base: `io.github.raffasanttos
 
 | Classe | O que faz |
 |---|---|
-| `WarriorInteraction` | Clique do jogador: resgate de prisioneiro, tela de contrato, name tag, abrir a tela do dono. Coleta de itens do chão (botão ✋, ignora o que o dono jogou). |
+| `WarriorInteraction` | Clique do jogador: resgate de prisioneiro, tela de contrato, name tag, abrir a tela do dono, agachado de mão vazia alterna Seguir/Parado. Coleta de itens do chão (botão ✋: desligada / úteis / tudo; ignora o que o dono jogou). |
 | `WarriorTeleport` | Teleporte seguro (chão firme, sem lava, sem sufocar) e a regra do modo Seguir: 13 blocos + 2 s fora de combate, ou 32 blocos sempre (valores da config). |
 | `WarriorThreatSensor` | Creeper prestes a explodir e projéteis vindo na direção do guerreiro ou do dono. Guarda a última varredura num cache por guerreiro (projéteis a cada 2 ticks, creepers a cada 5). |
 | `WarriorWarcry` | Grito de guerra de cada classe (efeitos, partículas, sons). |
 | `WarriorProgression` | Escolha de classe no nível 5 (recria a entidade com o tipo da classe). |
+| `WarriorEquipment` | Auto-equipar (melhor armadura/arma/escudo da mochila, a cada 2 s fora de combate) e o filtro "só úteis" da coleta. |
 | `WarriorCombatHelper` | Fogo amigo, esquiva do Duelista, bloqueio com escudo. |
 | `WarriorHealingHelper` | Escolher e consumir comida e poções. |
 
@@ -32,12 +33,12 @@ IA: `entity/ai` tem os goals (combate tático, seguir, guarda, comer, fugir, gri
 
 ## Rede
 
-`networking/Messages.java` registra os pacotes. Protocolo atual: **"3"** (cliente e servidor precisam da mesma versão; aumente ao mudar qualquer pacote).
+`networking/Messages.java` registra os pacotes. Protocolo atual: **"4"** (cliente e servidor precisam da mesma versão; aumente ao mudar qualquer pacote).
 
 | Pacote | Quem pode | O que faz |
 |---|---|---|
 | `PacketWarriorCombatMode` | dono, perto | troca a postura |
-| `PacketWarriorTactics` | dono, perto | Espada (monstros), Carne (animais), Mão (coleta) |
+| `PacketWarriorTactics` | dono, perto | Espada (monstros), Carne (animais), Mão (coleta: 0 desligada, 1 úteis, 2 tudo) |
 | `PacketWarriorCancelAction` | dono, perto | encerra a luta |
 | `PacketOpenWarriorGUI` | perto (inventário só o dono) | abre a tela |
 | `PacketRecruitWarrior` | perto | contrata com moedas |
@@ -50,6 +51,11 @@ IA: `entity/ai` tem os goals (combate tático, seguir, guarda, comer, fugir, gri
 ## Telas
 
 `screen/`: `WarriorCompanionScreen` (mochila e táticas), `WarriorSkillTreeScreen` (talentos e escolha de classe), `HonorContractScreen` (contratar), `VanguardPointScreen` (edital).
+
+## Itens
+
+- `item/GoldCoinItem`: moeda de ouro.
+- `item/VanguardHornItem`: Corneta da Vanguarda. Mira (raio 32) e manda os companheiros do dono por perto atacarem o alvo, ou pararem de lutar se não mirar em nada.
 
 ## Posto da Vanguarda
 

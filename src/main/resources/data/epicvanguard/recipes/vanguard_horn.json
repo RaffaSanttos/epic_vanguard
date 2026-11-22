@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "C  ",
+    "CG ",
+    " CC"
+  ],
+  "key": {
+    "C": {
+      "item": "minecraft:copper_ingot"
+    },
+    "G": {
+      "item": "epicvanguard:gold_coin"
+    }
+  },
+  "result": {
+    "item": "epicvanguard:vanguard_horn",
+    "count": 1
+  }
+}

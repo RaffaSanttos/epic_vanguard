@@ -1,0 +1,17 @@
+{
+  "name": "Corneta da Vanguarda",
+  "icon": "epicvanguard:vanguard_horn",
+  "category": "epicvanguard:commanding",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Toque a corneta ($(thing)botão direito$()) para dar uma ordem a todos os seus companheiros num raio de 32 blocos:$(li)$(thing)mirando numa criatura$(): todos atacam, mesmo pacíficos;$(li)$(thing)mirando no nada$(): param de lutar e se reagrupam.$(br2)Quem está em $(thing)Parado$() segura a posição. Jogadores, companheiros e seus animais não podem ser alvo."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "epicvanguard:vanguard_horn",
+      "text": "Quatro barras de cobre e uma moeda de ouro."
+    }
+  ]
+}

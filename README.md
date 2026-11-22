@@ -8,7 +8,9 @@ Mercenary companions for **Minecraft 1.20.1 (Forge 47.x)**. Hire warriors with g
 
 - **Hiring:** find mercenaries in warrior houses inside villages, rescue prisoners from pillager outposts, or post a request at a **Vanguard Point** block and a company marches to your base.
 - **Gold Coins** are the currency. Mercenaries cost more the better their starting gear (Recruit, Veteran, Elite).
-- **Stances:** Follow, Guard (protects an area) and Stay. New recruits start in Follow and peaceful; turn monster hunting (sword) and food hunting (meat) on in their screen. The ✋ button toggles item pick-up.
+- **Stances:** Follow, Guard (protects an area) and Stay. New recruits start in Follow and peaceful; turn monster hunting (sword) and food hunting (meat) on in their screen. Sneak + right-click with an empty hand switches Follow/Stay.
+- **Gear:** they pick up useful items (✋ button: off / useful / everything) and put on better armor and weapons from their backpack by themselves.
+- **Vanguard War Horn:** order every companion nearby to attack what you aim at, or to stop and regroup.
 - **Classes:** Berserker, Guardian and Duelist, each with its own talents and war cry. A plain Warrior can choose one at level 5.
 - **Survival:** companions eat food and drink healing potions from their backpack, retreat when badly hurt and rest by campfires.
 - **Protection:** they block arrows, dodge creepers and step in when you are about to die.
@@ -81,7 +83,9 @@ Companheiros mercenários para **Minecraft 1.20.1 (Forge 47.x)**. Contrate guerr
 
 - **Contratação:** mercenários nas casas de guerreiro das vilas, prisioneiros nos postos de saqueadores para resgatar, ou um edital no bloco **Vanguard Point** (Posto da Vanguarda) para uma companhia marchar até a sua base.
 - **Moedas de Ouro** são a moeda. Quanto melhor o equipamento inicial (Recruta, Veterano, Elite), mais caro.
-- **Posturas:** Seguir, Guarda (protege uma área) e Parado. Recrutas novos começam em Seguir e pacíficos; ligue a caça a monstros (espada) e a animais (carne) na tela deles. O botão ✋ liga/desliga pegar itens do chão.
+- **Posturas:** Seguir, Guarda (protege uma área) e Parado. Recrutas novos começam em Seguir e pacíficos; ligue a caça a monstros (espada) e a animais (carne) na tela deles. Agachado + botão direito de mão vazia alterna Seguir/Parado.
+- **Equipamento:** pegam itens úteis do chão (botão ✋: desligada / úteis / tudo) e vestem sozinhos armadura e armas melhores da mochila.
+- **Corneta da Vanguarda:** manda todos os companheiros por perto atacarem o que você mira, ou pararem e se reagruparem.
 - **Classes:** Berserker, Guardião e Duelista, cada uma com talentos e grito de guerra. Um Guerreiro comum escolhe a sua no nível 5.
 - **Sobrevivência:** comem e bebem poções da mochila, recuam quando muito feridos e descansam em fogueiras.
 - **Proteção:** bloqueiam flechas, fogem de creepers e intervêm quando você está para morrer.

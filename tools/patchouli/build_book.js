@@ -89,8 +89,8 @@ const entries = [
         '$(thing)Right-click$() your companion to open their screen (owner only).$(br)On the right side:$(li)$(thing)Stance$(): cycles between $(l:epicvanguard:commanding/stances)Follow, Guard and Stay$().$(li)$(thing)Stop$(): ends the current fight and clears the target.$(li)Three $(thing)tactic buttons$(), explained on the next page.',
         'Clique com o $(thing)botão direito$() no seu companheiro para abrir a tela dele (só o dono).$(br)No lado direito:$(li)$(thing)Postura$(): alterna entre $(l:epicvanguard:commanding/stances)Seguir, Guarda e Parado$().$(li)$(thing)Parar$(): encerra a luta atual e limpa o alvo.$(li)Três $(thing)botões de tática$(), explicados na próxima página.') },
       { type: 'text', title: t('Tactics', 'Táticas'), text: t(
-        'Lit buttons are on, grey ones are off.$(li)$(thing)Sword$(): attack hostile monsters. Off for new recruits.$(li)$(thing)Meat$(): hunt adult animals for food.$(li)$(thing)Hand$(): pick up items from the ground. On by default; they never take items you dropped yourself.',
-        'Botão aceso está ligado, cinza está desligado.$(li)$(thing)Espada$(): atacar monstros hostis. Desligado ao recrutar.$(li)$(thing)Carne$(): caçar animais adultos para comida.$(li)$(thing)Mão$(): pegar itens do chão. Ligado por padrão; nunca pega o que você mesmo jogou.') },
+        'Lit buttons are on, grey ones are off.$(li)$(thing)Sword$(): attack hostile monsters. Off for new recruits.$(li)$(thing)Meat$(): hunt adult animals for food.$(li)$(thing)Hand$(): item pick-up. Click to cycle: off (grey), useful only (yellow, default) and everything (green).',
+        'Botão aceso está ligado, cinza está desligado.$(li)$(thing)Espada$(): atacar monstros hostis. Desligado ao recrutar.$(li)$(thing)Carne$(): caçar animais adultos para comida.$(li)$(thing)Mão$(): coleta de itens. Clique para trocar: desligada (cinza), só úteis (amarela, padrão) e tudo (verde).') },
       { type: 'text', title: t('Tabs and Name', 'Abas e Nome'), text: t(
         'The $(thing)Backpack$() tab shows their gear and health; the $(thing)Talents$() tab shows their level, XP and class bonuses.$(br2)To rename a companion, press the $(thing)pencil$(), use a named $(item)Name Tag$() on them, or the $(l:epicvanguard:reference/commands)rename command$().',
         'A aba $(thing)Mochila$() mostra o equipamento e a vida; a aba $(thing)Talentos$() mostra o nível, o XP e os bônus da classe.$(br2)Para renomear um companheiro, aperte o $(thing)lápis$(), use uma $(item)Etiqueta$() com nome nele, ou o $(l:epicvanguard:reference/commands)comando de renomear$().') },
@@ -104,6 +104,9 @@ const entries = [
       { type: 'text', text: t(
         '$(thing)Guard$(): defends the spot where you set it, within about 6 blocks.$(br2)$(thing)Stay$(): stands still and chases nothing, but defends themselves.$(br2)In $(thing)Guard$() or $(thing)Stay$() they never teleport to you. Use the $(l:epicvanguard:reference/commands)call command$() to bring them back.',
         '$(thing)Guarda$(): defende o ponto escolhido, a uns 6 blocos dele.$(br2)$(thing)Parado$(): fica imóvel e não persegue nada, mas se defende.$(br2)Em $(thing)Guarda$() ou $(thing)Parado$() eles nunca se teleportam até você. Use o $(l:epicvanguard:reference/commands)comando de chamar$() para trazê-los de volta.') },
+      { type: 'text', title: t('Quick Orders', 'Ordens Rápidas'), text: t(
+        '$(thing)Sneak + right-click$() your companion with an empty hand to switch between $(thing)Follow$() and $(thing)Stay$() without opening the screen.$(br2)To command everyone at once, use the $(l:epicvanguard:commanding/war_horn)Vanguard War Horn$().',
+        '$(thing)Agachado + botão direito$() no companheiro, de mão vazia, alterna entre $(thing)Seguir$() e $(thing)Parado$() sem abrir a tela.$(br2)Para comandar todos de uma vez, use a $(l:epicvanguard:commanding/war_horn)Corneta da Vanguarda$().') },
     ] },
   { category: 'commanding', id: 'inventory', icon: 'minecraft:bundle', sortnum: 2,
     name: t('Gear and Backpack', 'Equipamento e Mochila'),
@@ -112,8 +115,11 @@ const entries = [
         'Every companion has $(thing)4 armor slots$(), a $(thing)main weapon$() slot, an $(thing)off-hand$() slot for a shield or second weapon, and a $(thing)15-slot backpack$().$(br2)Swords, axes, Epic Fight weapons and most modded weapons fit the weapon slots. Shift-click sends armor and weapons to the right slot.',
         'Todo companheiro tem $(thing)4 slots de armadura$(), um slot de $(thing)arma principal$(), um slot de $(thing)mão secundária$() para escudo ou segunda arma, e uma $(thing)mochila de 15 slots$().$(br2)Espadas, machados, armas do Epic Fight e a maioria das armas de outros mods cabem nos slots de arma. Shift + clique manda armadura e armas para o slot certo.') },
       { type: 'text', text: t(
-        'Weapon enchantments work: $(thing)Sharpness$(), $(thing)Smite$(), $(thing)Knockback$(), $(thing)Fire Aspect$() and others. Weapons lose durability like yours and break when worn out.$(br2)Companions $(thing)pick up items$() they walk over, except what you drop. Turn it off with the $(thing)Hand$() button.',
-        'Os encantamentos da arma funcionam: $(thing)Afiação$(), $(thing)Julgamento$(), $(thing)Repulsão$(), $(thing)Aspecto Flamejante$() e outros. As armas gastam como as suas e quebram quando acabam.$(br2)Companheiros $(thing)pegam itens$() do chão ao passar por cima, menos o que você joga. Desligue no botão $(thing)Mão$().') },
+        'Weapon enchantments work: $(thing)Sharpness$(), $(thing)Smite$(), $(thing)Knockback$(), $(thing)Fire Aspect$() and others. Weapons lose durability like yours and break when worn out.$(br2)Companions $(thing)pick up items$() they walk over, except what you drop. See the $(thing)Hand$() button.',
+        'Os encantamentos da arma funcionam: $(thing)Afiação$(), $(thing)Julgamento$(), $(thing)Repulsão$(), $(thing)Aspecto Flamejante$() e outros. As armas gastam como as suas e quebram quando acabam.$(br2)Companheiros $(thing)pegam itens$() do chão ao passar por cima, menos o que você joga. Veja o botão $(thing)Mão$().') },
+      { type: 'text', title: t('Auto-Equip', 'Auto-Equipar'), text: t(
+        'Put better gear in the $(thing)backpack$() and the companion wears it on their own after a moment out of combat: armor by protection, melee weapon by damage, a shield if the off-hand is empty. The old piece goes back to the backpack.$(br2)They never swap out a bow or crossbow, and skip nearly broken items.',
+        'Coloque equipamento melhor na $(thing)mochila$() e o companheiro veste sozinho depois de um tempo fora de combate: armadura pela proteção, arma corpo a corpo pelo dano, escudo se a mão secundária estiver vazia. A peça antiga volta para a mochila.$(br2)Ele nunca troca um arco ou besta e ignora itens quase quebrados.') },
       { type: 'text', title: t('If They Fall', 'Se Ele Cair'), text: t(
         'When a companion dies, everything they carried drops on the ground. The companion is gone for good, so keep them fed and well armored.',
         'Quando um companheiro morre, tudo o que ele carregava cai no chão. Ele não volta, então mantenha-o alimentado e bem protegido.') },
@@ -125,8 +131,8 @@ const entries = [
         'Companions take care of themselves with what is in their $(thing)backpack$():$(li)Out of combat and hurt, they eat $(item)food$() until healed.$(li)They drink $(item)Healing$() and $(item)Regeneration$() potions, leaving the empty bottle.$(li)In an emergency they prefer the strongest items, like $(item)golden apples$().',
         'Os companheiros se cuidam com o que está na $(thing)mochila$():$(li)Fora de combate e feridos, comem $(item)comida$() até se curarem.$(li)Bebem poções de $(item)Cura$() e $(item)Regeneração$(), deixando o frasco vazio.$(li)Numa emergência preferem os itens mais fortes, como $(item)maçãs douradas$().') },
       { type: 'text', title: t('Retreat', 'Recuo'), text: t(
-        'When their health gets low and they carry something to heal with, they $(thing)roll away$(), retreat and eat before returning to the fight.$(br2)Without any food they keep fighting. Out of combat they also regenerate slowly on their own.',
-        'Quando a vida fica baixa e eles têm algo para se curar, eles $(thing)rolam para trás$(), recuam e comem antes de voltar à luta.$(br2)Sem nenhuma comida, continuam lutando. Fora de combate também se regeneram devagar sozinhos.') },
+        'When their health gets low and they carry something to heal with, they $(thing)roll away$(), retreat and eat before returning to the fight.$(br2)Without any food they keep fighting. Out of combat, 5 seconds after any damage (falls and fire too), they also regenerate slowly on their own.',
+        'Quando a vida fica baixa e eles têm algo para se curar, eles $(thing)rolam para trás$(), recuam e comem antes de voltar à luta.$(br2)Sem nenhuma comida, continuam lutando. Fora de combate, 5 segundos depois de qualquer dano (queda e fogo também), se regeneram devagar sozinhos.') },
     ] },
   { category: 'commanding', id: 'protection', icon: 'minecraft:totem_of_undying', sortnum: 4,
     name: t('Protecting You', 'Protegendo Você'),
@@ -137,6 +143,15 @@ const entries = [
       { type: 'text', title: t('Friendly Fire', 'Fogo Amigo'), text: t(
         'By default your attacks never hurt your own companions, and companions of the same owner never hit each other. An operator can change this: see $(l:epicvanguard:reference/friendly_fire)Friendly Fire$().',
         'Por padrão seus ataques nunca ferem seus companheiros, e companheiros do mesmo dono nunca se acertam. Um operador pode mudar isso: veja $(l:epicvanguard:reference/friendly_fire)Fogo Amigo$().') },
+    ] },
+  { category: 'commanding', id: 'war_horn', icon: 'epicvanguard:vanguard_horn', sortnum: 5,
+    name: t('Vanguard War Horn', 'Corneta da Vanguarda'),
+    pages: [
+      { type: 'text', text: t(
+        'Blow the horn ($(thing)right-click$()) to give an order to all your companions within 32 blocks:$(li)$(thing)aiming at a creature$(): they all attack it, even if peaceful;$(li)$(thing)aiming at nothing$(): they stop fighting and regroup.$(br2)Companions in $(thing)Stay$() hold their position. Players, companions and your own pets can\'t be targeted.',
+        'Toque a corneta ($(thing)botão direito$()) para dar uma ordem a todos os seus companheiros num raio de 32 blocos:$(li)$(thing)mirando numa criatura$(): todos atacam, mesmo pacíficos;$(li)$(thing)mirando no nada$(): param de lutar e se reagrupam.$(br2)Quem está em $(thing)Parado$() segura a posição. Jogadores, companheiros e seus animais não podem ser alvo.') },
+      { type: 'crafting', recipe: 'epicvanguard:vanguard_horn', text: t(
+        'Four copper ingots and a gold coin.', 'Quatro barras de cobre e uma moeda de ouro.') },
     ] },
 
   // ═══ Classes ═══
