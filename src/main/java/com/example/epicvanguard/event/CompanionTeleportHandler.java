@@ -253,13 +253,6 @@ public class CompanionTeleportHandler {
     }
 
     /**
-     * Alias para compatibilidade com chamadas existentes.
-     */
-    public static void teleportFollowingCompanions(ServerPlayer player) {
-        rescueFollowingCompanions(player);
-    }
-
-    /**
      * Materializa um companheiro que estava em chunk descarregado na posição do jogador,
      * restaurando todos os seus atributos, inventário, armas, vida e nível.
      */

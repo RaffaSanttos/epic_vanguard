@@ -179,8 +179,4 @@ public class WarriorHealingHelper {
         warrior.syncEquipmentWithInventory();
         WarriorSpeechSystem.onHealed(warrior);
     }
-
-    public static void consumeHealingItem(WarriorCompanionEntity warrior, ItemStack stack, int slotIndex) {
-        consumeHealingItem(warrior, slotIndex);
-    }
 }

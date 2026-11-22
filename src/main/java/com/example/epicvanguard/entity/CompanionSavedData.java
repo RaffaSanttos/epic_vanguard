@@ -12,7 +12,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CompanionSavedData extends SavedData {
-    private static final String DATA_NAME = "grimal_companions";
+    public static final String DATA_NAME = "epicvanguard_companions";
+    /** Nome usado até a 1.0.16; migrado em {@link #migrateLegacy}. */
+    public static final String LEGACY_DATA_NAME = "grimal_companions";
 
     public enum FriendlyFireMode {
         DISABLED("disabled"),
@@ -140,7 +142,30 @@ public class CompanionSavedData extends SavedData {
 
     public static CompanionSavedData get(MinecraftServer server) {
         ServerLevel overworld = server.overworld();
-        return overworld.getDataStorage().computeIfAbsent(CompanionSavedData::load, CompanionSavedData::new, DATA_NAME);
+        return overworld.getDataStorage().computeIfAbsent(CompanionSavedData::load, () -> migrateLegacy(server), DATA_NAME);
+    }
+
+    /**
+     * Mundo sem o arquivo novo: lê o do nome antigo ({@value #LEGACY_DATA_NAME}), se existir, e marca para salvar
+     * com o nome novo. O arquivo antigo fica no disco como backup. Lido direto do arquivo (e não pelo
+     * DimensionDataStorage) para não ficar em cache com os dois nomes.
+     */
+    public static CompanionSavedData migrateLegacy(MinecraftServer server) {
+        java.nio.file.Path legacy = server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT)
+                .resolve("data").resolve(LEGACY_DATA_NAME + ".dat");
+        if (!java.nio.file.Files.isRegularFile(legacy)) return new CompanionSavedData();
+        try {
+            CompoundTag root = net.minecraft.nbt.NbtIo.readCompressed(legacy.toFile());
+            CompanionSavedData data = load(root.getCompound("data"));
+            data.setDirty();
+            org.slf4j.LoggerFactory.getLogger(CompanionSavedData.class).info(
+                    "Migrated {} companions from {}.dat to {}.dat", data.companions.size(), LEGACY_DATA_NAME, DATA_NAME);
+            return data;
+        } catch (Exception e) {
+            org.slf4j.LoggerFactory.getLogger(CompanionSavedData.class).error(
+                    "Could not read legacy companion data {}.dat; starting empty", LEGACY_DATA_NAME, e);
+            return new CompanionSavedData();
+        }
     }
 
     public void registerOrUpdate(UUID companionUUID, UUID ownerUUID, String name, String dimension, BlockPos pos, int mode, float health, float maxHealth, int level, int specialization, CompoundTag fullNbt) {

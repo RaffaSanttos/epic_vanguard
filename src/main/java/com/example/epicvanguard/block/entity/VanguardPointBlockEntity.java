@@ -144,10 +144,13 @@ public class VanguardPointBlockEntity extends BlockEntity implements MenuProvide
         }
     }
 
-    /** O jogador pode mexer nas moedas do slot (vazio, são dele, ou é admin/criativo). */
+    /**
+     * O jogador pode mexer nas moedas do slot (vazio, são dele, ou é operador). Criativo não basta: num servidor
+     * com criativo liberado, qualquer um tiraria as moedas dos outros. Criativo continua contratando de graça.
+     */
     public boolean canAccessCoins(Player player) {
         return depositorUUID == null || depositorUUID.equals(player.getUUID())
-                || player.isCreative() || player.hasPermissions(2);
+                || player.hasPermissions(2);
     }
 
     public boolean canStartContract(Player player) {

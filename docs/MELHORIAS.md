@@ -51,9 +51,13 @@ Também por isso, uma **cópia antiga** (geração menor) sobrescreve o nome no 
 
 ---
 
-### 🟠 1.6 Armadura do guerreiro nunca gasta
+### ✅ 1.6 Armadura do guerreiro nunca gasta — corrigido (22/11/2026)
 O `LivingEntity#hurtArmor` vanilla não faz nada para mobs (só o jogador sobrescreve). A armadura do guerreiro nunca perde durabilidade.
 **Correção:** sobrescrever `hurtArmor` e `hurtHelmet` em `WarriorCompanionEntity`, desgastando os slots de armadura como o `Inventory#hurtArmor` do jogador. Decidir se o desgaste deve ser igual ao do jogador ou menor.
+
+### ✅ 1.7 Guerreiros de saves antigos ainda podem duplicar o equipamento — corrigido (22/11/2026)
+A correção de duplicação zera a chance de drop dos slots de equipamento no construtor. Mas o `Mob#readAdditionalSaveData` vanilla lê `ArmorDropChances`/`HandDropChances` do NBT e sobrescreve esse zero. Guerreiros salvos antes da correção (versão 1.0.0, a publicada) voltam com a chance padrão de 8,5% por slot. Se um deles morrer para um jogador (PvP ou fogo amigo), `super.dropCustomDeathLoot` dropa uma cópia da peça, e depois `dropAllInventory` dropa o original.
+**Correção:** zerar as chances de novo no fim de `readAdditionalSaveData` (ou sobrescrever `getEquipmentDropChance` para devolver 0). Dá para cobrir com um GameTest que carrega um NBT com `ArmorDropChances` antigo.
 
 ---
 
@@ -69,6 +73,10 @@ Em `Messages.register`, `clientAcceptedVersions(s -> true)` e `serverAcceptedVer
 
 ### 🟢 2.3 Pacote de abrir GUI manda um `boolean recruited` inútil
 `PacketOpenWarriorGUI` já ignora o flag e usa o estado do servidor. Dá para remover o campo e economizar o byte. Isso exige aumentar a versão do protocolo (2.2).
+
+### ✅ 2.4 Criativo mexe nas moedas depositadas por outro jogador no Posto da Vanguarda — corrigido (22/11/2026)
+`VanguardPointBlockEntity.canAccessCoins` aceita `player.isCreative()`. É o mesmo problema da 2.1: num servidor com criativo liberado, alguém pode tirar as moedas que outro depositou. O impacto é pequeno, porque quem está em criativo pode criar moedas.
+**Correção:** aceitar só o depositante ou `hasPermissions(2)`. Criativo continua contratando de graça (`canStartContract`), mas sem usar as moedas dos outros.
 
 ---
 
@@ -114,7 +122,7 @@ Toda a lógica de duelo existe (`DUEL_MODE`, recrutar quem vence o duelo em `hur
 
 ## 4. Persistência
 
-### 🟠 4.1 `DATA_NAME = "grimal_companions"` (pendente da auditoria)
+### ✅ 4.1 `DATA_NAME = "grimal_companions"` — corrigido (22/11/2026): agora `epicvanguard_companions`, com migração automática
 Trocar para `epicvanguard_companions` **com migração**: se o arquivo novo não existir, ler o antigo e marcar `setDirty()`.
 
 ### 🟢 4.2 Conjuntos `Retired` e `Dismissed` só crescem
@@ -154,12 +162,13 @@ Chama `setItemSlot` 6 vezes por tick. Daria para marcar o inventário como "sujo
   - `WarriorThreatSensor` (creeper/projéteis)
   - `WarriorProgression` (nível/XP/especialização/grito de guerra)
 - 🟢 **Constantes de balanceamento num lugar só.** Custos de recrutamento, curva de XP, cooldowns, raios e porcentagens estão espalhados como números mágicos. Melhor ainda: um `ForgeConfigSpec` (`epicvanguard-common.toml`), para donos de servidor ajustarem sem recompilar.
-- 🟢 **Imports duplicados** em `WarriorCompanionEntity` (`ShieldItem` duas vezes) e indentação quebrada em `isSpellOrMagicDamage`.
+- 🟢 ~~Import duplicado de `ShieldItem`~~ (removido). Falta a indentação quebrada em `isSpellOrMagicDamage`.
 - 🟢 **Código morto:**
   - `NEXT_TAVERN_SPAWN` / `MIN_TAVERN_INTERVAL` / `checkTavernRespawn` comentado em `VillageWarriorSpawner`
   - `findOrLoadCompanion`, que hoje é igual a `findLoadedCompanion`
-  - `teleportFollowingCompanions` (alias)
-  - `consumeHealingItem(ItemStack, int)`, que ignora o `ItemStack`
+  - ~~`teleportFollowingCompanions` (alias)~~ (removido)
+  - ~~`consumeHealingItem(ItemStack, int)`~~ (removido)
+  - ~~`VillageCompanionSavedData`~~ (removido)
 - 🟢 **Pacote `com.example.epicvanguard`** → trocar por um domínio seu antes de publicar (pendente da auditoria).
 - 🟢 **Registro de pacotes:** `Messages` mistura imports e nomes totalmente qualificados. Padronizar com imports.
 
@@ -171,13 +180,13 @@ Chama `setItemSlot` 6 vezes por tick. Daria para marcar o inventário como "sujo
 - 🟢 `build_jar.bat` anuncia `build\libs\epicvanguard-1.0.0.jar`, mas o jar real é `EpicVanguard <versão> [1.20.1].jar`.
 - 🟢 Apagar `scratch_test_nbt.java` da raiz, ou mover para `tools/`.
 - 🟢 Mudar `forge.logging.console.level` de `debug` para `info` nas runs, para deixar o log legível.
-- 🟢 CI no GitHub Actions rodando `./gradlew build` a cada push.
+- 🟢 CI no GitHub Actions rodando `./gradlew build` e `./gradlew runGameTestServer` a cada push. Os testes precisam do jar do Epic Fight em `libs/` ou do flag `-PnoEpicFight`.
 
 ---
 
 ## 8. Testes e documentação
 
-- ✅ **GameTests:** 18 testes em `src/gametest` (combate, persistência, segurança multiplayer, XP, fogo amigo, traduções, livro). Como rodar em [TESTES.md](TESTES.md).
+- ✅ **GameTests:** 22 testes em `src/gametest` (combate, persistência, segurança multiplayer, XP, fogo amigo, traduções, livro). Como rodar em [TESTES.md](TESTES.md).
 - 🟢 **Mais testes:** `rollRandomTier`, IA seguindo/guardando, teleporte, duelo (quando 3.7 for feito).
 - ✅ **Guia dentro do jogo:** livro do Patchouli (opcional) em inglês e português, gerado por `tools/patchouli/build_book.js`.
 - 🟢 **README.md:** o que o mod faz, como recrutar (moedas, duelo, prisioneiro), modos de combate, classes, comandos `/vanguard` e `/fogoamigo`, dependências, como compilar.

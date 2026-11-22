@@ -79,7 +79,6 @@ import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.PotionItem;
-import net.minecraft.world.item.ShieldItem;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.item.alchemy.PotionUtils;
@@ -1522,6 +1521,48 @@ public class WarriorCompanionEntity extends PathfinderMob {
         dropAllInventory();
     }
 
+    /**
+     * Os slots de equipamento só espelham o WarriorInventory, que é dropado inteiro na morte. O zero do construtor
+     * não basta: o Mob vanilla lê ArmorDropChances/HandDropChances do NBT, e saves antigos têm a chance padrão (8,5%),
+     * o que duplicava a peça. Aqui a chance é sempre zero, venha de onde vier.
+     */
+    @Override
+    protected float getEquipmentDropChance(EquipmentSlot pSlot) {
+        return 0.0F;
+    }
+
+    /** Desgaste da armadura ao levar dano, como o do jogador ({@code Inventory#hurtArmor}). O Mob vanilla não desgasta. */
+    @Override
+    protected void hurtArmor(DamageSource pDamageSource, float pDamageAmount) {
+        wearArmor(pDamageSource, pDamageAmount, new int[]{WarriorInventory.SLOT_HELMET, WarriorInventory.SLOT_CHEST,
+                WarriorInventory.SLOT_LEGS, WarriorInventory.SLOT_BOOTS});
+    }
+
+    /** Bigorna ou estalactite caindo na cabeça: só o capacete. */
+    @Override
+    protected void hurtHelmet(DamageSource pDamageSource, float pDamageAmount) {
+        wearArmor(pDamageSource, pDamageAmount, new int[]{WarriorInventory.SLOT_HELMET});
+    }
+
+    private void wearArmor(DamageSource source, float amount, int[] slots) {
+        if (this.level().isClientSide || amount <= 0.0F) return;
+        int wear = (int) Math.max(1.0F, amount / 4.0F);
+        for (int slot : slots) {
+            ItemStack stack = warriorInventory.getItem(slot);
+            if (!(stack.getItem() instanceof net.minecraft.world.item.ArmorItem)) continue;
+            if (source.is(net.minecraft.tags.DamageTypeTags.IS_FIRE) && stack.getItem().isFireResistant()) continue;
+            EquipmentSlot equipmentSlot = switch (slot) {
+                case WarriorInventory.SLOT_HELMET -> EquipmentSlot.HEAD;
+                case WarriorInventory.SLOT_CHEST -> EquipmentSlot.CHEST;
+                case WarriorInventory.SLOT_LEGS -> EquipmentSlot.LEGS;
+                default -> EquipmentSlot.FEET;
+            };
+            // A pilha é a mesma do slot de equipamento; quebrada, ela fica vazia nos dois lugares
+            stack.hurtAndBreak(wear, this, e -> e.broadcastBreakEvent(equipmentSlot));
+        }
+        warriorInventory.setChanged();
+    }
+
     public void dropAllInventory() {
         if (this.level().isClientSide) return;
 
@@ -1966,10 +2007,6 @@ public class WarriorCompanionEntity extends PathfinderMob {
     }
 
     public void consumeHealingItem(int slotIndex) {
-        WarriorHealingHelper.consumeHealingItem(this, slotIndex);
-    }
-
-    public void consumeHealingItem(ItemStack stack, int slotIndex) {
         WarriorHealingHelper.consumeHealingItem(this, slotIndex);
     }
 }
