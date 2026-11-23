@@ -32,5 +32,7 @@ public class ClientEvents {
         event.registerEntityRenderer(ModEntityTypes.BERSERKER_COMPANION.get(), WarriorCompanionRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.GUARDIAN_COMPANION.get(), WarriorCompanionRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.DUELIST_COMPANION.get(), WarriorCompanionRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.ARCHER_COMPANION.get(), WarriorCompanionRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.STANDARD_BEARER_COMPANION.get(), WarriorCompanionRenderer::new);
     }
 }

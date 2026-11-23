@@ -33,4 +33,12 @@ public class ModItems {
     public static final RegistryObject<Item> DUELIST_SPAWN_EGG = ITEMS.register("duelist_companion_spawn_egg",
             () -> new ForgeSpawnEggItem(ModEntityTypes.DUELIST_COMPANION, 0x1E824C, 0xF4D03F,
                     new Item.Properties()));
+
+    public static final RegistryObject<Item> ARCHER_SPAWN_EGG = ITEMS.register("archer_companion_spawn_egg",
+            () -> new ForgeSpawnEggItem(ModEntityTypes.ARCHER_COMPANION, 0x4E6B2E, 0xC8A165,
+                    new Item.Properties()));
+
+    public static final RegistryObject<Item> STANDARD_BEARER_SPAWN_EGG = ITEMS.register("standard_bearer_companion_spawn_egg",
+            () -> new ForgeSpawnEggItem(ModEntityTypes.STANDARD_BEARER_COMPANION, 0x7A1F1F, 0xE5C04A,
+                    new Item.Properties()));
 }

@@ -70,10 +70,19 @@ IA: `entity/ai` tem os goals (combate tático, seguir, guarda, comer, fugir, gri
 | follow | `combatLeashDistance` | 32 | `WarriorTeleport`, `CompanionTeleportHandler` |
 | follow | `followTeleportDelayTicks` | 40 | `WarriorTeleport` |
 | registry | `registryMemoryDays` | 100 | `CompanionSavedData.pruneForgotten` |
+| vanguardPoint | `contractCoins` | 20 | `VanguardPointBlockEntity.requiredCoins()` |
+| companions | `naturalRegen`, `regenIntervalTicks` | true, 60 | regeneração no `tick` |
+| combat | `shieldBlockChance`, `shieldBlockReduction`, `duelistDodgeChance` | 0.70, 0.80, 0.18 | `WarriorCombatHelper` |
+| ranged | `enableRangedCombat`, `infiniteArrows`, `rangedDamageMultiplier` | true, false, 1.0 | `WarriorRangedHelper`, `WarriorRangedCombatGoal` |
+| equipment | `equipmentWear`, `wearMultiplier`, `warnOnBreak`, `lowDurabilityWarning`, `fieldRepair`, `autoSwapBroken` | true, 1.0, true, 0.10, true, true | `WarriorEquipmentWear` |
+| specializations | `bannerAuraRadius` | 8 | Porta-estandarte |
+| mounts | `enableMounts`, `mountSearchRadius` | true, 16 | `WarriorMountHelper`, `MountUpGoal` |
+| spawning | `outpostPrisoners`, `warriorHouseSpawns` | true, true | `VillageWarriorSpawner` |
 
 ## Integrações opcionais
 
 - **Epic Fight** (`compat/epicfight`): só é registrado se o mod estiver instalado. No build vem pelo CurseMaven (`curse.maven:epic-fight-mod-405076:8049910`).
+- **Jade / WTHIT** (`compat/jade`, `compat/wthit`, textos em `compat/WarriorTooltipLines`): tooltip do guerreiro. Só a API entra no build (`compileOnly`); WTHIT acha o plugin por `waila_plugins.json`.
 - **Patchouli**: livro em `src/main/resources/.../patchouli_books/guide/{en_us,pt_br}`, gerado por `node tools/patchouli/build_book.js`. Não edite os JSON à mão; edite o script e rode de novo.
 
 ## Traduções

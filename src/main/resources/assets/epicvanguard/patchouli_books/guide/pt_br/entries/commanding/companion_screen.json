@@ -11,12 +11,12 @@
     {
       "type": "patchouli:text",
       "title": "Táticas",
-      "text": "Botão aceso está ligado, cinza está desligado.$(li)$(thing)Espada$(): atacar monstros hostis. Desligado ao recrutar.$(li)$(thing)Carne$(): caçar animais adultos para comida.$(li)$(thing)Mão$(): pegar itens do chão. Ligado por padrão; nunca pega o que você mesmo jogou."
+      "text": "Botão aceso está ligado, cinza está desligado.$(li)$(thing)Espada$(): atacar monstros hostis. Desligado ao recrutar.$(li)$(thing)Carne$(): caçar animais adultos para comida.$(li)$(thing)Mão$(): pegar itens do chão. Ligado por padrão; inclui os itens que você joga para ele."
     },
     {
       "type": "patchouli:text",
       "title": "Abas e Nome",
-      "text": "A aba $(thing)Mochila$() mostra o equipamento e a vida; a aba $(thing)Talentos$() mostra o nível, o XP e os bônus da classe.$(br2)Para renomear um companheiro, aperte o $(thing)lápis$(), use uma $(item)Etiqueta$() com nome nele, ou o $(l:epicvanguard:reference/commands)comando de renomear$()."
+      "text": "A aba $(thing)Mochila$() mostra o equipamento e a vida; a aba $(thing)Habilidades$() mostra o nível, o XP e as habilidades da classe; na aba $(thing)Talentos$() você gasta os pontos de talento.$(br2)Para renomear um companheiro, aperte o $(thing)lápis$(), use uma $(item)Etiqueta$() com nome nele, ou o $(l:epicvanguard:reference/commands)comando de renomear$()."
     }
   ]
 }

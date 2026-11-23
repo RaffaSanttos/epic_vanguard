@@ -144,11 +144,9 @@ public final class WarriorInteraction {
         // Não precisa checar todo tick: a cada 5 ticks, espalhado entre guerreiros pelo id
         if ((w.tickCount + w.getId()) % 5 != 0) return;
 
-        Entity owner = w.getOwner();
-        java.util.UUID ownerId = w.getOwnerUUID().orElse(null);
+        // Pega tudo, inclusive o que o dono jogou (o dono desliga a coleta pelo botão ✋ se não quiser)
         AABB pickupBox = w.getBoundingBox().inflate(1.0D, 0.5D, 1.0D);
-        List<ItemEntity> items = w.level().getEntitiesOfClass(ItemEntity.class, pickupBox, e -> !e.isRemoved() && !e.hasPickUpDelay()
-                && !isThrownBy(e, owner, ownerId));
+        List<ItemEntity> items = w.level().getEntitiesOfClass(ItemEntity.class, pickupBox, e -> !e.isRemoved() && !e.hasPickUpDelay());
 
         for (ItemEntity itemEntity : items) {
             ItemStack groundStack = itemEntity.getItem();
@@ -171,12 +169,5 @@ public final class WarriorInteraction {
                 }
             }
         }
-    }
-
-    /** O item foi jogado pelo dono? ItemEntity#getOwner devolve quem jogou (Player#drop marca o thrower). */
-    private static boolean isThrownBy(ItemEntity item, Entity owner, java.util.UUID ownerId) {
-        Entity thrower = item.getOwner();
-        if (thrower == null) return false;
-        return thrower == owner || (ownerId != null && ownerId.equals(thrower.getUUID()));
     }
 }

@@ -74,7 +74,10 @@ public class WarriorCombatHelper {
         if (warrior.getSpecialization() == WarriorCompanionEntity.SPEC_DUELIST &&
                 source.getDirectEntity() != null &&
                 !source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
-            if (warrior.getRandom().nextFloat() < 0.18F) {
+            float dodgeChance = io.github.raffasanttos.epicvanguard.config.EpicVanguardConfig.duelistDodgeChance();
+            if (warrior.hasPerk(io.github.raffasanttos.epicvanguard.entity.WarriorPerk.SPEC_T2)) dodgeChance += 0.10F; // Esquiva Aprimorada
+            if (warrior.getRandom().nextFloat() < dodgeChance) {
+                if (warrior.hasPerk(io.github.raffasanttos.epicvanguard.entity.WarriorPerk.SPEC_T1)) warrior.setCounterReady(true); // Contra-ataque
                 warrior.level().playSound(null, warrior.getX(), warrior.getY(), warrior.getZ(),
                         SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.2F, 1.4F);
                 if (warrior.level() instanceof ServerLevel serverLevel) {
@@ -95,14 +98,21 @@ public class WarriorCombatHelper {
         ItemStack offhand = warrior.getItemBySlot(EquipmentSlot.OFFHAND);
         ItemStack mainhand = warrior.getItemBySlot(EquipmentSlot.MAINHAND);
         if (offhand.getItem() instanceof ShieldItem || mainhand.getItem() instanceof ShieldItem) {
-            if (warrior.getRandom().nextFloat() < 0.70F) {
+            float blockChance = io.github.raffasanttos.epicvanguard.config.EpicVanguardConfig.shieldBlockChance();
+            if (warrior.getSpecialization() == WarriorCompanionEntity.SPEC_GUARDIAN
+                    && warrior.hasPerk(io.github.raffasanttos.epicvanguard.entity.WarriorPerk.SPEC_T1)) {
+                blockChance = Math.min(1.0F, blockChance + 0.15F); // Muralha
+            }
+            if (warrior.getRandom().nextFloat() < blockChance) {
                 warrior.level().playSound(null, warrior.getX(), warrior.getY(), warrior.getZ(),
                         SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, 1.0F, 1.0F);
                 if (warrior.level() instanceof ServerLevel serverLevel) {
                     serverLevel.sendParticles(ParticleTypes.CRIT, warrior.getX(), warrior.getY() + 1.0D, warrior.getZ(),
                             8, 0.3D, 0.3D, 0.3D, 0.1D);
                 }
-                return amount * 0.2F; // 80% de redução
+                float reduction = io.github.raffasanttos.epicvanguard.config.EpicVanguardConfig.shieldBlockReduction(); // padrão 80%
+                WarriorEquipmentWear.damageShield(warrior, amount * reduction);
+                return amount * (1.0F - reduction);
             }
         }
         return amount;

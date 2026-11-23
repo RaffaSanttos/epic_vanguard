@@ -15,8 +15,8 @@
     },
     {
       "type": "patchouli:text",
-      "title": "Escolhendo a Classe",
-      "text": "Um $(thing)Guerreiro$() comum pode escolher a classe no $(thing)nível 5$(). Abra a aba $(thing)Talentos$(), aperte $(thing)⇄$() para ver a árvore de $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardião$() ou $(l:epicvanguard:classes/duelist)Duelista$(), depois $(thing)Escolher classe$() e $(thing)Confirmar$().$(br2)É permanente. Nível, XP, nome e equipamento continuam."
+      "title": "Classes",
+      "text": "Todo companheiro já tem uma classe quando você o encontra: $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardião$(), $(l:epicvanguard:classes/duelist)Duelista$(), Arqueiro ou Porta-estandarte. A classe não muda.$(br2)Nível, XP e equipamento evoluem com ele; os pontos de talento (1 a cada 2 níveis) vão na aba $(thing)Talentos$()."
     }
   ]
 }

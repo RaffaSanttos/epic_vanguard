@@ -14,14 +14,13 @@ import io.github.raffasanttos.epicvanguard.networking.packet.PacketWarriorCombat
 import io.github.raffasanttos.epicvanguard.networking.packet.PacketWarriorTactics;
 import io.github.raffasanttos.epicvanguard.networking.packet.PacketPostVanguardContract;
 import io.github.raffasanttos.epicvanguard.networking.packet.PacketRenameWarrior;
-import io.github.raffasanttos.epicvanguard.networking.packet.PacketChooseSpecialization;
 
 public class Messages {
     /**
      * Versão do protocolo de rede. Cliente e servidor precisam ter a mesma; aumente sempre que
      * um pacote mudar de formato ou for adicionado/removido.
      */
-    private static final String PROTOCOL_VERSION = "3"; // 3: coleta de itens nas táticas + escolha de classe
+    private static final String PROTOCOL_VERSION = "5"; // 3: coleta de itens nas táticas; 4: talentos (PacketUnlockPerk); 5: fim da escolha de classe
 
     private static SimpleChannel INSTANCE;
     private static int packetId = 0;
@@ -82,10 +81,10 @@ public class Messages {
                 .consumerMainThread(PacketRenameWarrior::handle)
                 .add();
 
-        net.messageBuilder(PacketChooseSpecialization.class, id(), NetworkDirection.PLAY_TO_SERVER)
-                .decoder(PacketChooseSpecialization::new)
-                .encoder(PacketChooseSpecialization::toBytes)
-                .consumerMainThread(PacketChooseSpecialization::handle)
+        net.messageBuilder(io.github.raffasanttos.epicvanguard.networking.packet.PacketUnlockPerk.class, id(), NetworkDirection.PLAY_TO_SERVER)
+                .decoder(io.github.raffasanttos.epicvanguard.networking.packet.PacketUnlockPerk::new)
+                .encoder(io.github.raffasanttos.epicvanguard.networking.packet.PacketUnlockPerk::toBytes)
+                .consumerMainThread(io.github.raffasanttos.epicvanguard.networking.packet.PacketUnlockPerk::handle)
                 .add();
     }
 

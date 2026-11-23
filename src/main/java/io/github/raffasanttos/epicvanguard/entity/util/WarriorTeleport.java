@@ -170,7 +170,14 @@ public final class WarriorTeleport {
     }
 
     private static void doTeleport(WarriorCompanionEntity w, double x, double y, double z) {
-        w.teleportTo(x, y, z);
+        // Montado: teleporta o cavalo (o cavaleiro vai junto)
+        if (w.getVehicle() instanceof net.minecraft.world.entity.animal.horse.AbstractHorse horse) {
+            horse.teleportTo(x, y, z);
+            horse.getNavigation().stop();
+            horse.resetFallDistance();
+        } else {
+            w.teleportTo(x, y, z);
+        }
         w.resetFallDistance();
         w.fallDistance = 0.0F; // Reseta inércia e distância de queda acumulada antes do teleporte
         w.setDeltaMovement(Vec3.ZERO);

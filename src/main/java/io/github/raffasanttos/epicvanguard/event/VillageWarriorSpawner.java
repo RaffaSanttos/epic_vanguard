@@ -89,7 +89,11 @@ public class VillageWarriorSpawner {
                                             .registryOrThrow(Registries.STRUCTURE)
                                             .getKey(entry.getKey());
 
-                                    if (structureHolder.is(PILLAGER_OUTPOST_TAG) || (structureId != null && structureId.equals(PILLAGER_OUTPOST_RL))) {
+                                    if (!io.github.raffasanttos.epicvanguard.config.EpicVanguardConfig.outpostPrisoners() && (structureHolder.is(PILLAGER_OUTPOST_TAG) || (structureId != null && structureId.equals(PILLAGER_OUTPOST_RL)))) {
+                                        savedData.markSpawned(level.dimension(), key);
+                                    } else if (!io.github.raffasanttos.epicvanguard.config.EpicVanguardConfig.warriorHouseSpawns() && (structureHolder.is(WARRIOR_HOUSE_KEY) || (structureId != null && structureId.equals(WARRIOR_HOUSE_RL)))) {
+                                        savedData.markSpawned(level.dimension(), key);
+                                    } else if (structureHolder.is(PILLAGER_OUTPOST_TAG) || (structureId != null && structureId.equals(PILLAGER_OUTPOST_RL))) {
                                         savedData.markSpawned(level.dimension(), key);
                                         spawnPrisonerInOutpost(level, start);
                                     } else if (structureHolder.is(WARRIOR_HOUSE_KEY) || (structureId != null && structureId.equals(WARRIOR_HOUSE_RL))) {
@@ -128,14 +132,13 @@ public class VillageWarriorSpawner {
     }
 
     public static WarriorCompanionEntity createRandomSpecializedCompanion(ServerLevel level) {
-        int roll = level.random.nextInt(3);
-        if (roll == 0) {
-            return ModEntityTypes.BERSERKER_COMPANION.get().create(level);
-        } else if (roll == 1) {
-            return ModEntityTypes.GUARDIAN_COMPANION.get().create(level);
-        } else {
-            return ModEntityTypes.DUELIST_COMPANION.get().create(level);
-        }
+        return switch (level.random.nextInt(5)) {
+            case 0 -> ModEntityTypes.BERSERKER_COMPANION.get().create(level);
+            case 1 -> ModEntityTypes.GUARDIAN_COMPANION.get().create(level);
+            case 2 -> ModEntityTypes.DUELIST_COMPANION.get().create(level);
+            case 3 -> ModEntityTypes.ARCHER_COMPANION.get().create(level);
+            default -> ModEntityTypes.STANDARD_BEARER_COMPANION.get().create(level);
+        };
     }
 
     private static void spawnTavernMercenary(ServerLevel level, BlockPos spawnPos, ServerPlayer player, BlockPos poiPos, boolean playerIsNear) {

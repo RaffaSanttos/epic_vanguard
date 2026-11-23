@@ -75,7 +75,7 @@ public class VanguardPointScreen extends AbstractContainerScreen<VanguardPointMe
         boolean isCreative = player != null && player.isCreative();
         boolean active = menu.isContractActive();
         int coins = menu.getStoredCoins();
-        boolean canAfford = isCreative || coins >= VanguardPointBlockEntity.REQUIRED_COINS;
+        boolean canAfford = isCreative || coins >= VanguardPointBlockEntity.requiredCoins();
 
         if (active) {
             postButton.active = false;
@@ -139,7 +139,7 @@ public class VanguardPointScreen extends AbstractContainerScreen<VanguardPointMe
             guiGraphics.drawString(this.font, I18n.get("epicvanguard.ui.vanguard_point_screen.5"), 15, 34, 0x333333, false);
 
             int coins = menu.getStoredCoins();
-            String coinStatus = (coins >= 20 ? "§2§l" : "§c§l") + coins + I18n.get("epicvanguard.ui.vanguard_point_screen.6");
+            String coinStatus = (coins >= VanguardPointBlockEntity.requiredCoins() ? "§2§l" : "§c§l") + coins + I18n.get("epicvanguard.ui.vanguard_point_screen.6");
             guiGraphics.drawString(this.font, I18n.get("epicvanguard.ui.vanguard_point_screen.7") + coinStatus, 15, 45, 0x333333, false);
 
             guiGraphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 0x404040, false);

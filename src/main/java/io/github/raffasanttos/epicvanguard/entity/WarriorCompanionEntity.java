@@ -18,6 +18,11 @@ import io.github.raffasanttos.epicvanguard.entity.util.WarriorTeleport;
 import io.github.raffasanttos.epicvanguard.entity.util.WarriorThreatSensor;
 import io.github.raffasanttos.epicvanguard.entity.util.WarriorWarcry;
 import io.github.raffasanttos.epicvanguard.entity.util.WarriorProgression;
+import io.github.raffasanttos.epicvanguard.entity.util.WarriorEquipmentWear;
+import io.github.raffasanttos.epicvanguard.entity.util.WarriorMountHelper;
+import io.github.raffasanttos.epicvanguard.entity.util.WarriorRangedHelper;
+import io.github.raffasanttos.epicvanguard.config.EpicVanguardConfig;
+import net.minecraft.world.entity.NeutralMob;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ShieldItem;
@@ -160,12 +165,19 @@ public class WarriorCompanionEntity extends PathfinderMob {
             SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> PERSONALITY =
             SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.INT);
+    /** Bitmask dos talentos desbloqueados ({@link WarriorPerk}). */
+    private static final EntityDataAccessor<Integer> PERKS =
+            SynchedEntityData.defineId(WarriorCompanionEntity.class, EntityDataSerializers.INT);
 
     // ── Constantes de Especialização ──────────────────────────────────────────
     public static final int SPEC_NONE = 0;
     public static final int SPEC_BERSERKER = 1;
     public static final int SPEC_GUARDIAN = 2;
     public static final int SPEC_DUELIST = 3;
+    public static final int SPEC_ARCHER = 4;
+    public static final int SPEC_STANDARD_BEARER = 5;
+    /** Maior id de especialização válido. */
+    public static final int SPEC_MAX = SPEC_STANDARD_BEARER;
 
     private final WarriorInventory warriorInventory = new WarriorInventory();
     private final WarriorThreatSensor.Cache threatCache = new WarriorThreatSensor.Cache();
@@ -181,6 +193,81 @@ public class WarriorCompanionEntity extends PathfinderMob {
     private int talkingTicks = 0;
     private int globalSpeechCooldown = 0;
     private final int[] triggerSpeechCooldowns = new int[SpeechTrigger.values().length];
+    /** Recarga do talento Segundo Fôlego (ticks). */
+    private int secondWindCooldown = 0;
+    /** Última montaria usada (preferida na próxima vez). */
+    @Nullable
+    private UUID mountUUID = null;
+    /** Duelista com Contra-ataque: próximo golpe depois de uma esquiva causa +50%. */
+    private boolean counterReady = false;
+
+    public static final int SECOND_WIND_COOLDOWN_TICKS = 6000; // 5 minutos
+
+    @Nullable
+    public UUID getMountUUID() { return mountUUID; }
+    public void setMountUUID(@Nullable UUID uuid) { this.mountUUID = uuid; }
+
+    /** Mesmo deslocamento do jogador: o modelo é o de jogador. */
+    @Override
+    public double getMyRidingOffset() {
+        return -0.35D;
+    }
+
+    // ── Árvore de habilidades ─────────────────────────────────────────────────
+    public int getPerks() {
+        return WarriorPerk.sanitize(this.entityData.get(PERKS));
+    }
+
+    public void setPerks(int mask) {
+        this.entityData.set(PERKS, WarriorPerk.sanitize(mask));
+        recalculateAttributes();
+    }
+
+    public boolean hasPerk(WarriorPerk perk) {
+        return (getPerks() & perk.mask()) != 0;
+    }
+
+    /** Pontos de talento livres: 1 a cada 2 níveis, menos os já gastos. */
+    public int getSkillPoints() {
+        return Math.max(0, WarriorPerk.pointsForLevel(getWarriorLevel()) - Integer.bitCount(getPerks()));
+    }
+
+    /** Motivo pelo qual o talento não pode ser desbloqueado, ou {@code null} se pode. */
+    @Nullable
+    public Component getPerkLockReason(WarriorPerk perk) {
+        if (hasPerk(perk)) return Component.translatable("epicvanguard.perk.reason.owned");
+        if (getWarriorLevel() < perk.getRequiredLevel())
+            return Component.translatable("epicvanguard.perk.reason.level", perk.getRequiredLevel());
+        WarriorPerk pre = perk.getPrerequisite();
+        if (pre != null && !hasPerk(pre))
+            return Component.translatable("epicvanguard.perk.reason.prerequisite", pre.getName(getSpecialization()));
+        if (getSkillPoints() <= 0) return Component.translatable("epicvanguard.perk.reason.points");
+        return null;
+    }
+
+    /** Desbloqueia o talento se possível (servidor). */
+    public boolean unlockPerk(WarriorPerk perk) {
+        if (this.level().isClientSide || getPerkLockReason(perk) != null) return false;
+        float oldMax = this.getMaxHealth();
+        setPerks(getPerks() | perk.mask());
+        if (this.getMaxHealth() > oldMax) {
+            this.heal(this.getMaxHealth() - oldMax);
+        }
+        updateSavedData();
+        return true;
+    }
+
+    public int getSecondWindCooldown() { return secondWindCooldown; }
+    public void setSecondWindCooldown(int ticks) { this.secondWindCooldown = Math.max(0, ticks); }
+
+    public void setCounterReady(boolean ready) { this.counterReady = ready; }
+
+    /** Inimigo que os gritos de guerra afetam: hostil e não um neutro calmo (Enderman, piglin zumbi, etc.). */
+    public static boolean isWarcryTarget(LivingEntity entity) {
+        if (!entity.isAlive() || !(entity instanceof Enemy)) return false;
+        if (entity instanceof NeutralMob neutral && !neutral.isAngry()) return false;
+        return true;
+    }
 
     public boolean isInStaminaRegen() {
         return this.inStaminaRegen;
@@ -211,6 +298,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
             case SPEC_BERSERKER -> 0.20F; // Berserker luta frenético até 20%
             case SPEC_GUARDIAN -> 0.30F;  // Guardião segura a linha até 30%
             case SPEC_DUELIST -> 0.35F;   // Duelista é ágil e preserva integridade física
+            case SPEC_ARCHER -> 0.35F;    // Arqueiro não gosta de briga de perto
             default -> 0.30F;
         };
         return this.getHealth() <= (this.getMaxHealth() * threshold);
@@ -478,6 +566,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
         this.entityData.define(SPECIALIZATION, SPEC_NONE);
         this.entityData.define(WARCRY_COOLDOWN, 0);
         this.entityData.define(PERSONALITY, 0);
+        this.entityData.define(PERKS, 0);
     }
 
     // ── Getters / Setters ─────────────────────────────────────────────────────
@@ -831,7 +920,11 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
     public float getCalculatedAttackDamage() {
         float damage = (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE);
-        float multiplier = (getSpecialization() == SPEC_BERSERKER) ? 0.90F : 0.75F;
+        float multiplier = switch (getSpecialization()) {
+            case SPEC_BERSERKER -> 0.90F;
+            case SPEC_STANDARD_BEARER -> 0.65F; // luta pouco: o valor dele é a aura
+            default -> 0.75F;
+        };
         return Math.max(1.0F, damage * multiplier);
     }
 
@@ -862,6 +955,8 @@ public class WarriorCompanionEntity extends PathfinderMob {
             case SPEC_BERSERKER -> "berserker";
             case SPEC_GUARDIAN  -> "guardian";
             case SPEC_DUELIST   -> "duelist";
+            case SPEC_ARCHER    -> "archer";
+            case SPEC_STANDARD_BEARER -> "standard_bearer";
             default             -> "warrior";
         };
     }
@@ -884,6 +979,82 @@ public class WarriorCompanionEntity extends PathfinderMob {
         WarriorWarcry.trigger(this);
     }
 
+    /** Recarga total do grito: config, -30% (talento de especialização II do Guerreiro/Guardião), -50% (Lenda). */
+    public int getWarcryCooldownTotal() {
+        double cd = EpicVanguardConfig.warcryCooldownTicks();
+        int spec = getSpecialization();
+        if (hasPerk(WarriorPerk.SPEC_T2) && (spec == SPEC_NONE || spec == SPEC_GUARDIAN)) cd *= 0.70D;
+        if (hasPerk(WarriorPerk.LEGEND)) cd *= 0.50D;
+        return (int) Math.max(100, cd);
+    }
+
+    /** O próprio guerreiro, o dono e os companheiros do mesmo dono dentro do raio. */
+    public List<LivingEntity> getAuraAllies(double radius) {
+        List<LivingEntity> allies = new java.util.ArrayList<>();
+        allies.add(this);
+        if (!isRecruited()) return allies;
+        double r2 = radius * radius;
+        Player owner = getOwner();
+        if (owner != null && owner.level() == this.level() && owner.distanceToSqr(this) <= r2 && !owner.isSpectator()) {
+            allies.add(owner);
+        }
+        for (WarriorCompanionEntity other : this.level().getEntitiesOfClass(WarriorCompanionEntity.class,
+                this.getBoundingBox().inflate(radius), w -> w != this && w.isAlive() && this.isAlliedTo(w))) {
+            if (other.distanceToSqr(this) <= r2) allies.add(other);
+        }
+        return allies;
+    }
+
+    /** Porta-estandarte com estandarte na mão secundária: Resistência I (e Velocidade I com Marcha) para os aliados. */
+    public boolean hasBannerRaised() {
+        return getSpecialization() == SPEC_STANDARD_BEARER
+                && this.getWarriorInventory().getItem(WarriorInventory.SLOT_WEAPON_OFF).getItem() instanceof net.minecraft.world.item.BannerItem;
+    }
+
+    public double getBannerAuraRadius() {
+        double r = EpicVanguardConfig.bannerAuraRadius();
+        if (hasPerk(WarriorPerk.SPEC_T1)) r += 4.0D; // Estandarte Alto
+        return r;
+    }
+
+    /** Aplica a aura uma vez (chamado a cada 40 ticks no servidor). */
+    public void applyBannerAura() {
+        if (!hasBannerRaised() || this.isPrisoner()) return;
+        boolean march = hasPerk(WarriorPerk.SPEC_T2);
+        for (LivingEntity ally : getAuraAllies(getBannerAuraRadius())) {
+            ally.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 60, 0, true, true));
+            if (march) {
+                ally.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 60, 0, true, true));
+            }
+        }
+        if (this.level() instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(ParticleTypes.GLOW, this.getX(), this.getY() + 2.3D, this.getZ(), 2, 0.2D, 0.2D, 0.2D, 0.0D);
+        }
+    }
+
+    /** Equipamento inicial específico da especialização (depois do conjunto sorteado pelo tier). */
+    public void applySpecializationLoadout(int tier) {
+        switch (getSpecialization()) {
+            case SPEC_ARCHER -> {
+                ItemStack bow = new ItemStack(tier >= 2 && this.random.nextInt(3) == 0 ? Items.CROSSBOW : Items.BOW);
+                if (tier >= 2 && bow.is(Items.BOW)) {
+                    bow.enchant(net.minecraft.world.item.enchantment.Enchantments.POWER_ARROWS, 1);
+                }
+                warriorInventory.setItem(WarriorInventory.SLOT_WEAPON_MAIN, bow);
+                warriorInventory.setItem(WarriorInventory.SLOT_WEAPON_OFF, ItemStack.EMPTY);
+                warriorInventory.addItemToBackpack(new ItemStack(Items.ARROW, 16 + tier * 8));
+                // Faca de reserva para quando acabarem as flechas
+                warriorInventory.addItemToBackpack(new ItemStack(tier >= 1 ? Items.STONE_SWORD : Items.WOODEN_SWORD));
+            }
+            case SPEC_STANDARD_BEARER -> {
+                net.minecraft.world.item.Item[] banners = {Items.WHITE_BANNER, Items.RED_BANNER, Items.BLUE_BANNER,
+                        Items.YELLOW_BANNER, Items.GREEN_BANNER, Items.BLACK_BANNER};
+                warriorInventory.setItem(WarriorInventory.SLOT_WEAPON_OFF, new ItemStack(banners[this.random.nextInt(banners.length)]));
+            }
+            default -> {}
+        }
+    }
+
 
 
 
@@ -901,12 +1072,24 @@ public class WarriorCompanionEntity extends PathfinderMob {
         if (spec == SPEC_GUARDIAN) {
             baseMaxHealth *= 1.30D;
         }
+        if (spec == SPEC_ARCHER) {
+            baseMaxHealth *= 0.90D;
+        } else if (spec == SPEC_STANDARD_BEARER) {
+            baseMaxHealth *= 1.15D;
+        }
+        if (hasPerk(WarriorPerk.VITALITY)) {
+            baseMaxHealth += 4.0D;
+        }
         var attrHealth = this.getAttribute(Attributes.MAX_HEALTH);
         if (attrHealth != null) {
             double oldMax = attrHealth.getBaseValue();
             attrHealth.setBaseValue(baseMaxHealth);
             if (baseMaxHealth > oldMax && this.isAlive()) {
                 this.heal((float)(baseMaxHealth - oldMax));
+            }
+            // Vida máxima caiu (ex.: atributo recalculado ao carregar): a vida atual não pode passar do máximo
+            if (this.getHealth() > this.getMaxHealth()) {
+                this.setHealth(this.getMaxHealth());
             }
         }
 
@@ -921,6 +1104,12 @@ public class WarriorCompanionEntity extends PathfinderMob {
         double naturalArmor = (lvl - 1) * 0.5D;
         if (spec == SPEC_GUARDIAN) {
             naturalArmor += 6.0D;
+        }
+        if (spec == SPEC_STANDARD_BEARER) {
+            naturalArmor += 2.0D;
+        }
+        if (hasPerk(WarriorPerk.IRON_SKIN)) {
+            naturalArmor += 2.0D;
         }
         var attrArmor = this.getAttribute(Attributes.ARMOR);
         if (attrArmor != null) {
@@ -941,6 +1130,11 @@ public class WarriorCompanionEntity extends PathfinderMob {
         double speed = 0.28D + (lvl - 1) * 0.002D;
         if (spec == SPEC_DUELIST) {
             speed *= 1.15D;
+        } else if (spec == SPEC_ARCHER) {
+            speed *= 1.05D;
+        }
+        if (hasPerk(WarriorPerk.SWIFT_FEET)) {
+            speed *= 1.08D;
         }
         var attrSpeed = this.getAttribute(Attributes.MOVEMENT_SPEED);
         if (attrSpeed != null) {
@@ -949,6 +1143,9 @@ public class WarriorCompanionEntity extends PathfinderMob {
 
         // 6. Resistência a Repulsão: 0.0 (0.40D se Guardião)
         double knockbackRes = (spec == SPEC_GUARDIAN) ? 0.40D : 0.0D;
+        if (spec == SPEC_GUARDIAN && hasPerk(WarriorPerk.SPEC_T2)) {
+            knockbackRes += 0.30D; // Bastião
+        }
         var attrKnockback = this.getAttribute(Attributes.KNOCKBACK_RESISTANCE);
         if (attrKnockback != null) {
             attrKnockback.setBaseValue(knockbackRes);
@@ -963,6 +1160,8 @@ public class WarriorCompanionEntity extends PathfinderMob {
         this.goalSelector.addGoal(1, new FleeIllagersGoal(this, 12.0F, 1.2D, 1.35D));
         this.goalSelector.addGoal(1, new EmergencyRetreatAndEatGoal(this));
         this.goalSelector.addGoal(2, new ActiveShieldDefenseGoal(this));
+        this.goalSelector.addGoal(2, new MountUpGoal(this));
+        this.goalSelector.addGoal(3, new WarriorRangedCombatGoal(this, 1.1D));
         this.goalSelector.addGoal(3, new WarriorTacticalCombatGoal(this, 1.25D));
         this.goalSelector.addGoal(3, new FollowOwnerGoal(this, 1.15D, 8.0F, 3.0F));
         this.goalSelector.addGoal(4, new GuardRadiusGoal(this, 1.1D));
@@ -1046,6 +1245,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
                 this.setRecruitCost(scaledCost(60 + this.random.nextInt(21))); // 60 a 80 moedas
                 break;
         }
+        this.applySpecializationLoadout(tier);
         this.syncEquipmentWithInventory();
         this.recalculateAttributes();
     }
@@ -1057,9 +1257,29 @@ public class WarriorCompanionEntity extends PathfinderMob {
         return 2; // 10%
     }
 
+    @Nullable
+    private net.minecraft.world.entity.animal.horse.AbstractHorse pendingMount;
+
+    public void setPendingMount(@Nullable net.minecraft.world.entity.animal.horse.AbstractHorse horse) {
+        this.pendingMount = horse;
+    }
+
     // ── Tick & Equipment Sync ─────────────────────────────────────────────────
     @Override
     public void tick() {
+        // Não existem mais guerreiros sem classe: o Guerreiro base vira uma classe sorteada
+        if (!this.level().isClientSide && io.github.raffasanttos.epicvanguard.entity.util.WarriorProgression.needsClass(this)) {
+            io.github.raffasanttos.epicvanguard.entity.util.WarriorProgression.assignRandomClass(this);
+            if (this.isRemoved()) return;
+        }
+        // Montada pedida pelo MountUpGoal: feita aqui, fora da iteração dos goals (ver WarriorMountHelper#mount)
+        if (this.pendingMount != null) {
+            net.minecraft.world.entity.animal.horse.AbstractHorse horse = this.pendingMount;
+            this.pendingMount = null;
+            if (!this.level().isClientSide) {
+                WarriorMountHelper.applyPendingMount(this, horse);
+            }
+        }
         super.tick();
 
         if (!this.level().isClientSide) {
@@ -1138,12 +1358,38 @@ public class WarriorCompanionEntity extends PathfinderMob {
                 }
             }
 
-            // Regeneração natural lenta fora de combate (1 HP a cada 3 s, após 5 s sem levar dano)
-            if (this.isAlive() && !this.isPrisoner() && this.getHealth() < this.getMaxHealth()
-                    && this.tickCount % 60 == 0 && !this.isFighting()
+            if (secondWindCooldown > 0) {
+                secondWindCooldown--;
+            }
+
+            // Regeneração natural lenta fora de combate (padrão 1 HP a cada 3 s, após 5 s sem levar dano)
+            int regenInterval = EpicVanguardConfig.regenIntervalTicks();
+            if (hasPerk(WarriorPerk.FIELD_MEDIC)) regenInterval = Math.max(5, regenInterval / 2);
+            if (EpicVanguardConfig.naturalRegen() && this.isAlive() && !this.isPrisoner() && this.getHealth() < this.getMaxHealth()
+                    && this.tickCount % regenInterval == 0 && !this.isFighting()
                     && (this.tickCount - this.getLastHurtByMobTimestamp()) > 100
                     && this.hurtTime == 0) {
                 this.heal(1.0F);
+            }
+
+            // Montaria: guia o cavalo atrás do dono ou desmonta para lutar
+            if (this.isPassenger()) {
+                WarriorMountHelper.tickMounted(this);
+            }
+
+            // Porta-estandarte: aura a cada 2 s
+            if (this.tickCount % 40 == 0) {
+                applyBannerAura();
+            }
+
+            // Sem flechas em combate: saca a arma corpo a corpo (e o Arqueiro volta ao arco depois)
+            if (this.tickCount % 20 == 5 && isRecruited()) {
+                WarriorRangedHelper.manageWeaponSwap(this);
+            }
+
+            // Reparo em descanso: sentado (fogueira/taverna), fora de combate, a cada 5 s
+            if (this.tickCount % 100 == 0 && this.getPose() == Pose.SITTING && !this.isFighting()) {
+                WarriorEquipmentWear.tryFieldRepair(this);
             }
 
             // Sync Warrior Inventory equipment to entity equipment slots for rendering
@@ -1361,8 +1607,22 @@ public class WarriorCompanionEntity extends PathfinderMob {
             target.setSecondsOnFire(fireAspect * 4);
         }
 
+        int spec = getSpecialization();
+        if (hasPerk(WarriorPerk.SPEC_T1)) {
+            if (spec == SPEC_NONE) {
+                damage *= 1.10F; // Veterano
+            } else if (spec == SPEC_DUELIST && this.counterReady) {
+                damage *= 1.50F; // Contra-ataque
+                isCrit = true;
+            }
+        }
+        this.counterReady = false;
+
         DamageSource source = this.damageSources().mobAttack(this);
         boolean success = target.hurt(source, damage);
+        if (success && spec == SPEC_BERSERKER && hasPerk(WarriorPerk.SPEC_T1)) {
+            this.heal(damage * 0.15F); // Sede de Sangue: cura 15% do dano causado
+        }
         if (success) {
             if (knockback > 0.0F && target instanceof LivingEntity livingTarget) {
                 float yawRad = this.getYRot() * ((float) Math.PI / 180F);
@@ -1371,10 +1631,10 @@ public class WarriorCompanionEntity extends PathfinderMob {
             }
             this.doEnchantDamageEffects(this, target);
             this.setLastHurtMob(target);
-            // Desgasta a arma como no jogador (espada -1, machado -2); antes a durabilidade era infinita.
-            // A pilha é a mesma do slot do WarriorInventory, então a arma quebrada some do inventário também.
-            if (!weapon.isEmpty() && target instanceof LivingEntity livingTarget) {
-                weapon.getItem().hurtEnemy(weapon, livingTarget, this);
+            // Desgasta a arma como no jogador (espada -1, outras ferramentas -2), com config, talento,
+            // aviso de durabilidade baixa e troca automática pela reserva da mochila
+            if (!weapon.isEmpty() && weapon.isDamageableItem()) {
+                WarriorEquipmentWear.damageMainWeapon(this, weapon.getItem() instanceof net.minecraft.world.item.SwordItem ? 1 : 2);
             }
         }
         if (success && isCrit && this.level() instanceof ServerLevel serverLevel) {
@@ -1389,12 +1649,30 @@ public class WarriorCompanionEntity extends PathfinderMob {
     @Override
     public void die(DamageSource pDamageSource) {
         super.die(pDamageSource);
+        // Morte cancelada (talento Segundo Fôlego ou outro mod via LivingDeathEvent): continua vivo
+        if (this.getHealth() > 0.0F) return;
         if (!this.level().isClientSide) {
             if (this.getServer() != null) {
                 CompanionSavedData.get(this.getServer()).retire(this.getUUID());
+                notifyOwnerOfDeath();
             }
             dropAllInventory();
         }
+    }
+
+    /** Avisa o dono (em qualquer dimensão) que o companheiro morreu, como e onde ficaram os itens. */
+    private void notifyOwnerOfDeath() {
+        if (!this.isRecruited() || this.getServer() == null) return;
+        UUID ownerId = this.getOwnerUUID().orElse(null);
+        if (ownerId == null) return;
+        net.minecraft.server.level.ServerPlayer owner = this.getServer().getPlayerList().getPlayer(ownerId);
+        if (owner == null) return;
+        Component cause = this.getCombatTracker().getDeathMessage();
+        String dim = this.level().dimension().location().toString();
+        owner.sendSystemMessage(Component.translatable("epicvanguard.text.companion_died",
+                this.getWarriorName(), cause,
+                this.getBlockX(), this.getBlockY(), this.getBlockZ(), dim));
+        owner.playNotifySound(SoundEvents.WITHER_DEATH, SoundSource.PLAYERS, 0.4F, 1.4F);
     }
 
     @Override
@@ -1416,33 +1694,19 @@ public class WarriorCompanionEntity extends PathfinderMob {
     /** Desgaste da armadura ao levar dano, como o do jogador ({@code Inventory#hurtArmor}). O Mob vanilla não desgasta. */
     @Override
     protected void hurtArmor(DamageSource pDamageSource, float pDamageAmount) {
-        wearArmor(pDamageSource, pDamageAmount, new int[]{WarriorInventory.SLOT_HELMET, WarriorInventory.SLOT_CHEST,
-                WarriorInventory.SLOT_LEGS, WarriorInventory.SLOT_BOOTS});
+        WarriorEquipmentWear.damageArmor(this, pDamageSource, pDamageAmount);
     }
 
     /** Bigorna ou estalactite caindo na cabeça: só o capacete. */
     @Override
     protected void hurtHelmet(DamageSource pDamageSource, float pDamageAmount) {
-        wearArmor(pDamageSource, pDamageAmount, new int[]{WarriorInventory.SLOT_HELMET});
+        WarriorEquipmentWear.damageHelmet(this, pDamageAmount);
     }
 
-    private void wearArmor(DamageSource source, float amount, int[] slots) {
-        if (this.level().isClientSide || amount <= 0.0F) return;
-        int wear = (int) Math.max(1.0F, amount / 4.0F);
-        for (int slot : slots) {
-            ItemStack stack = warriorInventory.getItem(slot);
-            if (!(stack.getItem() instanceof net.minecraft.world.item.ArmorItem)) continue;
-            if (source.is(net.minecraft.tags.DamageTypeTags.IS_FIRE) && stack.getItem().isFireResistant()) continue;
-            EquipmentSlot equipmentSlot = switch (slot) {
-                case WarriorInventory.SLOT_HELMET -> EquipmentSlot.HEAD;
-                case WarriorInventory.SLOT_CHEST -> EquipmentSlot.CHEST;
-                case WarriorInventory.SLOT_LEGS -> EquipmentSlot.LEGS;
-                default -> EquipmentSlot.FEET;
-            };
-            // A pilha é a mesma do slot de equipamento; quebrada, ela fica vazia nos dois lugares
-            stack.hurtAndBreak(wear, this, e -> e.broadcastBreakEvent(equipmentSlot));
-        }
-        warriorInventory.setChanged();
+    /** Escudo ao aparar golpes (ActiveShieldDefenseGoal / bloqueio vanilla). */
+    @Override
+    protected void hurtCurrentlyUsedShield(float amount) {
+        WarriorEquipmentWear.damageShield(this, amount);
     }
 
     public void dropAllInventory() {
@@ -1521,6 +1785,9 @@ public class WarriorCompanionEntity extends PathfinderMob {
         pCompound.putInt("Specialization", getSpecialization());
         pCompound.putInt("WarcryCooldown", getWarcryCooldown());
         pCompound.putInt("Personality", getPersonalityId());
+        pCompound.putInt("Perks", getPerks());
+        pCompound.putInt("SecondWindCooldown", secondWindCooldown);
+        if (mountUUID != null) pCompound.putUUID("MountUUID", mountUUID);
 
         if (guardPos != null) {
             pCompound.putInt("GuardX", guardPos.getX());
@@ -1601,6 +1868,9 @@ public class WarriorCompanionEntity extends PathfinderMob {
         if (pCompound.contains("Personality")) {
             setPersonalityId(pCompound.getInt("Personality"));
         }
+        this.entityData.set(PERKS, WarriorPerk.sanitize(pCompound.getInt("Perks")));
+        this.secondWindCooldown = pCompound.getInt("SecondWindCooldown");
+        this.mountUUID = pCompound.hasUUID("MountUUID") ? pCompound.getUUID("MountUUID") : null;
         recalculateAttributes();
         if (pCompound.contains("QuestStarted")) {
             setQuestStarted(pCompound.getBoolean("QuestStarted"));

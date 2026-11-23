@@ -101,7 +101,9 @@ public class WarriorInventory extends SimpleContainer {
             case SLOT_CHEST  -> isArmorForSlot(stack, EquipmentSlot.CHEST);
             case SLOT_LEGS   -> isArmorForSlot(stack, EquipmentSlot.LEGS);
             case SLOT_BOOTS  -> isArmorForSlot(stack, EquipmentSlot.FEET);
-            case SLOT_WEAPON_MAIN, SLOT_WEAPON_OFF -> isWeaponOrShield(stack);
+            case SLOT_WEAPON_MAIN -> isWeaponOrShield(stack);
+            // Mão secundária também aceita estandarte (aura do Porta-estandarte)
+            case SLOT_WEAPON_OFF -> isWeaponOrShield(stack) || stack.getItem() instanceof net.minecraft.world.item.BannerItem;
             default          -> true; // slots 6-20 (mochila) aceitam qualquer item
         };
     }
