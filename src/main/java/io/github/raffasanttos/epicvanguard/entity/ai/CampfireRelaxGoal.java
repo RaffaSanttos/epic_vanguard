@@ -71,7 +71,7 @@ public class CampfireRelaxGoal extends Goal {
                 for (int dz = -8; dz <= 8; dz++) {
                     mut.set(origin.getX() + dx, origin.getY() + dy, origin.getZ() + dz);
                     BlockState state = warrior.level().getBlockState(mut);
-                    if (state.getBlock() instanceof CampfireBlock && state.getValue(CampfireBlock.LIT)) {
+                    if (isRestBlock(state)) {
                         BlockPos safeSpot = findSafeSitSpotAround(mut);
                         if (safeSpot != null) {
                             this.campfirePos = mut.immutable();
@@ -83,6 +83,17 @@ public class CampfireRelaxGoal extends Goal {
             }
         }
         return false;
+    }
+
+    /**
+     * Lugar de descanso: fogueira acesa, ou o Posto da Vanguarda para quem já foi contratado (os não contratados
+     * usam o Posto como taverna, no TavernRelaxGoal). Sentado aqui, o guerreiro repara o equipamento.
+     */
+    private boolean isRestBlock(BlockState state) {
+        if (state.getBlock() instanceof CampfireBlock) {
+            return state.getValue(CampfireBlock.LIT);
+        }
+        return warrior.isRecruited() && state.is(io.github.raffasanttos.epicvanguard.init.ModBlocks.VANGUARD_POINT.get());
     }
 
     private BlockPos findSafeSitSpotAround(BlockPos firePos) {
@@ -114,8 +125,7 @@ public class CampfireRelaxGoal extends Goal {
             return false;
         }
 
-        BlockState fireState = warrior.level().getBlockState(campfirePos);
-        if (!(fireState.getBlock() instanceof CampfireBlock) || !fireState.getValue(CampfireBlock.LIT)) {
+        if (!isRestBlock(warrior.level().getBlockState(campfirePos))) {
             return false;
         }
 
@@ -165,7 +175,7 @@ public class CampfireRelaxGoal extends Goal {
             ambientTimer = 0;
             if (warrior.level() instanceof ServerLevel serverLevel) {
                 // Partícula sutil de conforto
-                if (warrior.getRandom().nextFloat() < 0.4F) {
+                if (warrior.getRandom().nextFloat() < 0.4F && warrior.level().getBlockState(campfirePos).getBlock() instanceof CampfireBlock) {
                     serverLevel.sendParticles(ParticleTypes.SMOKE, campfirePos.getX() + 0.5D, campfirePos.getY() + 0.6D, campfirePos.getZ() + 0.5D,
                             3, 0.15D, 0.2D, 0.15D, 0.01D);
                 }

@@ -1,0 +1,7 @@
+{
+  "epicvanguard:plugin": {
+    "initializer": "io.github.raffasanttos.epicvanguard.compat.wthit.VanguardWthitPlugin",
+    "side": "client",
+    "required": ["epicvanguard"]
+  }
+}

@@ -149,8 +149,7 @@ public final class WarriorInteraction {
     /**
      * Coleta automática: guarda na mochila os itens do chão por onde o guerreiro passa.
      * Botão da tela: desligada, só úteis (comida, poções de cura, moedas, flechas, equipamento melhor) ou tudo.
-     * Nunca pega o que o próprio dono jogou no chão
-     * (o dono pode largar itens perto dele sem perdê-los para a mochila).
+     * O que o dono joga no chão é sempre pego (fora do modo desligada): é o jeito de entregar itens.
      */
     public static void pickUpGroundItems(WarriorCompanionEntity w) {
         if (!w.isAlive() || w.level().isClientSide() || !w.isRecruited() || w.isPrisoner() || !w.isPickupItems()) {
@@ -163,9 +162,9 @@ public final class WarriorInteraction {
         java.util.UUID ownerId = w.getOwnerUUID().orElse(null);
         AABB pickupBox = w.getBoundingBox().inflate(1.0D, 0.5D, 1.0D);
         boolean usefulOnly = w.getPickupMode() == WarriorCompanionEntity.PICKUP_USEFUL;
+        // O que o dono joga é sempre pego (é como ele entrega itens); o resto passa pelo filtro "só úteis"
         List<ItemEntity> items = w.level().getEntitiesOfClass(ItemEntity.class, pickupBox, e -> !e.isRemoved() && !e.hasPickUpDelay()
-                && !isThrownBy(e, owner, ownerId)
-                && (!usefulOnly || WarriorEquipment.isUseful(w, e.getItem())));
+                && (!usefulOnly || isThrownBy(e, owner, ownerId) || WarriorEquipment.isUseful(w, e.getItem())));
 
         for (ItemEntity itemEntity : items) {
             ItemStack groundStack = itemEntity.getItem();

@@ -10,7 +10,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "Os encantamentos da arma funcionam: $(thing)Afiação$(), $(thing)Julgamento$(), $(thing)Repulsão$(), $(thing)Aspecto Flamejante$() e outros. As armas gastam como as suas e quebram quando acabam.$(br2)Companheiros $(thing)pegam itens$() do chão ao passar por cima, menos o que você joga. Veja o botão $(thing)Mão$()."
+      "text": "Os encantamentos da arma funcionam: $(thing)Afiação$(), $(thing)Julgamento$(), $(thing)Repulsão$(), $(thing)Aspecto Flamejante$() e outros. As armas gastam como as suas e quebram quando acabam.$(br2)Companheiros $(thing)pegam itens$() do chão ao passar por cima, inclusive o que você joga para eles. Veja o botão $(thing)Mão$()."
     },
     {
       "type": "patchouli:text",

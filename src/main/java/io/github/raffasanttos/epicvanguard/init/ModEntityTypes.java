@@ -43,4 +43,18 @@ public class ModEntityTypes {
                             .sized(0.6F, 1.8F)
                             .clientTrackingRange(10)
                             .build(new ResourceLocation(EpicVanguardMod.MOD_ID, "duelist_companion").toString()));
+
+    public static final RegistryObject<EntityType<io.github.raffasanttos.epicvanguard.entity.ArcherCompanionEntity>> ARCHER_COMPANION =
+            ENTITY_TYPES.register("archer_companion",
+                    () -> EntityType.Builder.<io.github.raffasanttos.epicvanguard.entity.ArcherCompanionEntity>of(io.github.raffasanttos.epicvanguard.entity.ArcherCompanionEntity::new, MobCategory.CREATURE)
+                            .sized(0.6F, 1.8F)
+                            .clientTrackingRange(10)
+                            .build(new ResourceLocation(EpicVanguardMod.MOD_ID, "archer_companion").toString()));
+
+    public static final RegistryObject<EntityType<io.github.raffasanttos.epicvanguard.entity.StandardBearerCompanionEntity>> STANDARD_BEARER_COMPANION =
+            ENTITY_TYPES.register("standard_bearer_companion",
+                    () -> EntityType.Builder.<io.github.raffasanttos.epicvanguard.entity.StandardBearerCompanionEntity>of(io.github.raffasanttos.epicvanguard.entity.StandardBearerCompanionEntity::new, MobCategory.CREATURE)
+                            .sized(0.6F, 1.8F)
+                            .clientTrackingRange(10)
+                            .build(new ResourceLocation(EpicVanguardMod.MOD_ID, "standard_bearer_companion").toString()));
 }

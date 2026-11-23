@@ -23,6 +23,8 @@ public class ModCreativeModeTabs {
                         output.accept(ModItems.BERSERKER_SPAWN_EGG.get());
                         output.accept(ModItems.GUARDIAN_SPAWN_EGG.get());
                         output.accept(ModItems.DUELIST_SPAWN_EGG.get());
+                        output.accept(ModItems.ARCHER_SPAWN_EGG.get());
+                        output.accept(ModItems.STANDARD_BEARER_SPAWN_EGG.get());
                     })
                     .build());
 }

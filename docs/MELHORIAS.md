@@ -230,6 +230,46 @@ Continua rodando todo tick (é barato), mas só chama `setItemSlot` quando o slo
 
 ---
 
+## 9. Revisão depois da 1.0.19 (22/11/2026)
+
+Achados de uma nova leitura do código. A 1.0.19 já foi publicada com eles; os 🟠 valem entrar na 1.0.20.
+
+### 🟠 9.1 Corneta pode mandar atacar os animais de outro jogador
+`VanguardHornItem.isValidOrderTarget` só protege os pets **do próprio dono**. Em multiplayer dá para mandar os companheiros matarem o lobo, gato ou cavalo domado de outro jogador.
+**Correção:** recusar qualquer `OwnableEntity` com dono e `AbstractHorse` domado (e talvez aldeões, para evitar clique errado).
+
+### 🟠 9.2 Corneta "erra" quando um companheiro está na frente
+O raio pega a primeira criatura na mira. Se for um dos seus companheiros (comum: eles andam na sua frente), o alvo é inválido e a corneta vira "reagrupar" em vez de "atacar".
+**Correção:** o filtro do raio deve ignorar seus companheiros e os alvos inválidos, e seguir até a próxima criatura.
+
+### 🟠 9.3 Livro diz que a poção deixa o frasco vazio
+A página "Comida e Cura" diz "deixando o frasco vazio", mas `WarriorHealingHelper` descarta o frasco (e a tigela dos ensopados). Corrigir o texto do livro.
+
+### 🟢 9.4 Recrutar com moedas só registra o companheiro depois de até 10 s
+`PacketRecruitWarrior` não chama `updateSavedData()`. O `/companions` não mostra o recruta nesse intervalo, e se o servidor cair antes ele não entra no registro (o resgate do modo Seguir não o acha). Chamar `updateSavedData()` ao recrutar (moedas e prisioneiro).
+
+### 🟢 9.5 Moedas na mão secundária não contam
+`countGoldCoins`/`consumeGoldCoins` só olham `getInventory().items`. Moedas no offhand ficam de fora do contrato.
+
+### 🟢 9.6 Pacote de abrir GUI ainda manda o `boolean` inútil (2.3)
+O protocolo foi para "6" na 1.0.20 (merge com o trabalho da nuvem). Se o campo sair antes do upload da 1.0.20, não precisa de outro aumento depois.
+
+### 🟢 9.7 Auto-equipar: casos a conferir no jogo
+- Com uma arma de duas mãos do Epic Fight (montante, lança), ele ainda coloca escudo na mão secundária se ela estiver vazia. Conferir se atrapalha a animação; se sim, não equipar escudo com arma de duas mãos.
+- Armaduras de mod com habilidade especial e pouca armadura são trocadas por outras com mais armadura (comportamento esperado, mas vale citar no livro).
+- No modo "só úteis", ele pega várias cópias da mesma peça melhor (compara só com a equipada, não com a mochila).
+
+### 🟢 9.8 Mapas de cooldown de fala nunca são limpos
+`WarriorSpeechSystem` guarda cooldowns em mapas estáticos (por dono, por gatilho e por chunk) que só crescem durante a sessão do servidor. Pequeno, mas dá para limpar entradas velhas de vez em quando.
+
+### 🟢 9.9 Contagem da corneta
+A mensagem "N companheiros avançam" conta quem está em Guarda, mas eles largam o alvo se ele estiver a mais de 8 blocos do ponto de guarda. Contar só quem vai de fato, ou deixar Guarda fora da ordem de ataque.
+
+### 🟢 9.10 GameTests para o que entrou na 1.0.19
+Auto-equipar (troca e devolve a peça antiga), filtro "só úteis", `pruneForgotten`, migração do `VillageWarriorSavedData` por dimensão, `setDirty` só com mudança, e a corneta (alvo válido / inválido).
+
+---
+
 ## Ordem sugerida
 
 1. 1.1 (rename), 1.2 (dano/durabilidade), 2.1 (admin em criativo), 2.2 (versão de rede)

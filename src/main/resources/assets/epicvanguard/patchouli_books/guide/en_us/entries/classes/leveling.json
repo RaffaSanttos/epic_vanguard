@@ -15,8 +15,8 @@
     },
     {
       "type": "patchouli:text",
-      "title": "Choosing a Class",
-      "text": "A plain $(thing)Warrior$() can pick a class at $(thing)level 5$(). Open the $(thing)Talents$() tab, press $(thing)⇄$() to preview the $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardian$() or $(l:epicvanguard:classes/duelist)Duelist$() tree, then $(thing)Choose class$() and $(thing)Confirm$().$(br2)It is permanent. Level, XP, name and gear are kept."
+      "title": "Classes",
+      "text": "Every companion already has a class when you meet them: $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardian$(), $(l:epicvanguard:classes/duelist)Duelist$(), Archer or Standard-bearer. The class never changes.$(br2)Level, XP and gear grow with them; talent points (1 every 2 levels) go in the $(thing)Talents$() tab."
     }
   ]
 }

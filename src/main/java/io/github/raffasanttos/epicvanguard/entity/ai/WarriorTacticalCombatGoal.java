@@ -51,6 +51,10 @@ public class WarriorTacticalCombatGoal extends Goal {
             warrior.shouldAvoidCombat() || warrior.isPrisoner()) {
             return false;
         }
+        // Com arco/besta e flechas quem luta é o WarriorRangedCombatGoal
+        if (io.github.raffasanttos.epicvanguard.entity.util.WarriorRangedHelper.canFightAtRange(warrior)) {
+            return false;
+        }
 
         if (warrior.isRecruited()) {
             if (warrior.getCombatMode() == 2) { // Parado
@@ -87,6 +91,9 @@ public class WarriorTacticalCombatGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
+        if (io.github.raffasanttos.epicvanguard.entity.util.WarriorRangedHelper.canFightAtRange(warrior)) {
+            return false;
+        }
         if (warrior.shouldAvoidCombat() || warrior.isPrisoner()) {
             return false;
         }
@@ -229,6 +236,9 @@ public class WarriorTacticalCombatGoal extends Goal {
                     int spec = warrior.getSpecialization();
                     // Berserker em fúria tem cadência de ataque mais rápida
                     int baseCd = (spec == WarriorCompanionEntity.SPEC_BERSERKER && warrior.getHealth() < warrior.getMaxHealth() * 0.40F) ? 8 : 12;
+                    if (spec == WarriorCompanionEntity.SPEC_BERSERKER && warrior.hasPerk(io.github.raffasanttos.epicvanguard.entity.WarriorPerk.SPEC_T2)) {
+                        baseCd = Math.max(5, Math.round(baseCd * 0.75F)); // Frenesi
+                    }
                     attackCooldown = baseCd;
 
                     if (comboCount >= maxCombo) {

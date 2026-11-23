@@ -1,5 +1,59 @@
 # Changelog — Epic Vanguard
 
+## 1.0.20 (Minecraft 1.20.1, Forge 47.x)
+
+### English
+
+**New**
+- **Two new classes:** **Archer** (bow or crossbow, keeps a sword for when arrows run out, warcry "Arrow Rain") and **Standard-bearer** (banner in the off hand, Resistance aura for you and nearby allies, warcry "Rally"). Both spawn in villages and through the Vanguard Point.
+- **Every companion has a class from the start** (Berserker, Guardian, Duelist, Archer or Standard-bearer). There is no plain Warrior and no class choice at level 5 anymore; old plain Warriors become a random class when loaded, keeping level, name and items.
+- **Talents:** new Talents tab with 10 talents. Companions earn 1 talent point every 2 levels.
+- **Ranged combat:** any companion with a bow or crossbow and arrows in the backpack fights at range. Their arrows never hit you or your other companions.
+- **Equipment wear:** low durability warning in chat, automatic swap when an item breaks, and repair with materials from the backpack while resting at a campfire or at the Vanguard Point.
+- **Mounts:** in Follow stance, companions ride your tamed, saddled horses when you ride, and teleport together with their horse.
+- **Death notice:** you get a chat message when a companion dies, with the cause and where their items dropped.
+- **Jade / WTHIT** (optional): tooltip with level, class, owner and stance.
+- New config sections: regeneration, shield and dodge chances, ranged combat, equipment wear, aura radius, mounts, spawns and contract cost.
+
+**Changes**
+- Companion screens: Backpack, Skills and Talents tabs in the same place, and all three screens have the same size.
+- Fixed: right after recruiting, the Monsters button showed ON and could turn hunting on by accident.
+- Item pick-up: whatever you drop for a companion is always picked up (unless pick-up is off), even in "useful only" mode. That is how you hand them items.
+- Auto-equip: the Standard-bearer puts a banner in the off hand instead of a shield.
+- Fixed: crash when a companion mounted a horse with Epic Fight installed.
+- Fixed: health could go above the maximum.
+- Fixed: long class names spilled out of their box in the companion screen.
+
+**Notes**
+- Client and server must both be on 1.0.20 (network protocol changed).
+
+### Português
+
+**Novidades**
+- **Duas classes novas:** **Arqueiro** (arco ou besta, guarda uma espada para quando acabam as flechas, grito "Chuva de Flechas") e **Porta-estandarte** (estandarte na mão secundária, aura de Resistência em você e nos aliados próximos, grito "Reagrupar"). As duas aparecem nas vilas e pelo Posto da Vanguarda.
+- **Todo companheiro já nasce com classe** (Berserker, Guardião, Duelista, Arqueiro ou Porta-estandarte). Não existe mais Guerreiro sem classe nem escolha de classe no nível 5; Guerreiros antigos viram uma classe sorteada ao carregar, mantendo nível, nome e itens.
+- **Talentos:** aba nova de Talentos com 10 talentos. O companheiro ganha 1 ponto a cada 2 níveis.
+- **Combate à distância:** qualquer companheiro com arco ou besta e flechas na mochila luta de longe. As flechas nunca acertam você nem seus outros companheiros.
+- **Desgaste de equipamento:** aviso de durabilidade baixa no chat, troca automática quando um item quebra e reparo com materiais da mochila ao descansar numa fogueira ou no Posto da Vanguarda.
+- **Montarias:** na postura Seguir, os companheiros montam nos seus cavalos domados e selados quando você monta, e são teleportados junto com o cavalo.
+- **Aviso de morte:** você recebe uma mensagem no chat quando um companheiro morre, com a causa e o lugar onde os itens caíram.
+- **Jade / WTHIT** (opcional): tooltip com nível, classe, dono e postura.
+- Seções novas na config: regeneração, chances de escudo e esquiva, combate à distância, desgaste, raio da aura, montarias, spawns e custo do edital.
+
+**Mudanças**
+- Telas do companheiro: abas Mochila, Habilidades e Talentos no mesmo lugar, e as três telas têm o mesmo tamanho.
+- Corrigido: logo depois de contratar, o botão de Monstros aparecia ligado e podia ligar a caça sem querer.
+- Coleta: o que você joga para um companheiro é sempre pego (a menos que a coleta esteja desligada), mesmo no modo "só úteis". É assim que você entrega itens a ele.
+- Auto-equipar: o Porta-estandarte coloca um estandarte na mão secundária em vez de escudo.
+- Corrigido: crash quando um companheiro montava num cavalo com o Epic Fight instalado.
+- Corrigido: a vida podia passar do máximo.
+- Corrigido: nomes de classe longos saíam da caixa na tela do companheiro.
+
+**Observações**
+- Cliente e servidor precisam estar os dois na 1.0.20 (o protocolo de rede mudou).
+
+---
+
 ## 1.0.19 (Minecraft 1.20.1, Forge 47.x)
 
 ### English

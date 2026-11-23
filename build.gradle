@@ -79,6 +79,15 @@ repositories {
         url = "https://cursemaven.com"
         content { includeGroup "curse.maven" }
     }
+    // Jade (Modrinth Maven) e WTHIT: só a API para compilar os plugins de tooltip (opcionais)
+    maven {
+        url = "https://api.modrinth.com/maven"
+        content { includeGroup "maven.modrinth" }
+    }
+    maven {
+        url = "https://maven2.bai.lol"
+        content { includeGroup "mcp.mobius.waila" }
+    }
 }
 
 // Epic Fight 20.14.17 (MC 1.20.1, Forge): projeto 405076, arquivo 8049910 no CurseForge.
@@ -94,6 +103,10 @@ dependencies {
     if (!project.hasProperty('noEpicFight')) {
         runtimeOnly fg.deobf(epicFightDep)
     }
+
+    // Jade / WTHIT: plugins de tooltip opcionais (compat/jade, compat/wthit), só para compilar
+    compileOnly fg.deobf("maven.modrinth:jade:11.13.3+forge")
+    compileOnly fg.deobf("mcp.mobius.waila:wthit-api:forge-8.21.2")
 
     // Patchouli: só para testar o livro-guia nas runs de desenvolvimento (o mod não depende dele para compilar)
     // -PnoPatchouli roda sem ele

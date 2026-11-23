@@ -35,10 +35,18 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
             "epicvanguard.ui.warrior_companion_screen.1", "epicvanguard.ui.warrior_companion_screen.2", "epicvanguard.ui.warrior_companion_screen.3"
     };
 
+    /** Conteúdo original da tela (textura warrior_hud.png). */
+    private static final int CONTENT_W = 224;
+    private static final int CONTENT_H = 192;
+    private static final int PAD_X = (ScreenTabs.FRAME_W - CONTENT_W) / 2;
+    private static final int PAD_Y = (ScreenTabs.FRAME_H - CONTENT_H) / 2;
+
     private int currentMode = 0;
     private boolean targetHostiles = true;
     private boolean targetPassives = false;
     private int pickupMode = WarriorCompanionEntity.PICKUP_USEFUL;
+    /** Ticks em que a tela não relê o estado do guerreiro depois de um clique (espera o servidor confirmar). */
+    private int localEditTicks = 0;
 
     private Button modeButton;
     private Button cancelButton;
@@ -47,6 +55,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
     private Button pickupButton;
     private Button tabMochilaButton;
     private Button tabHabilidadesButton;
+    private Button tabTalentosButton;
     private Button pencilButton;
 
     private EditBox renameEditBox;
@@ -56,8 +65,9 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
 
     public WarriorCompanionScreen(WarriorCompanionMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
-        this.imageWidth = 224;
-        this.imageHeight = 192;
+        // Mesmo tamanho da árvore de habilidades (ScreenTabs): o conteúdo de 224x192 fica centralizado na moldura
+        this.imageWidth = ScreenTabs.FRAME_W;
+        this.imageHeight = ScreenTabs.FRAME_H;
         this.inventoryLabelY = 98;
         this.inventoryLabelX = 31;
         this.titleLabelX = 12;
@@ -77,12 +87,18 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
     @Override
     protected void init() {
         super.init();
+        // leftPos/topPos apontam para o conteúdo (slots e botões); a moldura começa PAD antes
+        this.leftPos += PAD_X;
+        this.topPos += PAD_Y;
+        int frameLeft = leftPos - PAD_X;
+        int frameTop = topPos - PAD_Y;
 
         // Painel Direito: Botão 1 - Modo de Postura (Y = 37, 46x16)
         modeButton = Button.builder(
                 Component.translatable(MODE_KEYS[currentMode % 3]),
                 btn -> {
                     currentMode = (currentMode + 1) % 3;
+                    localEditTicks = 20;
                     btn.setMessage(Component.translatable(MODE_KEYS[currentMode]));
                     Messages.sendToServer(new PacketWarriorCombatMode(menu.getEntityId(), currentMode));
                 })
@@ -105,6 +121,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
                 Component.literal(targetHostiles ? "§c⚔" : "§8⚔"),
                 btn -> {
                     targetHostiles = !targetHostiles;
+                    localEditTicks = 20;
                     btn.setMessage(Component.literal(targetHostiles ? "§c⚔" : "§8⚔"));
                     Messages.sendToServer(new PacketWarriorTactics(menu.getEntityId(), targetHostiles, targetPassives, pickupMode));
                 })
@@ -116,6 +133,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
                 Component.literal(targetPassives ? "§6🍖" : "§8🍖"),
                 btn -> {
                     targetPassives = !targetPassives;
+                    localEditTicks = 20;
                     btn.setMessage(Component.literal(targetPassives ? "§6🍖" : "§8🍖"));
                     Messages.sendToServer(new PacketWarriorTactics(menu.getEntityId(), targetHostiles, targetPassives, pickupMode));
                 })
@@ -127,6 +145,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
                 Component.literal(pickupLabel(pickupMode)),
                 btn -> {
                     pickupMode = (pickupMode + 1) % 3; // desligada -> úteis -> tudo
+                    localEditTicks = 20;
                     btn.setMessage(Component.literal(pickupLabel(pickupMode)));
                     btn.setTooltip(pickupTooltip(pickupMode));
                     Messages.sendToServer(new PacketWarriorTactics(menu.getEntityId(), targetHostiles, targetPassives, pickupMode));
@@ -135,11 +154,11 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
                 .tooltip(pickupTooltip(pickupMode))
                 .build();
 
-        // Abas superiores de navegação (somente 2 abas limpas)
+        // Abas superiores: Mochila, Habilidades, Talentos (mesmas posições da árvore)
         tabMochilaButton = Button.builder(
                 Component.translatable("epicvanguard.text.warrior_companion_screen.6"),
                 btn -> {})
-                .bounds(leftPos + 8, topPos - 18, 70, 18)
+                .bounds(frameLeft + ScreenTabs.TAB1_X, frameTop - ScreenTabs.TAB_H, ScreenTabs.TAB1_W, ScreenTabs.TAB_H)
                 .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.warrior_companion_screen.7")))
                 .build();
         tabMochilaButton.active = false; // Já estamos nesta tela
@@ -147,10 +166,19 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
         tabHabilidadesButton = Button.builder(
                 Component.translatable("epicvanguard.text.warrior_companion_screen.8"),
                 btn -> {
-                    Minecraft.getInstance().setScreen(new WarriorSkillTreeScreen(this.menu.getEntityId()));
+                    Minecraft.getInstance().setScreen(new WarriorSkillTreeScreen(this.menu.getEntityId(), false));
                 })
-                .bounds(leftPos + 80, topPos - 18, 90, 18)
+                .bounds(frameLeft + ScreenTabs.TAB2_X, frameTop - ScreenTabs.TAB_H, ScreenTabs.TAB2_W, ScreenTabs.TAB_H)
                 .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.warrior_companion_screen.9")))
+                .build();
+
+        tabTalentosButton = Button.builder(
+                Component.translatable("epicvanguard.ui.perks.tab"),
+                btn -> {
+                    Minecraft.getInstance().setScreen(new WarriorSkillTreeScreen(this.menu.getEntityId(), true));
+                })
+                .bounds(frameLeft + ScreenTabs.TAB3_X, frameTop - ScreenTabs.TAB_H, ScreenTabs.TAB3_W, ScreenTabs.TAB_H)
+                .tooltip(Tooltip.create(Component.translatable("epicvanguard.ui.perks.tab.tooltip")))
                 .build();
 
         // Botão de lápis ao lado do nome do guerreiro
@@ -172,7 +200,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
         // Modal de Renomear Companheiro
         int dialogW = 160;
         int dialogH = 68;
-        int dialogX = leftPos + (imageWidth - dialogW) / 2;
+        int dialogX = leftPos + (CONTENT_W - dialogW) / 2;
         int dialogY = topPos + 40;
 
         String initialName = warrior != null ? warrior.getWarriorName() : "";
@@ -196,6 +224,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
 
         this.addRenderableWidget(tabMochilaButton);
         this.addRenderableWidget(tabHabilidadesButton);
+        this.addRenderableWidget(tabTalentosButton);
         this.addRenderableWidget(pencilButton);
         this.addRenderableWidget(modeButton);
         this.addRenderableWidget(cancelButton);
@@ -208,12 +237,29 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
         this.addRenderableWidget(this.renameCancelButton);
     }
 
+    /** Clique fora da moldura (não só do conteúdo) é que conta como fora da tela. */
+    @Override
+    protected boolean hasClickedOutside(double mouseX, double mouseY, int guiLeft, int guiTop, int mouseButton) {
+        int fx = leftPos - PAD_X, fy = topPos - PAD_Y;
+        return mouseX < fx || mouseY < fy || mouseX >= fx + ScreenTabs.FRAME_W || mouseY >= fy + ScreenTabs.FRAME_H;
+    }
+
     @Override
     protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.setShaderTexture(0, TEXTURE);
-        guiGraphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
+        // Moldura do tamanho padrão (estilo do inventário vanilla) e, dentro, o miolo da textura de 224x192
+        int fx = leftPos - PAD_X, fy = topPos - PAD_Y;
+        int fw = ScreenTabs.FRAME_W, fh = ScreenTabs.FRAME_H;
+        guiGraphics.fill(fx, fy, fx + fw, fy + fh, 0xFFC6C6C6);
+        guiGraphics.fill(fx, fy, fx + fw - 2, fy + 1, 0xFFFFFFFF);
+        guiGraphics.fill(fx, fy, fx + 1, fy + fh - 2, 0xFFFFFFFF);
+        guiGraphics.fill(fx + fw - 2, fy + 1, fx + fw, fy + fh, 0xFF373737);
+        guiGraphics.fill(fx + 1, fy + fh - 2, fx + fw, fy + fh, 0xFF373737);
+        guiGraphics.fill(fx + fw - 2, fy + 1, fx + fw - 1, fy + fh - 1, 0xFF555555);
+        guiGraphics.fill(fx + 1, fy + fh - 2, fx + fw - 1, fy + fh - 1, 0xFF555555);
+        guiGraphics.blit(TEXTURE, leftPos + 1, topPos + 1, 1, 1, CONTENT_W - 3, CONTENT_H - 3);
 
         WarriorCompanionEntity warrior = getCompanion();
         if (warrior != null) {
@@ -308,8 +354,18 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
             String title = warrior.getFormattedSpecializationTitle().getString();
             String levelText = I18n.get("epicvanguard.ui.warrior_companion_screen.5") + lvl + "§r §8• " + title;
             int lvlW = this.font.width(levelText);
-            int lvlX = 105 - (lvlW / 2);
-            guiGraphics.drawString(this.font, levelText, lvlX, 75, 0x404040, false);
+            // Cabe entre a mochila e o painel da direita (x 59..151); nomes longos (Porta-estandarte) encolhem
+            int maxW = 92;
+            if (lvlW > maxW) {
+                float s = (float) maxW / lvlW;
+                guiGraphics.pose().pushPose();
+                guiGraphics.pose().translate(105 - maxW / 2.0F, 75 + (9 * (1 - s)) / 2.0F, 0);
+                guiGraphics.pose().scale(s, s, 1.0F);
+                guiGraphics.drawString(this.font, levelText, 0, 0, 0x404040, false);
+                guiGraphics.pose().popPose();
+            } else {
+                guiGraphics.drawString(this.font, levelText, 105 - (lvlW / 2), 75, 0x404040, false);
+            }
 
             // Texto numérico de XP abaixo da barra (alinhado à direita)
             String xpText;
@@ -335,6 +391,40 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
     }
 
     @Override
+    protected void containerTick() {
+        super.containerTick();
+        // A tela pode abrir antes de o cliente receber o estado novo do guerreiro (ex.: logo após contratar,
+        // quando ele vira pacífico). Relê o estado sincronizado para os botões não mostrarem nem reenviarem
+        // valores antigos. Logo após um clique, espera o servidor confirmar.
+        if (localEditTicks > 0) {
+            localEditTicks--;
+            return;
+        }
+        WarriorCompanionEntity warrior = getCompanion();
+        if (warrior == null) return;
+        int mode = warrior.getCombatMode() % 3;
+        if (mode != currentMode) {
+            currentMode = mode;
+            if (modeButton != null) modeButton.setMessage(Component.translatable(MODE_KEYS[currentMode]));
+        }
+        if (warrior.isTargetHostiles() != targetHostiles) {
+            targetHostiles = warrior.isTargetHostiles();
+            if (hostilesButton != null) hostilesButton.setMessage(Component.literal(targetHostiles ? "§c⚔" : "§8⚔"));
+        }
+        if (warrior.isTargetPassives() != targetPassives) {
+            targetPassives = warrior.isTargetPassives();
+            if (passivesButton != null) passivesButton.setMessage(Component.literal(targetPassives ? "§6🍖" : "§8🍖"));
+        }
+        if (warrior.getPickupMode() != pickupMode) {
+            pickupMode = warrior.getPickupMode();
+            if (pickupButton != null) {
+                pickupButton.setMessage(Component.literal(pickupLabel(pickupMode)));
+                pickupButton.setTooltip(pickupTooltip(pickupMode));
+            }
+        }
+    }
+
+    @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
         renderBackground(guiGraphics);
 
@@ -344,7 +434,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
 
             int dialogW = 160;
             int dialogH = 68;
-            int dialogX = leftPos + (imageWidth - dialogW) / 2;
+            int dialogX = leftPos + (CONTENT_W - dialogW) / 2;
             int dialogY = topPos + 40;
 
             guiGraphics.pose().pushPose();

@@ -315,6 +315,8 @@ public class CompanionTeleportHandler {
             case 1 -> ModEntityTypes.BERSERKER_COMPANION.get();
             case 2 -> ModEntityTypes.GUARDIAN_COMPANION.get();
             case 3 -> ModEntityTypes.DUELIST_COMPANION.get();
+            case 4 -> ModEntityTypes.ARCHER_COMPANION.get();
+            case 5 -> ModEntityTypes.STANDARD_BEARER_COMPANION.get();
             default -> ModEntityTypes.WARRIOR_COMPANION.get();
         };
     }

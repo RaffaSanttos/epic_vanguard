@@ -11,12 +11,12 @@
     {
       "type": "patchouli:text",
       "title": "Tactics",
-      "text": "Lit buttons are on, grey ones are off.$(li)$(thing)Sword$(): attack hostile monsters. Off for new recruits.$(li)$(thing)Meat$(): hunt adult animals for food.$(li)$(thing)Hand$(): item pick-up. Click to cycle: off (grey), useful only (yellow, default) and everything (green)."
+      "text": "Lit buttons are on, grey ones are off.$(li)$(thing)Sword$(): attack hostile monsters. Off for new recruits.$(li)$(thing)Meat$(): hunt adult animals for food.$(li)$(thing)Hand$(): item pick-up. Click to cycle: off (grey), useful only (yellow, default) and everything (green). Items you drop for them are always picked up."
     },
     {
       "type": "patchouli:text",
       "title": "Tabs and Name",
-      "text": "The $(thing)Backpack$() tab shows their gear and health; the $(thing)Talents$() tab shows their level, XP and class bonuses.$(br2)To rename a companion, press the $(thing)pencil$(), use a named $(item)Name Tag$() on them, or the $(l:epicvanguard:reference/commands)rename command$()."
+      "text": "The $(thing)Backpack$() tab shows their gear and health; the $(thing)Skills$() tab shows their level, XP and class skills; the $(thing)Talents$() tab is where you spend talent points.$(br2)To rename a companion, press the $(thing)pencil$(), use a named $(item)Name Tag$() on them, or the $(l:epicvanguard:reference/commands)rename command$()."
     }
   ]
 }

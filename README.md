@@ -9,9 +9,10 @@ Mercenary companions for **Minecraft 1.20.1 (Forge 47.x)**. Hire warriors with g
 - **Hiring:** find mercenaries in warrior houses inside villages, rescue prisoners from pillager outposts, or post a request at a **Vanguard Point** block and a company marches to your base.
 - **Gold Coins** are the currency. Mercenaries cost more the better their starting gear (Recruit, Veteran, Elite).
 - **Stances:** Follow, Guard (protects an area) and Stay. New recruits start in Follow and peaceful; turn monster hunting (sword) and food hunting (meat) on in their screen. Sneak + right-click with an empty hand switches Follow/Stay.
-- **Gear:** they pick up useful items (✋ button: off / useful / everything) and put on better armor and weapons from their backpack by themselves.
+- **Gear:** they pick up useful items (✋ button: off / useful / everything; what you drop for them is always picked up), put on better armor and weapons from their backpack, warn you when gear is about to break and repair it at a campfire.
+- **Ranged combat and mounts:** companions with a bow fight at range, and in Follow they ride your horses with you.
 - **Vanguard War Horn:** order every companion nearby to attack what you aim at, or to stop and regroup.
-- **Classes:** Berserker, Guardian and Duelist, each with its own talents and war cry. A plain Warrior can choose one at level 5.
+- **Classes:** Berserker, Guardian, Duelist, Archer and Standard-bearer, each with its own skills and war cry. Every companion has a class from the start; talent points (1 every 2 levels) unlock talents.
 - **Survival:** companions eat food and drink healing potions from their backpack, retreat when badly hurt and rest by campfires.
 - **Protection:** they block arrows, dodge creepers and step in when you are about to die.
 - **Guide book** in English and Portuguese (needs Patchouli, optional).
@@ -84,9 +85,10 @@ Companheiros mercenários para **Minecraft 1.20.1 (Forge 47.x)**. Contrate guerr
 - **Contratação:** mercenários nas casas de guerreiro das vilas, prisioneiros nos postos de saqueadores para resgatar, ou um edital no bloco **Vanguard Point** (Posto da Vanguarda) para uma companhia marchar até a sua base.
 - **Moedas de Ouro** são a moeda. Quanto melhor o equipamento inicial (Recruta, Veterano, Elite), mais caro.
 - **Posturas:** Seguir, Guarda (protege uma área) e Parado. Recrutas novos começam em Seguir e pacíficos; ligue a caça a monstros (espada) e a animais (carne) na tela deles. Agachado + botão direito de mão vazia alterna Seguir/Parado.
-- **Equipamento:** pegam itens úteis do chão (botão ✋: desligada / úteis / tudo) e vestem sozinhos armadura e armas melhores da mochila.
+- **Equipamento:** pegam itens úteis do chão (botão ✋: desligada / úteis / tudo; o que você joga para eles é sempre pego), vestem sozinhos armadura e armas melhores da mochila, avisam quando algo vai quebrar e consertam na fogueira.
+- **Combate à distância e montarias:** quem tem arco luta de longe, e no modo Seguir eles montam nos seus cavalos com você.
 - **Corneta da Vanguarda:** manda todos os companheiros por perto atacarem o que você mira, ou pararem e se reagruparem.
-- **Classes:** Berserker, Guardião e Duelista, cada uma com talentos e grito de guerra. Um Guerreiro comum escolhe a sua no nível 5.
+- **Classes:** Berserker, Guardião, Duelista, Arqueiro e Porta-estandarte, cada uma com habilidades e grito de guerra. Todo companheiro já nasce com classe; pontos de talento (1 a cada 2 níveis) liberam talentos.
 - **Sobrevivência:** comem e bebem poções da mochila, recuam quando muito feridos e descansam em fogueiras.
 - **Proteção:** bloqueiam flechas, fogem de creepers e intervêm quando você está para morrer.
 - **Livro guia** em inglês e português (precisa do Patchouli, opcional).

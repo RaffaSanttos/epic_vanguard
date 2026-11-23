@@ -4,49 +4,44 @@ import io.github.raffasanttos.epicvanguard.entity.CompanionSavedData;
 import io.github.raffasanttos.epicvanguard.entity.WarriorCompanionEntity;
 import io.github.raffasanttos.epicvanguard.event.CompanionTeleportHandler;
 import io.github.raffasanttos.epicvanguard.init.ModEntityTypes;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityType;
 
 import javax.annotation.Nullable;
 
 /**
- * Progressão do guerreiro: escolha de especialização.
+ * Classe do guerreiro.
  * <p>
- * A classe (Berserker, Guardião, Duelista) é o próprio tipo de entidade, porque o Epic Fight registra atributos
- * por tipo. Por isso trocar de classe recria o guerreiro no mesmo lugar, com o mesmo UUID, NBT (inventário,
+ * Todo guerreiro já nasce com uma classe (Berserker, Guardião, Duelista, Arqueiro ou Porta-estandarte). A classe é
+ * o próprio tipo de entidade, porque o Epic Fight registra atributos por tipo. Um Guerreiro base (ovo antigo,
+ * /summon ou save antigo) é recriado no mesmo lugar como uma classe sorteada, com o mesmo UUID e NBT (inventário,
  * nível, XP, nome, personalidade) e uma geração nova no registro, para que nenhuma cópia antiga volte.
  */
 public final class WarriorProgression {
 
-    /** Nível a partir do qual um Guerreiro base pode escolher a classe. */
-    public static final int SPEC_CHOICE_LEVEL = 5;
-
     private WarriorProgression() {}
 
-    /** Guerreiro base (sem classe), recrutado e no nível mínimo: pode escolher a especialização. */
-    public static boolean canChooseSpecialization(WarriorCompanionEntity w) {
-        return w.getType() == ModEntityTypes.WARRIOR_COMPANION.get()
-                && w.getSpecialization() == WarriorCompanionEntity.SPEC_NONE
-                && w.isRecruited()
-                && w.getWarriorLevel() >= SPEC_CHOICE_LEVEL;
+    /** Guerreiro base, sem classe, que deve virar uma classe sorteada. Guerreiros sem IA (testes) ficam como estão. */
+    public static boolean needsClass(WarriorCompanionEntity w) {
+        return w.getType() == ModEntityTypes.WARRIOR_COMPANION.get() && !w.isNoAi();
+    }
+
+    /** Troca um Guerreiro base por uma classe sorteada. Só no servidor. Devolve a entidade nova, ou {@code null}. */
+    @Nullable
+    public static WarriorCompanionEntity assignRandomClass(WarriorCompanionEntity w) {
+        int spec = WarriorCompanionEntity.SPEC_BERSERKER + w.getRandom().nextInt(WarriorCompanionEntity.SPEC_MAX);
+        return convertToClass(w, spec);
     }
 
     /**
-     * Troca a classe do guerreiro. Só no servidor. Devolve a entidade nova, ou {@code null} se não pôde trocar.
+     * Recria o guerreiro como a classe pedida. Só no servidor. Devolve a entidade nova, ou {@code null} se não pôde.
      * A entidade antiga é removida e não deve mais ser usada.
      */
     @Nullable
-    public static WarriorCompanionEntity chooseSpecialization(WarriorCompanionEntity w, ServerPlayer owner, int spec) {
-        if (!(w.level() instanceof ServerLevel level) || owner.getServer() == null) return null;
-        if (!canChooseSpecialization(w) || !w.isOwner(owner)) return null;
-        if (spec != WarriorCompanionEntity.SPEC_BERSERKER && spec != WarriorCompanionEntity.SPEC_GUARDIAN
-                && spec != WarriorCompanionEntity.SPEC_DUELIST) return null;
+    public static WarriorCompanionEntity convertToClass(WarriorCompanionEntity w, int spec) {
+        if (!(w.level() instanceof ServerLevel level) || w.isRemoved()) return null;
+        if (spec < WarriorCompanionEntity.SPEC_BERSERKER || spec > WarriorCompanionEntity.SPEC_MAX) return null;
 
         EntityType<? extends WarriorCompanionEntity> type = CompanionTeleportHandler.getEntityTypeForSpecialization(spec);
         WarriorCompanionEntity promoted = type.create(level);
@@ -59,26 +54,28 @@ public final class WarriorProgression {
         promoted.load(tag); // mesmo UUID, inventário, nível, nome; o construtor da subclasse fixa a classe
         promoted.moveTo(w.getX(), w.getY(), w.getZ(), w.getYRot(), w.getXRot());
         promoted.setYHeadRot(w.getYHeadRot());
+        // Quem ainda não foi contratado recebe o equipamento da classe (arco do Arqueiro, estandarte...)
+        if (!promoted.isRecruited() && !promoted.isPrisoner()) {
+            promoted.applySpecializationLoadout(Math.max(0, promoted.getEquipmentTier()));
+        }
+        promoted.recalculateAttributes();
         promoted.setHealth(Math.max(1.0F, promoted.getMaxHealth() * healthPct));
 
         // A nova é a cópia oficial: a antiga vira "stale" e qualquer snapshot dela é ignorado
-        CompanionSavedData data = CompanionSavedData.get(owner.getServer());
-        CompanionSavedData.CompanionInfo info = data.getCompanion(w.getUUID());
-        if (info != null) {
-            promoted.setRestoreGeneration(data.bumpGeneration(info));
+        if (level.getServer() != null && w.isRecruited()) {
+            CompanionSavedData data = CompanionSavedData.get(level.getServer());
+            CompanionSavedData.CompanionInfo info = data.getCompanion(w.getUUID());
+            if (info != null) {
+                promoted.setRestoreGeneration(data.bumpGeneration(info));
+            }
         }
 
         w.discard();
         level.addFreshEntity(promoted);
         promoted.syncEquipmentWithInventory();
-        promoted.updateSavedData();
-
-        level.sendParticles(ParticleTypes.TOTEM_OF_UNDYING, promoted.getX(), promoted.getY() + 1.0D, promoted.getZ(),
-                40, 0.5D, 0.8D, 0.5D, 0.25D);
-        level.playSound(null, promoted.getX(), promoted.getY(), promoted.getZ(),
-                SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1.2F, 0.8F);
-        owner.sendSystemMessage(Component.translatable("epicvanguard.text.specialization.chosen",
-                promoted.getWarriorName(), promoted.getFormattedSpecializationTitle()));
+        if (promoted.isRecruited()) {
+            promoted.updateSavedData();
+        }
         return promoted;
     }
 }

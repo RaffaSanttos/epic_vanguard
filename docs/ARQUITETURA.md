@@ -12,12 +12,12 @@ Mapa do código para quem for mexer no mod. Pacote base: `io.github.raffasanttos
 | `WarriorTeleport` | Teleporte seguro (chão firme, sem lava, sem sufocar) e a regra do modo Seguir: 13 blocos + 2 s fora de combate, ou 32 blocos sempre (valores da config). |
 | `WarriorThreatSensor` | Creeper prestes a explodir e projéteis vindo na direção do guerreiro ou do dono. Guarda a última varredura num cache por guerreiro (projéteis a cada 2 ticks, creepers a cada 5). |
 | `WarriorWarcry` | Grito de guerra de cada classe (efeitos, partículas, sons). |
-| `WarriorProgression` | Escolha de classe no nível 5 (recria a entidade com o tipo da classe). |
-| `WarriorEquipment` | Auto-equipar (melhor armadura/arma/escudo da mochila, a cada 2 s fora de combate) e o filtro "só úteis" da coleta. |
+| `WarriorProgression` | Todo guerreiro nasce com classe; um Guerreiro base (ovo antigo, save antigo) é recriado como classe sorteada. |
+| `WarriorEquipment` | Auto-equipar (melhor armadura/arma da mochila e escudo, ou estandarte no Porta-estandarte, a cada 2 s fora de combate) e o filtro "só úteis" da coleta. Convive com `WarriorEquipmentWear` (troca o que quebrou) e `WarriorRangedHelper` (arco ↔ arma corpo a corpo do Arqueiro): o auto-equipar nunca mexe num arco/besta equipado. |
 | `WarriorCombatHelper` | Fogo amigo, esquiva do Duelista, bloqueio com escudo. |
 | `WarriorHealingHelper` | Escolher e consumir comida e poções. |
 
-Classes: `BerserkerCompanionEntity`, `GuardianCompanionEntity` e `DuelistCompanionEntity` só fixam a especialização. A classe é o tipo de entidade porque o Epic Fight registra atributos (impacto, peso, stamina) por tipo.
+Classes: `BerserkerCompanionEntity`, `GuardianCompanionEntity`, `DuelistCompanionEntity`, `ArcherCompanionEntity` e `StandardBearerCompanionEntity` só fixam a especialização. Talentos em `WarriorPerk` (pacote `PacketUnlockPerk`). A classe é o tipo de entidade porque o Epic Fight registra atributos (impacto, peso, stamina) por tipo.
 
 Posturas: `MODE_FOLLOW` (0), `MODE_GUARD` (1), `MODE_STAY` (2). Quem é recrutado passa por `applyRecruitDefaults()`: Seguir e pacífico.
 
@@ -33,17 +33,17 @@ IA: `entity/ai` tem os goals (combate tático, seguir, guarda, comer, fugir, gri
 
 ## Rede
 
-`networking/Messages.java` registra os pacotes. Protocolo atual: **"4"** (cliente e servidor precisam da mesma versão; aumente ao mudar qualquer pacote).
+`networking/Messages.java` registra os pacotes. Protocolo atual: **"6"** (cliente e servidor precisam da mesma versão; aumente ao mudar qualquer pacote).
 
 | Pacote | Quem pode | O que faz |
 |---|---|---|
 | `PacketWarriorCombatMode` | dono, perto | troca a postura |
-| `PacketWarriorTactics` | dono, perto | Espada (monstros), Carne (animais), Mão (coleta: 0 desligada, 1 úteis, 2 tudo) |
+| `PacketWarriorTactics` | dono, perto | Espada (monstros), Carne (animais), Mão (coleta: 0 desligada, 1 úteis, 2 tudo; o que o dono joga é sempre pego) |
 | `PacketWarriorCancelAction` | dono, perto | encerra a luta |
 | `PacketOpenWarriorGUI` | perto (inventário só o dono) | abre a tela |
 | `PacketRecruitWarrior` | perto | contrata com moedas |
 | `PacketRenameWarrior` | dono | renomeia |
-| `PacketChooseSpecialization` | dono, perto | escolhe a classe (nível 5) |
+| `PacketUnlockPerk` | dono, perto | desbloqueia um talento |
 | `PacketPostVanguardContract` | perto do bloco | edital do Posto da Vanguarda |
 
 `PacketGuards` concentra as checagens de "perto" (10 blocos) e "dono".
@@ -76,10 +76,19 @@ IA: `entity/ai` tem os goals (combate tático, seguir, guarda, comer, fugir, gri
 | follow | `combatLeashDistance` | 32 | `WarriorTeleport`, `CompanionTeleportHandler` |
 | follow | `followTeleportDelayTicks` | 40 | `WarriorTeleport` |
 | registry | `registryMemoryDays` | 100 | `CompanionSavedData.pruneForgotten` |
+| vanguardPoint | `contractCoins` | 20 | `VanguardPointBlockEntity.requiredCoins()` |
+| companions | `naturalRegen`, `regenIntervalTicks` | true, 60 | regeneração no `tick` |
+| combat | `shieldBlockChance`, `shieldBlockReduction`, `duelistDodgeChance` | 0.70, 0.80, 0.18 | `WarriorCombatHelper` |
+| ranged | `enableRangedCombat`, `infiniteArrows`, `rangedDamageMultiplier` | true, false, 1.0 | `WarriorRangedHelper`, `WarriorRangedCombatGoal` |
+| equipment | `equipmentWear`, `wearMultiplier`, `warnOnBreak`, `lowDurabilityWarning`, `fieldRepair`, `autoSwapBroken` | true, 1.0, true, 0.10, true, true | `WarriorEquipmentWear` |
+| specializations | `bannerAuraRadius` | 8 | Porta-estandarte |
+| mounts | `enableMounts`, `mountSearchRadius` | true, 16 | `WarriorMountHelper`, `MountUpGoal` |
+| spawning | `outpostPrisoners`, `warriorHouseSpawns` | true, true | `VillageWarriorSpawner` |
 
 ## Integrações opcionais
 
 - **Epic Fight** (`compat/epicfight`): só é registrado se o mod estiver instalado. No build vem pelo CurseMaven (`curse.maven:epic-fight-mod-405076:8049910`).
+- **Jade / WTHIT** (`compat/jade`, `compat/wthit`, textos em `compat/WarriorTooltipLines`): tooltip do guerreiro. Só a API entra no build (`compileOnly`); WTHIT acha o plugin por `waila_plugins.json`.
 - **Patchouli**: livro em `src/main/resources/.../patchouli_books/guide/{en_us,pt_br}`, gerado por `node tools/patchouli/build_book.js`. Não edite os JSON à mão; edite o script e rode de novo.
 
 ## Traduções

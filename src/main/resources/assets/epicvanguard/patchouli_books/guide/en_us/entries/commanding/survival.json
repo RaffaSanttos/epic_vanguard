@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "Companions take care of themselves with what is in their $(thing)backpack$():$(li)Out of combat and hurt, they eat $(item)food$() until healed.$(li)They drink $(item)Healing$() and $(item)Regeneration$() potions, leaving the empty bottle.$(li)In an emergency they prefer the strongest items, like $(item)golden apples$()."
+      "text": "Companions take care of themselves with what is in their $(thing)backpack$():$(li)Out of combat and hurt, they eat $(item)food$() until healed.$(li)They drink $(item)Healing$() and $(item)Regeneration$() potions; the empty bottle is discarded.$(li)In an emergency they prefer the strongest items, like $(item)golden apples$()."
     },
     {
       "type": "patchouli:text",

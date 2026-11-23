@@ -33,7 +33,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.UUID;
 
 public class VanguardPointBlockEntity extends BlockEntity implements MenuProvider {
-    public static final int REQUIRED_COINS = 20;
+    /** Moedas para postar um edital (config vanguardPoint.contractCoins, padrão 20). */
+    public static int requiredCoins() {
+        return io.github.raffasanttos.epicvanguard.config.EpicVanguardConfig.contractCoins();
+    }
     public static final int DEFAULT_CONTRACT_TICKS = 7 * 24000; // 7 dias in-game = 168.000 ticks
 
     private final ItemStackHandler itemHandler = new ItemStackHandler(1) {
@@ -160,14 +163,14 @@ public class VanguardPointBlockEntity extends BlockEntity implements MenuProvide
         if (contractActive) return false;
         if (player.isCreative()) return true;
         // Não pode usar moedas que outro jogador depositou
-        return getStoredCoins() >= REQUIRED_COINS && canAccessCoins(player);
+        return getStoredCoins() >= requiredCoins() && canAccessCoins(player);
     }
 
     public boolean startContract(Player player) {
         if (!canStartContract(player)) return false;
 
         if (!player.isCreative()) {
-            itemHandler.extractItem(0, REQUIRED_COINS, false);
+            itemHandler.extractItem(0, requiredCoins(), false);
             // Devolve imediatamente qualquer moeda excedente (troco) ao jogador!
             int remaining = itemHandler.getStackInSlot(0).getCount();
             if (remaining > 0) {

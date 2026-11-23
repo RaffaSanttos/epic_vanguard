@@ -9,6 +9,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.BannerItem;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ItemStack;
@@ -26,7 +27,7 @@ import net.minecraft.world.item.enchantment.Enchantments;
  * <ul>
  *   <li>só troca por algo <b>melhor</b> (armadura + resistência + Proteção; dano + Afiação);</li>
  *   <li>arma corpo a corpo só substitui arma corpo a corpo (nunca troca o arco do guerreiro por espada);</li>
- *   <li>escudo vai para a mão secundária só se ela estiver vazia;</li>
+ *   <li>mão secundária vazia recebe escudo (ou estandarte, no Porta-estandarte);</li>
  *   <li>ignora peças quase quebradas (menos de 10% de durabilidade);</li>
  *   <li>a peça antiga vai para o lugar da nova na mochila (nada se perde);</li>
  *   <li>não mexe enquanto o dono está com a tela aberta, nem em luta.</li>
@@ -56,7 +57,7 @@ public final class WarriorEquipment {
             changed |= upgradeSlot(inv, ARMOR_SLOTS[i], ARMOR_EQUIP[i]);
         }
         changed |= upgradeMainWeapon(inv);
-        changed |= equipShieldIfEmpty(inv);
+        changed |= equipOffhandIfEmpty(w, inv);
 
         if (changed) {
             w.syncEquipmentWithInventory();
@@ -96,11 +97,20 @@ public final class WarriorEquipment {
         return bestIndex >= 0 && swap(inv, WarriorInventory.SLOT_WEAPON_MAIN, bestIndex);
     }
 
-    private static boolean equipShieldIfEmpty(WarriorInventory inv) {
+    /** Porta-estandarte usa estandarte na mão secundária (aura); os outros usam escudo. */
+    private static boolean isStandardBearer(WarriorCompanionEntity w) {
+        return w.getSpecialization() == WarriorCompanionEntity.SPEC_STANDARD_BEARER;
+    }
+
+    private static boolean isOffhandItemFor(WarriorCompanionEntity w, ItemStack stack) {
+        return isStandardBearer(w) ? stack.getItem() instanceof BannerItem : stack.getItem() instanceof ShieldItem;
+    }
+
+    private static boolean equipOffhandIfEmpty(WarriorCompanionEntity w, WarriorInventory inv) {
         if (!inv.getItem(WarriorInventory.SLOT_WEAPON_OFF).isEmpty()) return false;
         for (int i = WarriorInventory.SLOT_BACKPACK_START; i <= WarriorInventory.SLOT_BACKPACK_END; i++) {
             ItemStack cand = inv.getItem(i);
-            if (cand.getItem() instanceof ShieldItem && !nearlyBroken(cand)) {
+            if (isOffhandItemFor(w, cand) && !nearlyBroken(cand)) {
                 return swap(inv, WarriorInventory.SLOT_WEAPON_OFF, i);
             }
         }
@@ -186,8 +196,8 @@ public final class WarriorEquipment {
                 return current.isEmpty() || armorScore(stack, ARMOR_EQUIP[i]) > armorScore(current, ARMOR_EQUIP[i]) + 0.01D;
             }
         }
-        if (stack.getItem() instanceof ShieldItem) {
-            return inv.getItem(WarriorInventory.SLOT_WEAPON_OFF).isEmpty();
+        if (stack.getItem() instanceof ShieldItem || stack.getItem() instanceof BannerItem) {
+            return isOffhandItemFor(w, stack) && inv.getItem(WarriorInventory.SLOT_WEAPON_OFF).isEmpty();
         }
         if (WarriorInventory.isWeaponOrShield(stack) && isMelee(stack)) {
             ItemStack current = inv.getItem(WarriorInventory.SLOT_WEAPON_MAIN);

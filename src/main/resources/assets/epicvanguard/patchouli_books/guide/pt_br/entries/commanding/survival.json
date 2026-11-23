@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "Os companheiros se cuidam com o que está na $(thing)mochila$():$(li)Fora de combate e feridos, comem $(item)comida$() até se curarem.$(li)Bebem poções de $(item)Cura$() e $(item)Regeneração$(), deixando o frasco vazio.$(li)Numa emergência preferem os itens mais fortes, como $(item)maçãs douradas$()."
+      "text": "Os companheiros se cuidam com o que está na $(thing)mochila$():$(li)Fora de combate e feridos, comem $(item)comida$() até se curarem.$(li)Bebem poções de $(item)Cura$() e $(item)Regeneração$(); o frasco vazio é descartado.$(li)Numa emergência preferem os itens mais fortes, como $(item)maçãs douradas$()."
     },
     {
       "type": "patchouli:text",

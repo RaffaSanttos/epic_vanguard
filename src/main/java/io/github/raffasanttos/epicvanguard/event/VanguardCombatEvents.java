@@ -35,6 +35,8 @@ public class VanguardCombatEvents {
             event.put(ModEntityTypes.BERSERKER_COMPANION.get(), WarriorCompanionEntity.createAttributes().build());
             event.put(ModEntityTypes.GUARDIAN_COMPANION.get(), WarriorCompanionEntity.createAttributes().build());
             event.put(ModEntityTypes.DUELIST_COMPANION.get(), WarriorCompanionEntity.createAttributes().build());
+            event.put(ModEntityTypes.ARCHER_COMPANION.get(), WarriorCompanionEntity.createAttributes().build());
+            event.put(ModEntityTypes.STANDARD_BEARER_COMPANION.get(), WarriorCompanionEntity.createAttributes().build());
         }
     }
 
@@ -47,6 +49,16 @@ public class VanguardCombatEvents {
     public static void onLevelTick(TickEvent.LevelTickEvent event) {
         if (event.phase == TickEvent.Phase.END && event.level instanceof ServerLevel serverLevel) {
             VillageWarriorSpawner.tick(serverLevel);
+        }
+    }
+
+    /** Flechas e outros projéteis de um guerreiro não ferem o dono nem os aliados dele. */
+    @SubscribeEvent
+    public static void onLivingAttack(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
+        if (event.getSource().getEntity() instanceof WarriorCompanionEntity shooter
+                && event.getSource().getDirectEntity() != shooter
+                && shooter.isAlliedTo(event.getEntity())) {
+            event.setCanceled(true);
         }
     }
 
@@ -72,6 +84,25 @@ public class VanguardCombatEvents {
     @SubscribeEvent
     public static void onLivingDeath(net.minecraftforge.event.entity.living.LivingDeathEvent event) {
         LivingEntity victim = event.getEntity();
+        // Talento Segundo Fôlego: escapa da morte uma vez a cada 5 minutos
+        if (victim instanceof WarriorCompanionEntity warrior && !warrior.level().isClientSide
+                && warrior.isRecruited()
+                && warrior.hasPerk(io.github.raffasanttos.epicvanguard.entity.WarriorPerk.SECOND_WIND)
+                && warrior.getSecondWindCooldown() <= 0
+                && !event.getSource().is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            event.setCanceled(true);
+            warrior.setHealth(Math.max(2.0F, warrior.getMaxHealth() * 0.25F));
+            warrior.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.REGENERATION, 100, 1));
+            warrior.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 60, 1));
+            warrior.setSecondWindCooldown(WarriorCompanionEntity.SECOND_WIND_COOLDOWN_TICKS);
+            warrior.level().broadcastEntityEvent(warrior, (byte) 35); // animação do totem
+            Player owner = warrior.getOwner();
+            if (owner != null) {
+                owner.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                        "epicvanguard.perk.second_wind.triggered", warrior.getWarriorName()), true);
+            }
+            return;
+        }
         if (victim.level() instanceof ServerLevel serverLevel) {
             Entity attacker = event.getSource().getEntity();
             if (attacker == null) {

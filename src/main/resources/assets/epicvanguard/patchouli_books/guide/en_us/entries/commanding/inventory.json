@@ -10,7 +10,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "Weapon enchantments work: $(thing)Sharpness$(), $(thing)Smite$(), $(thing)Knockback$(), $(thing)Fire Aspect$() and others. Weapons lose durability like yours and break when worn out.$(br2)Companions $(thing)pick up items$() they walk over, except what you drop. See the $(thing)Hand$() button."
+      "text": "Weapon enchantments work: $(thing)Sharpness$(), $(thing)Smite$(), $(thing)Knockback$(), $(thing)Fire Aspect$() and others. Weapons lose durability like yours and break when worn out.$(br2)Companions $(thing)pick up items$() they walk over, including what you drop for them. See the $(thing)Hand$() button."
     },
     {
       "type": "patchouli:text",

@@ -53,7 +53,9 @@ public class EpicFightCompat {
                 ModEntityTypes.WARRIOR_COMPANION.get(),
                 ModEntityTypes.BERSERKER_COMPANION.get(),
                 ModEntityTypes.GUARDIAN_COMPANION.get(),
-                ModEntityTypes.DUELIST_COMPANION.get()
+                ModEntityTypes.DUELIST_COMPANION.get(),
+                ModEntityTypes.ARCHER_COMPANION.get(),
+                ModEntityTypes.STANDARD_BEARER_COMPANION.get()
         );
     }
 

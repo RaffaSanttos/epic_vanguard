@@ -98,6 +98,11 @@ public class WarriorHealingHelper {
         return -1;
     }
 
+    /** Médico de Campo: comida e poções curam 50% a mais. */
+    private static float healMultiplier(WarriorCompanionEntity warrior) {
+        return warrior.hasPerk(io.github.raffasanttos.epicvanguard.entity.WarriorPerk.FIELD_MEDIC) ? 1.5F : 1.0F;
+    }
+
     public static void consumeHealingItem(WarriorCompanionEntity warrior, int slotIndex) {
         WarriorInventory inv = warrior.getWarriorInventory();
         if (slotIndex < 0 || slotIndex >= inv.getContainerSize()) return;
@@ -111,7 +116,7 @@ public class WarriorHealingHelper {
             List<MobEffectInstance> effects = PotionUtils.getMobEffects(stack);
             for (MobEffectInstance effect : effects) {
                 if (effect.getEffect() == MobEffects.HEAL) {
-                    warrior.heal(4.0F * (effect.getAmplifier() + 1));
+                    warrior.heal(4.0F * (effect.getAmplifier() + 1) * healMultiplier(warrior));
                 } else if (effect.getEffect().isInstantenous()) {
                     effect.getEffect().applyInstantenousEffect(warrior, warrior, warrior, effect.getAmplifier(), 1.0D);
                 } else {
@@ -145,7 +150,7 @@ public class WarriorHealingHelper {
             float saturation = foodProps != null ? foodProps.getSaturationModifier() : 0.6F;
             float healAmount = Math.max(4.0F, nutrition + (saturation * 2.0F));
 
-            warrior.heal(healAmount);
+            warrior.heal(healAmount * healMultiplier(warrior));
 
             if (foodProps != null) {
                 for (var effectPair : foodProps.getEffects()) {

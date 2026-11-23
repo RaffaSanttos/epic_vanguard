@@ -44,6 +44,20 @@ public class WarriorCompanionPatch extends HumanoidMobPatch<WarriorCompanionEnti
         event.add(io.github.raffasanttos.epicvanguard.init.ModEntityTypes.DUELIST_COMPANION.get(), EpicFightAttributes.STUN_ARMOR.get(), 0.0D);
         event.add(io.github.raffasanttos.epicvanguard.init.ModEntityTypes.DUELIST_COMPANION.get(), EpicFightAttributes.MAX_STAMINA.get(), 20.0D);
         event.add(io.github.raffasanttos.epicvanguard.init.ModEntityTypes.DUELIST_COMPANION.get(), EpicFightAttributes.STAMINA_REGEN.get(), 1.6D);
+
+        // Arqueiro: leve, pouca resistência a atordoamento
+        event.add(io.github.raffasanttos.epicvanguard.init.ModEntityTypes.ARCHER_COMPANION.get(), EpicFightAttributes.IMPACT.get(), 0.4D);
+        event.add(io.github.raffasanttos.epicvanguard.init.ModEntityTypes.ARCHER_COMPANION.get(), EpicFightAttributes.WEIGHT.get(), 16.0D);
+        event.add(io.github.raffasanttos.epicvanguard.init.ModEntityTypes.ARCHER_COMPANION.get(), EpicFightAttributes.STUN_ARMOR.get(), 0.0D);
+        event.add(io.github.raffasanttos.epicvanguard.init.ModEntityTypes.ARCHER_COMPANION.get(), EpicFightAttributes.MAX_STAMINA.get(), 15.0D);
+        event.add(io.github.raffasanttos.epicvanguard.init.ModEntityTypes.ARCHER_COMPANION.get(), EpicFightAttributes.STAMINA_REGEN.get(), 1.2D);
+
+        // Porta-estandarte: firme, aguenta empurrões
+        event.add(io.github.raffasanttos.epicvanguard.init.ModEntityTypes.STANDARD_BEARER_COMPANION.get(), EpicFightAttributes.IMPACT.get(), 0.4D);
+        event.add(io.github.raffasanttos.epicvanguard.init.ModEntityTypes.STANDARD_BEARER_COMPANION.get(), EpicFightAttributes.WEIGHT.get(), 26.0D);
+        event.add(io.github.raffasanttos.epicvanguard.init.ModEntityTypes.STANDARD_BEARER_COMPANION.get(), EpicFightAttributes.STUN_ARMOR.get(), 2.0D);
+        event.add(io.github.raffasanttos.epicvanguard.init.ModEntityTypes.STANDARD_BEARER_COMPANION.get(), EpicFightAttributes.MAX_STAMINA.get(), 20.0D);
+        event.add(io.github.raffasanttos.epicvanguard.init.ModEntityTypes.STANDARD_BEARER_COMPANION.get(), EpicFightAttributes.STAMINA_REGEN.get(), 1.0D);
     }
 
     @Override

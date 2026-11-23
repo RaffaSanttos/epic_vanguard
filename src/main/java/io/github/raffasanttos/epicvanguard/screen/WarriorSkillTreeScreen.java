@@ -9,9 +9,10 @@ import io.github.raffasanttos.epicvanguard.entity.GuardianCompanionEntity;
 import io.github.raffasanttos.epicvanguard.entity.WarriorCompanionEntity;
 import io.github.raffasanttos.epicvanguard.networking.Messages;
 import io.github.raffasanttos.epicvanguard.networking.packet.PacketOpenWarriorGUI;
-import io.github.raffasanttos.epicvanguard.networking.packet.PacketChooseSpecialization;
 import io.github.raffasanttos.epicvanguard.entity.util.WarriorProgression;
 import io.github.raffasanttos.epicvanguard.init.ModEntityTypes;
+import io.github.raffasanttos.epicvanguard.networking.packet.PacketUnlockPerk;
+import io.github.raffasanttos.epicvanguard.entity.WarriorPerk;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -23,6 +24,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,19 +33,22 @@ public class WarriorSkillTreeScreen extends Screen {
             new ResourceLocation(EpicVanguardMod.MOD_ID, "textures/gui/skill_tree_bg.png");
 
     private final int entityId;
-    private int selectedSpec = 1; // 1 = Berserker, 2 = Guardião, 3 = Duelista
+    private int selectedSpec = 1; // 1 = Berserker, 2 = Guardião, 3 = Duelista, 4 = Arqueiro, 5 = Porta-estandarte
     private int leftPos;
     private int topPos;
-    private final int imageWidth = 256;
-    private final int imageHeight = 230;
+    private final int imageWidth = ScreenTabs.FRAME_W;
+    private final int imageHeight = ScreenTabs.FRAME_H;
 
     private Button tabMochilaButton;
     private Button tabHabilidadesButton;
-    /** Guerreiro base: alterna a classe mostrada na árvore (prévia). */
-    private Button previewSpecButton;
-    /** Guerreiro base no nível 5+: escolhe a classe mostrada (dois cliques: escolher e confirmar). */
-    private Button chooseSpecButton;
-    private boolean confirmingChoice = false;
+    private Button tabTalentosButton;
+    /** true = aba Talentos (árvore com pontos); false = aba Habilidades (passivas por nível). Lembrado entre aberturas. */
+    private static boolean showPerks = true;
+
+    // Grade de talentos: 2 colunas x 5 linhas
+    private static final int PERK_CARD_H = 24;
+    private static final int PERK_ROW_SPACING = 28;
+    private static final int PERK_GAP = 6;
 
     public static class SkillNode {
         public final int level;
@@ -57,6 +62,12 @@ public class WarriorSkillTreeScreen extends Screen {
             this.summary = summary;
             this.details = details;
         }
+    }
+
+    /** Abre a tela na aba Habilidades ({@code perks = false}) ou Talentos ({@code perks = true}). */
+    public WarriorSkillTreeScreen(int entityId, boolean perks) {
+        this(entityId);
+        showPerks = perks;
     }
 
     public WarriorSkillTreeScreen(int entityId) {
@@ -73,7 +84,7 @@ public class WarriorSkillTreeScreen extends Screen {
                 this.selectedSpec = 3;
             } else if (entity instanceof WarriorCompanionEntity warrior) {
                 int spec = warrior.getSpecialization();
-                this.selectedSpec = (spec >= 1 && spec <= 3) ? spec : 1;
+                this.selectedSpec = (spec >= 1 && spec <= WarriorCompanionEntity.SPEC_MAX) ? spec : 1;
             }
         }
     }
@@ -90,61 +101,137 @@ public class WarriorSkillTreeScreen extends Screen {
                 btn -> {
                     Messages.sendToServer(new PacketOpenWarriorGUI(entityId, true));
                 })
-                .bounds(leftPos + 8, topPos - 18, 70, 18)
+                .bounds(leftPos + ScreenTabs.TAB1_X, topPos - ScreenTabs.TAB_H, ScreenTabs.TAB1_W, ScreenTabs.TAB_H)
                 .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.warrior_skill_tree_screen.3")))
                 .build();
 
         this.tabHabilidadesButton = Button.builder(
                 Component.translatable("epicvanguard.text.warrior_skill_tree_screen.4"),
-                btn -> {})
-                .bounds(leftPos + 80, topPos - 18, 90, 18)
+                btn -> setShowPerks(false))
+                .bounds(leftPos + ScreenTabs.TAB2_X, topPos - ScreenTabs.TAB_H, ScreenTabs.TAB2_W, ScreenTabs.TAB_H)
+                .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.warrior_companion_screen.9")))
                 .build();
-        this.tabHabilidadesButton.active = false; // Aba atualmente ativa, sem tooltip obstrutiva
+
+        this.tabTalentosButton = Button.builder(
+                Component.translatable("epicvanguard.ui.perks.tab"),
+                btn -> setShowPerks(true))
+                .bounds(leftPos + ScreenTabs.TAB3_X, topPos - ScreenTabs.TAB_H, ScreenTabs.TAB3_W, ScreenTabs.TAB_H)
+                .tooltip(Tooltip.create(Component.translatable("epicvanguard.ui.perks.tab.tooltip")))
+                .build();
 
         this.addRenderableWidget(tabMochilaButton);
         this.addRenderableWidget(tabHabilidadesButton);
+        this.addRenderableWidget(tabTalentosButton);
 
-        // Guerreiro base (sem classe): prévia das 3 árvores e, a partir do nível 5, a escolha da classe
-        WarriorCompanionEntity warrior = getCompanion();
-        boolean isBase = warrior != null && warrior.getType() == ModEntityTypes.WARRIOR_COMPANION.get()
-                && warrior.getSpecialization() == WarriorCompanionEntity.SPEC_NONE;
-        if (isBase) {
-            this.previewSpecButton = Button.builder(Component.literal("⇄"), btn -> {
-                        selectedSpec = selectedSpec % 3 + 1;
-                        confirmingChoice = false;
-                        updateChooseButton();
-                    })
-                    .bounds(leftPos + 172, topPos - 18, 16, 18)
-                    .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.specialization.preview")))
-                    .build();
-            this.chooseSpecButton = Button.builder(Component.empty(), btn -> {
-                        if (!confirmingChoice) {
-                            confirmingChoice = true;
-                            updateChooseButton();
-                            return;
-                        }
-                        Messages.sendToServer(new PacketChooseSpecialization(entityId, selectedSpec));
-                        this.onClose();
-                    })
-                    .bounds(leftPos + 190, topPos - 18, 66, 18)
-                    .build();
-            boolean ready = warrior.getWarriorLevel() >= WarriorProgression.SPEC_CHOICE_LEVEL && warrior.isRecruited();
-            this.chooseSpecButton.active = ready;
-            this.chooseSpecButton.setTooltip(Tooltip.create(ready
-                    ? Component.translatable("epicvanguard.text.specialization.choose_tooltip")
-                    : Component.translatable("epicvanguard.text.specialization.not_ready", WarriorProgression.SPEC_CHOICE_LEVEL)));
-            updateChooseButton();
-            this.addRenderableWidget(previewSpecButton);
-            this.addRenderableWidget(chooseSpecButton);
+        setShowPerks(showPerks);
+    }
+
+    private void setShowPerks(boolean perks) {
+        showPerks = perks;
+        // Aba ativa fica desabilitada (indicador visual)
+        this.tabHabilidadesButton.active = perks;
+        this.tabTalentosButton.active = !perks;
+    }
+    private int perkCardX(int index) {
+        int cardW = perkCardW();
+        return leftPos + 10 + (index % 2) * (cardW + PERK_GAP);
+    }
+
+    private int perkCardY(int index) {
+        return topPos + 75 + (index / 2) * PERK_ROW_SPACING;
+    }
+
+    private int perkCardW() {
+        return (imageWidth - 20 - PERK_GAP) / 2;
+    }
+
+    @Nullable
+    private WarriorPerk perkAt(double mouseX, double mouseY) {
+        WarriorPerk[] perks = WarriorPerk.values();
+        for (int i = 0; i < perks.length; i++) {
+            int x = perkCardX(i), y = perkCardY(i);
+            if (mouseX >= x && mouseX <= x + perkCardW() && mouseY >= y && mouseY <= y + PERK_CARD_H) {
+                return perks[i];
+            }
         }
+        return null;
     }
 
-    private void updateChooseButton() {
-        if (chooseSpecButton == null) return;
-        chooseSpecButton.setMessage(confirmingChoice
-                ? Component.translatable("epicvanguard.text.specialization.confirm")
-                : Component.translatable("epicvanguard.text.specialization.choose"));
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (showPerks && button == 0) {
+            WarriorPerk perk = perkAt(mouseX, mouseY);
+            WarriorCompanionEntity warrior = getCompanion();
+            if (perk != null && warrior != null) {
+                if (warrior.getPerkLockReason(perk) == null) {
+                    Messages.sendToServer(new PacketUnlockPerk(entityId, perk));
+                    Minecraft.getInstance().getSoundManager().play(
+                            net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                }
+                return true;
+            }
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
     }
+
+    /** Desenha a grade de talentos e devolve o talento sob o mouse. */
+    @Nullable
+    private WarriorPerk renderPerks(GuiGraphics g, WarriorCompanionEntity warrior, int mouseX, int mouseY) {
+        int spec = warrior.getSpecialization();
+        WarriorPerk hovered = null;
+        WarriorPerk[] perks = WarriorPerk.values();
+        int cardW = perkCardW();
+        for (int i = 0; i < perks.length; i++) {
+            WarriorPerk perk = perks[i];
+            int x = perkCardX(i), y = perkCardY(i);
+            boolean owned = warrior.hasPerk(perk);
+            boolean available = !owned && warrior.getPerkLockReason(perk) == null;
+            boolean levelOk = warrior.getWarriorLevel() >= perk.getRequiredLevel();
+            boolean hover = mouseX >= x && mouseX <= x + cardW && mouseY >= y && mouseY <= y + PERK_CARD_H;
+
+            int border = owned ? 0xFFE0B040 : available ? (hover ? 0xFF7CFC9A : 0xFF2ECC71) : 0xFF555555;
+            int bg = owned ? 0xE6352A12 : available ? 0xE61E2E1E : 0xE6242424;
+            g.fill(x - 1, y - 1, x + cardW + 1, y + PERK_CARD_H + 1, border);
+            g.fill(x, y, x + cardW, y + PERK_CARD_H, bg);
+
+            String icon = owned ? "§6★" : available ? "§a✚" : "§8🔒";
+            g.drawString(this.font, icon, x + 4, y + 4, 0xFFFFFF, false);
+            String name = (owned ? "§e§l" : available ? "§f§l" : "§7") + perk.getName(spec).getString();
+            drawClampedString(g, name, x + 14, y + 3, cardW - 16, 0xFFFFFF);
+            String sub = owned ? I18n.get("epicvanguard.ui.perks.owned")
+                    : (levelOk ? "§a" : "§c") + I18n.get("epicvanguard.ui.perks.level", perk.getRequiredLevel());
+            drawClampedString(g, sub, x + 14, y + 13, cardW - 16, 0xCCCCCC);
+
+            if (hover) hovered = perk;
+        }
+        return hovered;
+    }
+
+    private void renderPerkTooltip(GuiGraphics g, WarriorCompanionEntity warrior, WarriorPerk perk, int mouseX, int mouseY) {
+        int spec = warrior.getSpecialization();
+        List<Component> tip = new ArrayList<>();
+        tip.add(Component.literal("§6§l✦ ").append(perk.getName(spec)).append(Component.literal(" §6§l✦")));
+        for (String line : perk.getDescription(spec).getString().split("\\n")) {
+            tip.add(Component.literal("§7" + line));
+        }
+        tip.add(Component.literal(""));
+        tip.add(Component.literal(I18n.get("epicvanguard.ui.perks.level", perk.getRequiredLevel())));
+        WarriorPerk pre = perk.getPrerequisite();
+        if (pre != null) {
+            tip.add(Component.literal((warrior.hasPerk(pre) ? "§a" : "§c")
+                    + I18n.get("epicvanguard.ui.perks.requires", pre.getName(spec).getString())));
+        }
+        if (warrior.hasPerk(perk)) {
+            tip.add(Component.literal(I18n.get("epicvanguard.ui.perks.owned")));
+        } else {
+            Component reason = warrior.getPerkLockReason(perk);
+            tip.add(reason == null
+                    ? Component.literal(I18n.get("epicvanguard.ui.perks.click"))
+                    : Component.literal("§c").append(reason));
+        }
+        g.renderComponentTooltip(this.font, tip, mouseX, mouseY);
+    }
+
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
@@ -224,6 +311,15 @@ public class WarriorSkillTreeScreen extends Screen {
                         I18n.get("epicvanguard.ui.warrior_skill_tree_screen.30")
                     )
             ));
+        } else if (spec == 4 || spec == 5) {
+            String b = spec == 4 ? "epicvanguard.ui.skill.archer." : "epicvanguard.ui.skill.standard_bearer.";
+            list.add(new SkillNode(
+                    5,
+                    I18n.get(b + "t5.title"),
+                    I18n.get(b + "t5.summary"),
+                    List.of(I18n.get(b + "t5.1"), I18n.get(b + "t5.2"), I18n.get(b + "t5.3"),
+                            I18n.get(b + "t5.4"), I18n.get(b + "t5.5"))
+            ));
         } else {
             list.add(new SkillNode(
                     5,
@@ -260,6 +356,14 @@ public class WarriorSkillTreeScreen extends Screen {
                         I18n.get("epicvanguard.ui.warrior_skill_tree_screen.45"),
                         I18n.get("epicvanguard.ui.warrior_skill_tree_screen.46")
                     )
+            ));
+        } else if (spec == 4 || spec == 5) {
+            String b = spec == 4 ? "epicvanguard.ui.skill.archer." : "epicvanguard.ui.skill.standard_bearer.";
+            list.add(new SkillNode(
+                    10,
+                    I18n.get(b + "t10.title"),
+                    I18n.get(b + "t10.summary"),
+                    List.of(I18n.get(b + "t10.1"), I18n.get(b + "t10.2"))
             ));
         } else {
             list.add(new SkillNode(
@@ -320,12 +424,21 @@ public class WarriorSkillTreeScreen extends Screen {
             case 1 -> I18n.get("epicvanguard.ui.warrior_skill_tree_screen.101");
             case 2 -> I18n.get("epicvanguard.ui.warrior_skill_tree_screen.102");
             case 3 -> I18n.get("epicvanguard.ui.warrior_skill_tree_screen.103");
+            case 4 -> I18n.get("epicvanguard.ui.skill.archer.header");
+            case 5 -> I18n.get("epicvanguard.ui.skill.standard_bearer.header");
             default -> I18n.get("epicvanguard.ui.warrior_skill_tree_screen.57");
         };
         drawClampedString(guiGraphics, headerTitle, leftPos + 12, topPos + 7, 232, 0x222222);
 
         String subHeader = I18n.get("epicvanguard.ui.warrior_skill_tree_screen.58") + companionName + I18n.get("epicvanguard.ui.warrior_skill_tree_screen.59") + companionLevel + " §8(" + companionTitle + "§8)";
-        drawClampedString(guiGraphics, subHeader, leftPos + 12, topPos + 18, 232, 0x333333);
+        if (showPerks && warrior != null) {
+            String pts = I18n.get("epicvanguard.ui.perks.points", warrior.getSkillPoints());
+            int ptsW = this.font.width(pts);
+            guiGraphics.drawString(this.font, pts, leftPos + imageWidth - 12 - ptsW, topPos + 18, 0x6B4A10, false);
+            drawClampedString(guiGraphics, subHeader, leftPos + 12, topPos + 18, 232 - ptsW - 6, 0x333333);
+        } else {
+            drawClampedString(guiGraphics, subHeader, leftPos + 12, topPos + 18, 232, 0x333333);
+        }
 
         // 2. Painel de Atributos em Combate
         int panelX = leftPos + 10;
@@ -363,6 +476,8 @@ public class WarriorSkillTreeScreen extends Screen {
                 case 1 -> I18n.get("epicvanguard.ui.warrior_skill_tree_screen.104");
                 case 2 -> I18n.get("epicvanguard.ui.warrior_skill_tree_screen.105");
                 case 3 -> I18n.get("epicvanguard.ui.warrior_skill_tree_screen.106");
+                case 4 -> I18n.get("epicvanguard.ui.skill.archer.buff");
+                case 5 -> I18n.get("epicvanguard.ui.skill.standard_bearer.buff");
                 default -> I18n.get("epicvanguard.ui.warrior_skill_tree_screen.60");
             };
             drawClampedString(guiGraphics, specBuff, panelX + 6, panelY + 16, panelW - 12, 0xFFFFFF);
@@ -384,7 +499,17 @@ public class WarriorSkillTreeScreen extends Screen {
             drawClampedString(guiGraphics, xpLabel, xpX + 2, xpY + 5, xpW - 4, 0xCCCCCC);
         }
 
-        // 3. Árvore de Habilidades (5 Cards)
+        // 3a. Aba Talentos: grade com pontos para gastar
+        if (showPerks) {
+            WarriorPerk hoveredPerk = warrior != null ? renderPerks(guiGraphics, warrior, mouseX, mouseY) : null;
+            super.render(guiGraphics, mouseX, mouseY, delta);
+            if (hoveredPerk != null) {
+                renderPerkTooltip(guiGraphics, warrior, hoveredPerk, mouseX, mouseY);
+            }
+            return;
+        }
+
+        // 3b. Aba Habilidades: passivas por nível (5 Cards)
         List<SkillNode> nodes = getNodesForSpec(selectedSpec);
         int nodeY = topPos + 75;
         int nodeH = 24;

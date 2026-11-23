@@ -41,7 +41,7 @@ public class WarriorWarcryGoal extends Goal {
             return true;
         }
         // Gatilho 3: Aglomeração de inimigos (>= 2 monstros em 10 blocos)
-        List<Monster> monsters = warrior.level().getEntitiesOfClass(Monster.class, warrior.getBoundingBox().inflate(10.0D), LivingEntity::isAlive);
+        List<Monster> monsters = warrior.level().getEntitiesOfClass(Monster.class, warrior.getBoundingBox().inflate(10.0D), WarriorCompanionEntity::isWarcryTarget);
         return monsters.size() >= 2;
     }
 
