@@ -20,6 +20,9 @@
 - Fixed: right after recruiting, the Monsters button showed ON and could turn hunting on by accident.
 - Item pick-up: whatever you drop for a companion is always picked up (unless pick-up is off), even in "useful only" mode. That is how you hand them items.
 - Auto-equip: the Standard-bearer puts a banner in the off hand instead of a shield.
+- Natural regeneration is now **off by default**: companions heal with food, potions and campfires (`companions.naturalRegen` turns it back on).
+- Item pick-up now starts **off** for new companions; turn it on with the ✋ button.
+- Quick order (sneak + right-click with an empty hand) now cycles **Follow → Guard → Stay**; Guard protects the spot where the companion is.
 - Fixed: crash when a companion mounted a horse with Epic Fight installed.
 - Fixed: health could go above the maximum.
 - Fixed: long class names spilled out of their box in the companion screen.
@@ -45,6 +48,9 @@
 - Corrigido: logo depois de contratar, o botão de Monstros aparecia ligado e podia ligar a caça sem querer.
 - Coleta: o que você joga para um companheiro é sempre pego (a menos que a coleta esteja desligada), mesmo no modo "só úteis". É assim que você entrega itens a ele.
 - Auto-equipar: o Porta-estandarte coloca um estandarte na mão secundária em vez de escudo.
+- A regeneração natural agora vem **desligada por padrão**: os companheiros se curam com comida, poções e fogueira (`companions.naturalRegen` liga de novo).
+- A coleta de itens agora começa **desligada** nos companheiros novos; ligue no botão ✋.
+- A ordem rápida (agachado + botão direito de mão vazia) agora alterna **Seguir → Guarda → Parado**; a Guarda protege o lugar onde o companheiro está.
 - Corrigido: crash quando um companheiro montava num cavalo com o Epic Fight instalado.
 - Corrigido: a vida podia passar do máximo.
 - Corrigido: nomes de classe longos saíam da caixa na tela do companheiro.

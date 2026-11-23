@@ -109,7 +109,7 @@ O `CompanionTeleportHandler` passou a cuidar só do que o guerreiro não resolve
 - Botão **✋** na tela do guerreiro liga/desliga a coleta (ligada por padrão; salvo no NBT como `PickupItems`).
 - Itens jogados pelo dono (`ItemEntity#getOwner`) são ignorados.
 - A varredura roda a cada 5 ticks, espalhada entre guerreiros pelo id (parte do 5.1).
-- ✅ Filtro (22/11/2026): o botão ✋ agora tem 3 modos: **desligada** (cinza), **só úteis** (amarela, padrão) e **tudo** (verde). "Úteis" = comida, poções de Cura/Regeneração, moedas de ouro, flechas e armadura/arma/escudo melhor que o equipado (`WarriorEquipment.isUseful`). NBT `PickupMode`; o `PickupItems` da 1.0.18 vira "tudo" (ligado) ou "desligada".
+- ✅ Filtro (22/11/2026): o botão ✋ agora tem 3 modos: **desligada** (cinza), **só úteis** (amarela) e **tudo** (verde). Desde a 1.0.20 começa **desligada** nos companheiros novos. "Úteis" = comida, poções de Cura/Regeneração, moedas de ouro, flechas e armadura/arma/escudo melhor que o equipado (`WarriorEquipment.isUseful`). NBT `PickupMode`; o `PickupItems` da 1.0.18 vira "tudo" (ligado) ou "desligada".
 
 ### ✅ 3.3 Especialização não pode ser escolhida — corrigido (22/11/2026)
 Um Guerreiro base (sem classe) no **nível 5** pode virar Berserker, Guardião ou Duelista pela aba **Talentos**:
@@ -127,7 +127,7 @@ Um Guerreiro base (sem classe) no **nível 5** pode virar Berserker, Guardião o
 É o comportamento padrão, sem botão: para ele não usar algo, não deixe na mochila.
 
 ### ✅ 3.5 Ordens rápidas sem abrir a GUI — feito (22/11/2026)
-- **Agachado + clique de mão vazia** no próprio companheiro: alterna Seguir ↔ Parado (mensagem na action bar). Agachar + clique com arma fica livre para o duelo (3.7).
+- **Agachado + clique de mão vazia** no próprio companheiro: alterna Seguir → Guarda → Parado (mensagem na action bar). Agachar + clique com arma fica livre para o duelo (3.7).
 - **Corneta da Vanguarda** (`vanguard_horn`, 4 cobres + 1 moeda): mirando numa criatura, todos os seus companheiros num raio de 32 blocos atacam (mesmo pacíficos; quem está em Parado não sai do lugar); mirando no nada, todos param de lutar. Não aceita jogadores, companheiros nem seus pets como alvo. Recarga de 2 s. Usa a textura da corneta de cabra vanilla.
 
 ### ✅ 3.8 Guerreiros ficavam mudos depois de trocar de mundo — corrigido (22/11/2026)

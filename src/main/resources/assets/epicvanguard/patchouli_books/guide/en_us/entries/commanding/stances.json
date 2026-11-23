@@ -15,7 +15,7 @@
     {
       "type": "patchouli:text",
       "title": "Quick Orders",
-      "text": "$(thing)Sneak + right-click$() your companion with an empty hand to switch between $(thing)Follow$() and $(thing)Stay$() without opening the screen.$(br2)To command everyone at once, use the $(l:epicvanguard:commanding/war_horn)Vanguard War Horn$()."
+      "text": "$(thing)Sneak + right-click$() your companion with an empty hand to cycle $(thing)Follow$() → $(thing)Guard$() → $(thing)Stay$() without opening the screen. Guard protects the spot where they are at that moment.$(br2)To command everyone at once, use the $(l:epicvanguard:commanding/war_horn)Vanguard War Horn$()."
     }
   ]
 }

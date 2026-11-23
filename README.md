@@ -8,12 +8,12 @@ Mercenary companions for **Minecraft 1.20.1 (Forge 47.x)**. Hire warriors with g
 
 - **Hiring:** find mercenaries in warrior houses inside villages, rescue prisoners from pillager outposts, or post a request at a **Vanguard Point** block and a company marches to your base.
 - **Gold Coins** are the currency. Mercenaries cost more the better their starting gear (Recruit, Veteran, Elite).
-- **Stances:** Follow, Guard (protects an area) and Stay. New recruits start in Follow and peaceful; turn monster hunting (sword) and food hunting (meat) on in their screen. Sneak + right-click with an empty hand switches Follow/Stay.
-- **Gear:** they pick up useful items (✋ button: off / useful / everything; what you drop for them is always picked up), put on better armor and weapons from their backpack, warn you when gear is about to break and repair it at a campfire.
+- **Stances:** Follow, Guard (protects an area) and Stay. New recruits start in Follow and peaceful; turn monster hunting (sword) and food hunting (meat) on in their screen. Sneak + right-click with an empty hand cycles Follow → Guard → Stay.
+- **Gear:** they can pick up items (✋ button: off by default / useful / everything; what you drop for them is always picked up), put on better armor and weapons from their backpack, warn you when gear is about to break and repair it at a campfire.
 - **Ranged combat and mounts:** companions with a bow fight at range, and in Follow they ride your horses with you.
 - **Vanguard War Horn:** order every companion nearby to attack what you aim at, or to stop and regroup.
 - **Classes:** Berserker, Guardian, Duelist, Archer and Standard-bearer, each with its own skills and war cry. Every companion has a class from the start; talent points (1 every 2 levels) unlock talents.
-- **Survival:** companions eat food and drink healing potions from their backpack, retreat when badly hurt and rest by campfires.
+- **Survival:** companions do not regenerate on their own (configurable); they eat food and drink healing potions from their backpack, retreat when badly hurt and rest by campfires.
 - **Protection:** they block arrows, dodge creepers and step in when you are about to die.
 - **Guide book** in English and Portuguese (needs Patchouli, optional).
 - **Epic Fight** (optional): companions fight with its animations.
@@ -47,6 +47,10 @@ Mercenary companions for **Minecraft 1.20.1 (Forge 47.x)**. Hire warriors with g
 | `follow.combatLeashDistance` | 32 | Blocks away at which they teleport even while fighting |
 | `follow.followTeleportDelayTicks` | 40 | Ticks they must stay behind first |
 | `registry.registryMemoryDays` | 100 | In-game days the save remembers dead/dismissed companions |
+| `companions.naturalRegen` | false | Slow health regeneration out of combat |
+| `companions.regenIntervalTicks` | 60 | Ticks per point of natural regeneration |
+
+The file has more sections (shield and dodge chances, ranged combat, equipment wear, aura, mounts, spawns, contract cost); each key has a comment.
 
 ## Requirements
 
@@ -84,12 +88,12 @@ Companheiros mercenários para **Minecraft 1.20.1 (Forge 47.x)**. Contrate guerr
 
 - **Contratação:** mercenários nas casas de guerreiro das vilas, prisioneiros nos postos de saqueadores para resgatar, ou um edital no bloco **Vanguard Point** (Posto da Vanguarda) para uma companhia marchar até a sua base.
 - **Moedas de Ouro** são a moeda. Quanto melhor o equipamento inicial (Recruta, Veterano, Elite), mais caro.
-- **Posturas:** Seguir, Guarda (protege uma área) e Parado. Recrutas novos começam em Seguir e pacíficos; ligue a caça a monstros (espada) e a animais (carne) na tela deles. Agachado + botão direito de mão vazia alterna Seguir/Parado.
-- **Equipamento:** pegam itens úteis do chão (botão ✋: desligada / úteis / tudo; o que você joga para eles é sempre pego), vestem sozinhos armadura e armas melhores da mochila, avisam quando algo vai quebrar e consertam na fogueira.
+- **Posturas:** Seguir, Guarda (protege uma área) e Parado. Recrutas novos começam em Seguir e pacíficos; ligue a caça a monstros (espada) e a animais (carne) na tela deles. Agachado + botão direito de mão vazia alterna Seguir → Guarda → Parado.
+- **Equipamento:** podem pegar itens do chão (botão ✋: desligada por padrão / úteis / tudo; o que você joga para eles é sempre pego), vestem sozinhos armadura e armas melhores da mochila, avisam quando algo vai quebrar e consertam na fogueira.
 - **Combate à distância e montarias:** quem tem arco luta de longe, e no modo Seguir eles montam nos seus cavalos com você.
 - **Corneta da Vanguarda:** manda todos os companheiros por perto atacarem o que você mira, ou pararem e se reagruparem.
 - **Classes:** Berserker, Guardião, Duelista, Arqueiro e Porta-estandarte, cada uma com habilidades e grito de guerra. Todo companheiro já nasce com classe; pontos de talento (1 a cada 2 níveis) liberam talentos.
-- **Sobrevivência:** comem e bebem poções da mochila, recuam quando muito feridos e descansam em fogueiras.
+- **Sobrevivência:** não se regeneram sozinhos (configurável); comem e bebem poções da mochila, recuam quando muito feridos e descansam em fogueiras.
 - **Proteção:** bloqueiam flechas, fogem de creepers e intervêm quando você está para morrer.
 - **Livro guia** em inglês e português (precisa do Patchouli, opcional).
 - **Epic Fight** (opcional): os companheiros lutam com as animações dele.
@@ -100,7 +104,7 @@ Companheiros mercenários para **Minecraft 1.20.1 (Forge 47.x)**. Contrate guerr
 
 ## Config do servidor
 
-`config/epicvanguard-common.toml`: custo de contratação, XP, recarga do grito, dias do edital, distâncias do modo Seguir e memória do registro. A tabela acima (em inglês) lista as chaves e os padrões.
+`config/epicvanguard-common.toml`: custo de contratação, XP, recarga do grito, dias do edital, distâncias do modo Seguir, memória do registro, regeneração natural (desligada por padrão) e mais seções de combate, desgaste, montarias e spawns. A tabela acima (em inglês) lista as chaves e os padrões.
 
 ## Compilar
 

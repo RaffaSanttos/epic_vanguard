@@ -71,8 +71,8 @@ public final class EpicVanguardConfig {
 
         b.comment("Companions").push("companions");
         NATURAL_REGEN = b
-                .comment("Companions slowly regenerate health out of combat.")
-                .define("naturalRegen", true);
+                .comment("Companions slowly regenerate health out of combat. Off by default: they heal with food, potions and campfires.")
+                .define("naturalRegen", false);
         REGEN_INTERVAL_TICKS = b
                 .comment("Ticks between each point of natural regeneration (20 = 1 second).")
                 .defineInRange("regenIntervalTicks", 60, 5, 1200);
@@ -211,7 +211,7 @@ public final class EpicVanguardConfig {
     }
 
     public static int contractCoins() { return loaded() ? CONTRACT_COINS.get() : 20; }
-    public static boolean naturalRegen() { return loaded() ? NATURAL_REGEN.get() : true; }
+    public static boolean naturalRegen() { return loaded() ? NATURAL_REGEN.get() : false; }
     public static int regenIntervalTicks() { return loaded() ? REGEN_INTERVAL_TICKS.get() : 60; }
     public static float shieldBlockChance() { return loaded() ? SHIELD_BLOCK_CHANCE.get().floatValue() : 0.70F; }
     public static float shieldBlockReduction() { return loaded() ? SHIELD_BLOCK_REDUCTION.get().floatValue() : 0.80F; }

@@ -15,7 +15,7 @@
     {
       "type": "patchouli:text",
       "title": "Ordens Rápidas",
-      "text": "$(thing)Agachado + botão direito$() no companheiro, de mão vazia, alterna entre $(thing)Seguir$() e $(thing)Parado$() sem abrir a tela.$(br2)Para comandar todos de uma vez, use a $(l:epicvanguard:commanding/war_horn)Corneta da Vanguarda$()."
+      "text": "$(thing)Agachado + botão direito$() no companheiro, de mão vazia, alterna $(thing)Seguir$() → $(thing)Guarda$() → $(thing)Parado$() sem abrir a tela. A Guarda protege o lugar onde ele está naquele momento.$(br2)Para comandar todos de uma vez, use a $(l:epicvanguard:commanding/war_horn)Corneta da Vanguarda$()."
     }
   ]
 }

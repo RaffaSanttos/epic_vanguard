@@ -44,7 +44,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
     private int currentMode = 0;
     private boolean targetHostiles = true;
     private boolean targetPassives = false;
-    private int pickupMode = WarriorCompanionEntity.PICKUP_USEFUL;
+    private int pickupMode = WarriorCompanionEntity.PICKUP_OFF;
     /** Ticks em que a tela não relê o estado do guerreiro depois de um clique (espera o servidor confirmar). */
     private int localEditTicks = 0;
 

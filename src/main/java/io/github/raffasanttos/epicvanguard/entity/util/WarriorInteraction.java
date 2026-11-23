@@ -104,16 +104,23 @@ public final class WarriorInteraction {
             if (w.isOwner(pPlayer)) {
                 ItemStack heldItem = pPlayer.getItemInHand(pHand);
 
-                // Ordem rápida: agachado e de mão vazia alterna Seguir <-> Parado sem abrir a tela
+                // Ordem rápida: agachado e de mão vazia alterna Seguir -> Guarda -> Parado -> Seguir sem abrir a tela
                 if (pPlayer.isShiftKeyDown() && heldItem.isEmpty()) {
-                    boolean toStay = w.getCombatMode() != WarriorCompanionEntity.MODE_STAY;
-                    w.setCombatMode(toStay ? WarriorCompanionEntity.MODE_STAY : WarriorCompanionEntity.MODE_FOLLOW);
-                    if (toStay) w.clearCombatTarget();
-                    w.updateSavedData();
-                    pPlayer.displayClientMessage(Component.translatable(toStay
-                            ? "epicvanguard.text.quick_order.stay" : "epicvanguard.text.quick_order.follow", w.getWarriorName()), true);
+                    int next = switch (w.getCombatMode()) {
+                        case WarriorCompanionEntity.MODE_FOLLOW -> WarriorCompanionEntity.MODE_GUARD;
+                        case WarriorCompanionEntity.MODE_GUARD -> WarriorCompanionEntity.MODE_STAY;
+                        default -> WarriorCompanionEntity.MODE_FOLLOW;
+                    };
+                    w.setCombatMode(next); // limpa o alvo; Guarda marca o ponto atual, Parado trava o movimento
+                    String key = switch (next) {
+                        case WarriorCompanionEntity.MODE_GUARD -> "epicvanguard.text.quick_order.guard";
+                        case WarriorCompanionEntity.MODE_STAY -> "epicvanguard.text.quick_order.stay";
+                        default -> "epicvanguard.text.quick_order.follow";
+                    };
+                    pPlayer.displayClientMessage(Component.translatable(key, w.getWarriorName()), true);
                     if (w.level() instanceof ServerLevel serverLevel) {
-                        serverLevel.playSound(null, w.blockPosition(), SoundEvents.ARMOR_EQUIP_IRON, SoundSource.NEUTRAL, 0.7F, toStay ? 0.8F : 1.2F);
+                        float pitch = next == WarriorCompanionEntity.MODE_STAY ? 0.8F : next == WarriorCompanionEntity.MODE_GUARD ? 1.0F : 1.2F;
+                        serverLevel.playSound(null, w.blockPosition(), SoundEvents.ARMOR_EQUIP_IRON, SoundSource.NEUTRAL, 0.7F, pitch);
                     }
                     return InteractionResult.SUCCESS;
                 }

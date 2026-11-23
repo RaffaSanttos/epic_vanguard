@@ -8,7 +8,7 @@ Mapa do código para quem for mexer no mod. Pacote base: `io.github.raffasanttos
 
 | Classe | O que faz |
 |---|---|
-| `WarriorInteraction` | Clique do jogador: resgate de prisioneiro, tela de contrato, name tag, abrir a tela do dono, agachado de mão vazia alterna Seguir/Parado. Coleta de itens do chão (botão ✋: desligada / úteis / tudo; ignora o que o dono jogou). |
+| `WarriorInteraction` | Clique do jogador: resgate de prisioneiro, tela de contrato, name tag, abrir a tela do dono, agachado de mão vazia alterna Seguir → Guarda → Parado. Coleta de itens do chão (botão ✋: desligada / úteis / tudo; ignora o que o dono jogou). |
 | `WarriorTeleport` | Teleporte seguro (chão firme, sem lava, sem sufocar) e a regra do modo Seguir: 13 blocos + 2 s fora de combate, ou 32 blocos sempre (valores da config). |
 | `WarriorThreatSensor` | Creeper prestes a explodir e projéteis vindo na direção do guerreiro ou do dono. Guarda a última varredura num cache por guerreiro (projéteis a cada 2 ticks, creepers a cada 5). |
 | `WarriorWarcry` | Grito de guerra de cada classe (efeitos, partículas, sons). |
@@ -77,7 +77,7 @@ IA: `entity/ai` tem os goals (combate tático, seguir, guarda, comer, fugir, gri
 | follow | `followTeleportDelayTicks` | 40 | `WarriorTeleport` |
 | registry | `registryMemoryDays` | 100 | `CompanionSavedData.pruneForgotten` |
 | vanguardPoint | `contractCoins` | 20 | `VanguardPointBlockEntity.requiredCoins()` |
-| companions | `naturalRegen`, `regenIntervalTicks` | true, 60 | regeneração no `tick` |
+| companions | `naturalRegen`, `regenIntervalTicks` | false, 60 | regeneração no `tick` |
 | combat | `shieldBlockChance`, `shieldBlockReduction`, `duelistDodgeChance` | 0.70, 0.80, 0.18 | `WarriorCombatHelper` |
 | ranged | `enableRangedCombat`, `infiniteArrows`, `rangedDamageMultiplier` | true, false, 1.0 | `WarriorRangedHelper`, `WarriorRangedCombatGoal` |
 | equipment | `equipmentWear`, `wearMultiplier`, `warnOnBreak`, `lowDurabilityWarning`, `fieldRepair`, `autoSwapBroken` | true, 1.0, true, 0.10, true, true | `WarriorEquipmentWear` |

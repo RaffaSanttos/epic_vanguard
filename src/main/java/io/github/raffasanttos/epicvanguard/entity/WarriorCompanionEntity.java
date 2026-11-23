@@ -559,7 +559,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
         this.entityData.define(COMBAT_MODE, 0); // 0=Seguir (padrão inicial), 1=Guarda, 2=Parado
         this.entityData.define(TARGET_HOSTILES, true);
         this.entityData.define(TARGET_PASSIVES, false);
-        this.entityData.define(PICKUP_MODE, PICKUP_USEFUL);
+        this.entityData.define(PICKUP_MODE, PICKUP_OFF);
         this.entityData.define(RECRUITED, false);
         this.entityData.define(WARRIOR_NAME, "");
         this.entityData.define(DUEL_MODE, false);
@@ -1384,7 +1384,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
                 secondWindCooldown--;
             }
 
-            // Regeneração natural lenta fora de combate (padrão 1 HP a cada 3 s, 5 s depois de qualquer dano)
+            // Regeneração natural lenta fora de combate (desligada por padrão na config; 1 HP a cada 3 s, 5 s depois de qualquer dano)
             int regenInterval = EpicVanguardConfig.regenIntervalTicks();
             if (hasPerk(WarriorPerk.FIELD_MEDIC)) regenInterval = Math.max(5, regenInterval / 2);
             if (EpicVanguardConfig.naturalRegen() && this.isAlive() && !this.isPrisoner() && this.getHealth() < this.getMaxHealth()
