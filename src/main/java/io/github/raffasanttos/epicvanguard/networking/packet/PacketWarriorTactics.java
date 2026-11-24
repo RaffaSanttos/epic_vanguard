@@ -7,7 +7,7 @@ import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
-/** Botões de tática da tela do guerreiro: atacar monstros, caçar animais e coleta de itens (0 desligada, 1 úteis, 2 tudo). */
+/** Botões de tática da tela do guerreiro: atacar monstros, caçar animais e coleta de itens (0 desligada, 2 tudo). */
 public class PacketWarriorTactics {
     private final int entityId;
     private final boolean targetHostiles;
@@ -43,7 +43,7 @@ public class PacketWarriorTactics {
 
             warrior.setTargetHostiles(targetHostiles);
             warrior.setTargetPassives(targetPassives);
-            warrior.setPickupMode(pickupMode); // setPickupMode limita a 0..2
+            warrior.setPickupMode(pickupMode); // qualquer valor diferente de 0 vira "tudo"
 
             // Se o alvo atual não for mais compatível com as regras ativas, limpa o alvo
             if (warrior.getTarget() != null) {

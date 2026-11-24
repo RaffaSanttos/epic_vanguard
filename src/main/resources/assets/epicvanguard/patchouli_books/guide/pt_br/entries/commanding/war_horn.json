@@ -6,7 +6,12 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "Toque a corneta ($(thing)botão direito$()) para dar uma ordem a todos os seus companheiros num raio de 32 blocos:$(li)$(thing)mirando numa criatura$(): todos atacam, mesmo pacíficos;$(li)$(thing)mirando no nada$(): param de lutar e se reagrupam.$(br2)Quem está em $(thing)Parado$() segura a posição. Jogadores, companheiros e seus animais não podem ser alvo."
+      "text": "Toque a corneta ($(thing)botão direito$()) para dar uma ordem a todos os seus companheiros num raio de 32 blocos:$(li)$(thing)mirando numa criatura$(): todos atacam, mesmo pacíficos;$(li)$(thing)mirando no nada$(): param de lutar e se reagrupam.$(br2)Quem está de $(thing)Guarda$() persegue o alvo mesmo longe do posto e depois volta para ele. Quem está em $(thing)Parado$() segura a posição.$(br2)Jogadores, companheiros, animais domesticados (de qualquer um), aldeões, golens e suportes de armadura não podem ser alvo: a corneta mira através deles."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Formações",
+      "text": "$(thing)Agachado + botão direito$() com a corneta troca como os companheiros em $(thing)Seguir$() andam com você:$(li)$(thing)Livre$(): cada um segue de perto (padrão).$(li)$(thing)Coluna$(): fila indiana atrás de você.$(li)$(thing)Linha$(): lado a lado, uma fileira atrás de você.$(li)$(thing)Círculo$(): uma escolta em volta de você.$(br2)A formação gira com você. Numa luta eles saem da formação e voltam depois."
     },
     {
       "type": "patchouli:crafting",

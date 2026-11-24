@@ -17,6 +17,12 @@ public class WarriorStrollGoal extends WaterAvoidingRandomStrollGoal {
             return false;
         }
         if (warrior.isTalking() || warrior.isDuelMode() || warrior.isInventoryOpen()) return false;
+        // Seguindo em formação: fica no lugar em vez de passear
+        if (warrior.isRecruited() && warrior.getCombatMode() == 0
+                && io.github.raffasanttos.epicvanguard.entity.util.WarriorFormation.getFormation(warrior)
+                   != io.github.raffasanttos.epicvanguard.entity.util.WarriorFormation.FREE) {
+            return false;
+        }
         return super.canUse();
     }
 

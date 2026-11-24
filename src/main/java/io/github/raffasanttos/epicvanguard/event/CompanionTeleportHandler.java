@@ -129,6 +129,7 @@ public class CompanionTeleportHandler {
     @SubscribeEvent
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         LAST_POSITIONS.remove(event.getEntity().getUUID());
+        io.github.raffasanttos.epicvanguard.entity.util.CompanyManager.forget(event.getEntity().getUUID());
     }
 
     @SubscribeEvent

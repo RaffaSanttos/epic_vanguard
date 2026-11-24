@@ -593,9 +593,11 @@ public class WarriorCompanionEntity extends PathfinderMob {
         this.entityData.set(TARGET_PASSIVES, targetPassives);
     }
 
-    /** Coleta de itens do chão (botão ✋ da tela): desligada, só itens úteis (padrão) ou tudo. */
+    /**
+     * Coleta de itens do chão (botão ✋ da tela): desligada (padrão) ou pega tudo, inclusive o que o dono joga.
+     * Guardado como número: o valor 1 era o antigo modo "só úteis", que agora vale como "tudo".
+     */
     public static final int PICKUP_OFF = 0;
-    public static final int PICKUP_USEFUL = 1;
     public static final int PICKUP_ALL = 2;
 
     public int getPickupMode() {
@@ -603,7 +605,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
     }
 
     public void setPickupMode(int mode) {
-        this.entityData.set(PICKUP_MODE, Math.max(PICKUP_OFF, Math.min(PICKUP_ALL, mode)));
+        this.entityData.set(PICKUP_MODE, mode == PICKUP_OFF ? PICKUP_OFF : PICKUP_ALL);
     }
 
     public boolean isPickupItems() {
@@ -704,7 +706,51 @@ public class WarriorCompanionEntity extends PathfinderMob {
         this.updateSavedData();
     }
 
+    /** Até onde quem está de Guarda vai atrás de um alvo, medido a partir do posto (corpo a corpo / arco). */
+    public static final double GUARD_CHASE_RADIUS = 10.0D;
+    public static final double GUARD_RANGED_RADIUS = 20.0D;
+
+    /**
+     * Regra única da Guarda, usada pela escolha de alvo E pelos goals de combate. Antes a escolha de alvo achava
+     * monstros a até 32 blocos e o combate largava qualquer um a mais de 8 blocos do posto: o guerreiro mirava,
+     * dava uns passos, largava, voltava ao posto e mirava de novo (parecia hesitar).
+     *
+     * @param extra folga (em blocos) para quem já está lutando, para não largar o alvo na beirada do raio
+     */
+    public boolean canEngageFromGuard(@Nullable LivingEntity target, double extra) {
+        if (target == null || !this.isRecruited() || this.getCombatMode() != MODE_GUARD || this.guardPos == null) return true;
+        if (target == this.hornOrderTarget && target.isAlive()) return true; // ordem da Corneta vai até o fim
+        double r = (io.github.raffasanttos.epicvanguard.entity.util.WarriorRangedHelper.canFightAtRange(this)
+                ? GUARD_RANGED_RADIUS : GUARD_CHASE_RADIUS) + extra;
+        if (target == this.getLastHurtByMob()) r += 6.0D; // quem atacou o guarda pode ser respondido um pouco mais longe
+        return target.distanceToSqr(Vec3.atBottomCenterOf(this.guardPos)) <= r * r;
+    }
+
+    public boolean canEngageFromGuard(@Nullable LivingEntity target) {
+        return canEngageFromGuard(target, 0.0D);
+    }
+
+    /** Alvo mandado pela Corneta: quem está de Guarda persegue até o fim, mesmo longe do posto, e depois volta. */
+    @Nullable
+    private LivingEntity hornOrderTarget;
+
+    public void setHornOrderTarget(@Nullable LivingEntity target) {
+        this.hornOrderTarget = target;
+    }
+
+    /** Está cumprindo a ordem da Corneta (o alvo atual é o da ordem e ainda está vivo). */
+    public boolean isOnHornOrder() {
+        LivingEntity order = this.hornOrderTarget;
+        if (order == null) return false;
+        if (!order.isAlive() || order.isRemoved() || this.getTarget() != order) {
+            this.hornOrderTarget = null;
+            return false;
+        }
+        return true;
+    }
+
     public void clearCombatTarget() {
+        this.hornOrderTarget = null;
         this.setTarget(null);
         this.setLastHurtByMob(null);
         this.getNavigation().stop();
@@ -1007,6 +1053,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
         int spec = getSpecialization();
         if (hasPerk(WarriorPerk.SPEC_T2) && (spec == SPEC_NONE || spec == SPEC_GUARDIAN)) cd *= 0.70D;
         if (hasPerk(WarriorPerk.LEGEND)) cd *= 0.50D;
+        if (getWarriorLevel() >= 20) cd *= 0.80D; // marco do nível 20: grito 20% mais rápido (50 s -> 40 s)
         return (int) Math.max(100, cd);
     }
 
@@ -1612,13 +1659,13 @@ public class WarriorCompanionEntity extends PathfinderMob {
         boolean isCrit = false;
         // Berserker Passives:
         if (getSpecialization() == SPEC_BERSERKER) {
-            // 1. Fúria Sangrenta com vida < 40%: +20% dano extra
-            if (this.getHealth() < (this.getMaxHealth() * 0.40F)) {
-                damage *= 1.20F;
+            // 1. Fúria Sangrenta com vida < 40%: +20% dano extra (config)
+            if (this.getHealth() < (this.getMaxHealth() * EpicVanguardConfig.berserkerRageThreshold())) {
+                damage *= 1.0F + EpicVanguardConfig.berserkerRageBonus();
             }
-            // 2. Acertos Críticos: 20% de chance de causar 1.5x de dano
-            if (this.random.nextFloat() < 0.20F) {
-                damage *= 1.50F;
+            // 2. Acertos Críticos: 20% de chance de causar 1.5x de dano (config)
+            if (this.random.nextFloat() < EpicVanguardConfig.berserkerCritChance()) {
+                damage *= EpicVanguardConfig.berserkerCritMultiplier();
                 isCrit = true;
             }
         }
@@ -1684,7 +1731,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
                 CompanionSavedData.get(this.getServer()).retire(this.getUUID());
                 notifyOwnerOfDeath();
             }
-            dropAllInventory();
+            dropAllInventory(); // reserva: os itens já saíram em dropEquipment; aqui só se algo sobrou
         }
     }
 
@@ -1706,7 +1753,24 @@ public class WarriorCompanionEntity extends PathfinderMob {
     @Override
     protected void dropCustomDeathLoot(DamageSource pSource, int pLooting, boolean pRecentlyHit) {
         super.dropCustomDeathLoot(pSource, pLooting, pRecentlyHit);
-        dropAllInventory();
+    }
+
+    /**
+     * Itens da mochila e do equipamento na morte. Roda dentro da captura de drops do Forge (dropAllDeathLoot), então
+     * passam pelo LivingDropsEvent: mods de lápide (Gravestone, Corail Tombstone) e de keep-inventory enxergam tudo.
+     * Diferente do dropCustomDeathLoot, roda mesmo com a gamerule doMobLoot desligada.
+     */
+    @Override
+    protected void dropEquipment() {
+        super.dropEquipment();
+        if (this.level().isClientSide) return;
+        for (int i = 0; i < warriorInventory.getContainerSize(); i++) {
+            ItemStack stack = warriorInventory.getItem(i);
+            if (!stack.isEmpty()) {
+                this.spawnAtLocation(stack.copy(), 0.5F);
+                warriorInventory.setItem(i, ItemStack.EMPTY);
+            }
+        }
     }
 
     /**

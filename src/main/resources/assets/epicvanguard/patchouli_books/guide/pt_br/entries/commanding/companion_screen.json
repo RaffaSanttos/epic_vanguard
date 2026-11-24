@@ -11,7 +11,7 @@
     {
       "type": "patchouli:text",
       "title": "Táticas",
-      "text": "Botão aceso está ligado, cinza está desligado.$(li)$(thing)Espada$(): atacar monstros hostis. Desligado ao recrutar.$(li)$(thing)Carne$(): caçar animais adultos para comida.$(li)$(thing)Mão$(): coleta de itens. Clique para trocar: desligada (cinza), só úteis (amarela) e tudo (verde). Recrutas novos começam com ela desligada. O que você joga para ele é sempre pego."
+      "text": "Botão aceso está ligado, cinza está desligado.$(li)$(thing)Espada$(): atacar monstros hostis. Desligado ao recrutar.$(li)$(thing)Carne$(): caçar animais adultos para comida.$(li)$(thing)Mão$(): coleta de itens. Verde pega tudo por onde passa, inclusive o que você joga para ele; cinza não pega nada. Recrutas novos começam com ela desligada."
     },
     {
       "type": "patchouli:text",

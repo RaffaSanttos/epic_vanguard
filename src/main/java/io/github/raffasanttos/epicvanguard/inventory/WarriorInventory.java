@@ -60,6 +60,7 @@ public class WarriorInventory extends SimpleContainer {
     public static boolean isWeaponOrShield(ItemStack stack) {
         if (stack.isEmpty()) return false;
         Item item = stack.getItem();
+        if (item instanceof net.minecraft.world.item.ArmorItem) return false; // armadura nunca é arma
 
         if (item instanceof SwordItem ||
             item instanceof AxeItem ||

@@ -10,7 +10,8 @@ public class AggressiveTargetGoal extends NearestAttackableTargetGoal<Mob> {
 
     public AggressiveTargetGoal(WarriorCompanionEntity warrior) {
         super(warrior, Mob.class, 10, true, false,
-                entity -> entity instanceof Enemy && !(entity instanceof WarriorCompanionEntity));
+                entity -> entity instanceof Enemy && !(entity instanceof WarriorCompanionEntity)
+                        && warrior.canEngageFromGuard(entity)); // Guarda: só o que está perto do posto
         this.warrior = warrior;
     }
 

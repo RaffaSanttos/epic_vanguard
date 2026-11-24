@@ -129,9 +129,16 @@ public class HonorContractScreen extends AbstractContainerScreen<HonorContractMe
         renderTooltip(guiGraphics, mouseX, mouseY);
     }
 
+    /** Inventário principal + mão secundária (moedas no offhand também pagam). */
+    private static Iterable<ItemStack> coinStacks(Player player) {
+        java.util.List<ItemStack> stacks = new java.util.ArrayList<>(player.getInventory().items);
+        stacks.addAll(player.getInventory().offhand);
+        return stacks;
+    }
+
     private static int countPlayerCoins(Player player) {
         int total = 0;
-        for (ItemStack stack : player.getInventory().items) {
+        for (ItemStack stack : coinStacks(player)) {
             if (!stack.isEmpty() && stack.is(ModItems.GOLD_COIN.get())) {
                 total += stack.getCount();
             }

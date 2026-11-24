@@ -11,12 +11,12 @@
     {
       "type": "patchouli:text",
       "title": "Per Level",
-      "text": "Every level adds:$(li)+1.5 max health$(li)+0.25 base damage$(li)+0.5 natural armor$(li)a little armor toughness and speed$(br2)From $(thing)level 5$() they unlock their class $(l:epicvanguard:classes/warcries)warcry$()."
+      "text": "Every level adds:$(li)+1.5 max health$(li)+0.25 base damage$(li)+0.5 natural armor$(li)a little armor toughness and speed$(br2)From $(thing)level 5$() they unlock their class $(l:epicvanguard:classes/warcries)warcry$(). At $(thing)level 20$() the warcry recharges 20% faster."
     },
     {
       "type": "patchouli:text",
       "title": "Classes",
-      "text": "Every companion already has a class when you meet them: $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardian$(), $(l:epicvanguard:classes/duelist)Duelist$(), Archer or Standard-bearer. The class never changes.$(br2)Level, XP and gear grow with them; talent points (1 every 2 levels) go in the $(thing)Talents$() tab."
+      "text": "Every companion already has a class when you meet them: $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardian$(), $(l:epicvanguard:classes/duelist)Duelist$(), $(l:epicvanguard:classes/archer)Archer$() or $(l:epicvanguard:classes/standard_bearer)Standard-bearer$(). The class never changes.$(br2)Level, XP and gear grow with them; talent points (1 every 2 levels) go in the $(thing)Talents$() tab."
     }
   ]
 }

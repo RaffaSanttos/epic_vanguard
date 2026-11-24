@@ -1,0 +1,19 @@
+{
+  "name": "Archer",
+  "icon": "epicvanguard:archer_companion_spawn_egg",
+  "category": "epicvanguard:classes",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:entity",
+      "entity": "epicvanguard:archer_companion",
+      "scale": 0.9,
+      "name": "Archer",
+      "text": "Fights from a distance with a bow or crossbow. Keep arrows in the backpack."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(li)Starts with a bow (sometimes a crossbow), arrows and a spare sword for when arrows run out.$(li)Draws 20% faster than other companions with a bow.$(li)Leaves the off hand empty: no shield.$(li)Talents: arrows that pierce an extra enemy and a chance to loose a second arrow.$(br2)$(thing)Warcry$(): Arrow Rain. See $(l:epicvanguard:classes/warcries)Warcries$()."
+    }
+  ]
+}

@@ -7,7 +7,7 @@
     {
       "type": "patchouli:text",
       "title": "Casas de Guerreiro",
-      "text": "Pequenas $(thing)casas de guerreiro$() estão espalhadas pelo Overworld. Na primeira vez que você chega perto de uma, há um mercenário esperando para ser contratado.$(br2)Todo mercenário pertence a uma das classes: $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardião$() ou $(l:epicvanguard:classes/duelist)Duelista$()."
+      "text": "Pequenas $(thing)casas de guerreiro$() estão espalhadas pelo Overworld. Na primeira vez que você chega perto de uma, há um mercenário esperando para ser contratado.$(br2)Todo mercenário pertence a uma das classes: $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardião$(), $(l:epicvanguard:classes/duelist)Duelista$(), $(l:epicvanguard:classes/archer)Arqueiro$() ou $(l:epicvanguard:classes/standard_bearer)Porta-estandarte$()."
     },
     {
       "type": "patchouli:text",

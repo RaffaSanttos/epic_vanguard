@@ -144,7 +144,7 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
         pickupButton = Button.builder(
                 Component.literal(pickupLabel(pickupMode)),
                 btn -> {
-                    pickupMode = (pickupMode + 1) % 3; // desligada -> úteis -> tudo
+                    pickupMode = pickupMode == WarriorCompanionEntity.PICKUP_OFF ? WarriorCompanionEntity.PICKUP_ALL : WarriorCompanionEntity.PICKUP_OFF;
                     localEditTicks = 20;
                     btn.setMessage(Component.literal(pickupLabel(pickupMode)));
                     btn.setTooltip(pickupTooltip(pickupMode));
@@ -633,7 +633,6 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
     private static String pickupLabel(int mode) {
         return switch (mode) {
             case WarriorCompanionEntity.PICKUP_ALL -> "§a✋";
-            case WarriorCompanionEntity.PICKUP_USEFUL -> "§e✋";
             default -> "§8✋";
         };
     }
@@ -641,7 +640,6 @@ public class WarriorCompanionScreen extends AbstractContainerScreen<WarriorCompa
     private static Tooltip pickupTooltip(int mode) {
         String state = switch (mode) {
             case WarriorCompanionEntity.PICKUP_ALL -> "epicvanguard.text.warrior_companion_screen.pickup.all";
-            case WarriorCompanionEntity.PICKUP_USEFUL -> "epicvanguard.text.warrior_companion_screen.pickup.useful";
             default -> "epicvanguard.text.warrior_companion_screen.pickup.off";
         };
         return Tooltip.create(Component.translatable("epicvanguard.text.warrior_companion_screen.pickup")

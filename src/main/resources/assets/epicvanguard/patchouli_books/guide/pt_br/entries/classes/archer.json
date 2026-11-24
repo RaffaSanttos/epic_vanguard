@@ -1,0 +1,19 @@
+{
+  "name": "Arqueiro",
+  "icon": "epicvanguard:archer_companion_spawn_egg",
+  "category": "epicvanguard:classes",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:entity",
+      "entity": "epicvanguard:archer_companion",
+      "scale": 0.9,
+      "name": "Arqueiro",
+      "text": "Luta de longe com arco ou besta. Mantenha flechas na mochila."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(li)Começa com arco (às vezes besta), flechas e uma espada reserva para quando as flechas acabam.$(li)Puxa o arco 20% mais rápido que os outros companheiros.$(li)Deixa a mão secundária vazia: sem escudo.$(li)Talentos: flechas que atravessam mais um inimigo e chance de soltar uma segunda flecha.$(br2)$(thing)Grito de guerra$(): Chuva de Flechas. Veja $(l:epicvanguard:classes/warcries)Gritos de Guerra$()."
+    }
+  ]
+}

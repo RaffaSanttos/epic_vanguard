@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "The file $(thing)config/epicvanguard-common.toml$() lets the server owner change:$(li)recruit cost and XP gain;$(li)warcry cooldown;$(li)how long a Vanguard Point request takes;$(li)the follow teleport distances.$(br2)Values in this book are the defaults."
+      "text": "The file $(thing)config/epicvanguard-common.toml$() lets the server owner change:$(li)recruit cost and XP gain;$(li)warcry cooldown and class chances (critical hit, fury, dodge, taunt);$(li)regeneration, ranged combat, wear and repair, mounts;$(li)Vanguard Point requests and follow distances.$(br2)Values in this book are the defaults."
     }
   ]
 }

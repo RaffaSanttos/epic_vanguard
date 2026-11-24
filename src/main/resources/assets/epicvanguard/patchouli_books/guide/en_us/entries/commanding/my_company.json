@@ -1,0 +1,16 @@
+{
+  "name": "My Company",
+  "icon": "minecraft:filled_map",
+  "category": "epicvanguard:commanding",
+  "sortnum": 7,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Press $(thing)J$() (change it in Controls) to open $(thing)My Company$(): a list of all your companions, even the ones far away or in other dimensions.$(br2)Each row shows the class, level, health, stance and where they are: the distance, or the dimension and coordinates. $(thing)far$() means their area is not loaded."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(li)$(thing)Call$(): brings that companion to you.$(li)$(thing)Call everyone$(): brings all of them.$(li)The $(thing)stance$() button cycles Follow, Guard and Stay. It only works for companions whose area is loaded: call them first.$(li)$(thing)Formation$(): the same choice as the $(l:epicvanguard:commanding/war_horn)War Horn$()."
+    }
+  ]
+}

@@ -58,8 +58,8 @@ const entries = [
     name: t('Finding Mercenaries', 'Onde Achar Mercenários'),
     pages: [
       { type: 'text', title: t('Warrior Houses', 'Casas de Guerreiro'), text: t(
-        'Small $(thing)warrior houses$() are scattered across the Overworld. When you get close to one for the first time, a mercenary is waiting there to be hired.$(br2)Every mercenary belongs to one of the classes: $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardian$() or $(l:epicvanguard:classes/duelist)Duelist$().',
-        'Pequenas $(thing)casas de guerreiro$() estão espalhadas pelo Overworld. Na primeira vez que você chega perto de uma, há um mercenário esperando para ser contratado.$(br2)Todo mercenário pertence a uma das classes: $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardião$() ou $(l:epicvanguard:classes/duelist)Duelista$().') },
+        'Small $(thing)warrior houses$() are scattered across the Overworld. When you get close to one for the first time, a mercenary is waiting there to be hired.$(br2)Every mercenary belongs to one of the classes: $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardian$(), $(l:epicvanguard:classes/duelist)Duelist$(), $(l:epicvanguard:classes/archer)Archer$() or $(l:epicvanguard:classes/standard_bearer)Standard-bearer$().',
+        'Pequenas $(thing)casas de guerreiro$() estão espalhadas pelo Overworld. Na primeira vez que você chega perto de uma, há um mercenário esperando para ser contratado.$(br2)Todo mercenário pertence a uma das classes: $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardião$(), $(l:epicvanguard:classes/duelist)Duelista$(), $(l:epicvanguard:classes/archer)Arqueiro$() ou $(l:epicvanguard:classes/standard_bearer)Porta-estandarte$().') },
       { type: 'text', title: t('Prisoners of War', 'Prisioneiros de Guerra'), text: t(
         'Next to $(thing)Pillager Outposts$() you may find a wooden cage holding a $(thing)prisoner$(): weak, unarmed and wounded.$(br2)Rescue them for free: see $(l:epicvanguard:getting_started/recruiting)Hiring a Companion$().',
         'Perto dos $(thing)Postos de Saqueadores$() pode haver uma cela de madeira com um $(thing)prisioneiro$(): fraco, desarmado e ferido.$(br2)Você pode resgatá-lo de graça: veja $(l:epicvanguard:getting_started/recruiting)Contratando um Companheiro$().') },
@@ -89,8 +89,8 @@ const entries = [
         '$(thing)Right-click$() your companion to open their screen (owner only).$(br)On the right side:$(li)$(thing)Stance$(): cycles between $(l:epicvanguard:commanding/stances)Follow, Guard and Stay$().$(li)$(thing)Stop$(): ends the current fight and clears the target.$(li)Three $(thing)tactic buttons$(), explained on the next page.',
         'Clique com o $(thing)botão direito$() no seu companheiro para abrir a tela dele (só o dono).$(br)No lado direito:$(li)$(thing)Postura$(): alterna entre $(l:epicvanguard:commanding/stances)Seguir, Guarda e Parado$().$(li)$(thing)Parar$(): encerra a luta atual e limpa o alvo.$(li)Três $(thing)botões de tática$(), explicados na próxima página.') },
       { type: 'text', title: t('Tactics', 'Táticas'), text: t(
-        'Lit buttons are on, grey ones are off.$(li)$(thing)Sword$(): attack hostile monsters. Off for new recruits.$(li)$(thing)Meat$(): hunt adult animals for food.$(li)$(thing)Hand$(): item pick-up. Click to cycle: off (grey), useful only (yellow) and everything (green). New recruits start with it off. Items you drop for them are always picked up.',
-        'Botão aceso está ligado, cinza está desligado.$(li)$(thing)Espada$(): atacar monstros hostis. Desligado ao recrutar.$(li)$(thing)Carne$(): caçar animais adultos para comida.$(li)$(thing)Mão$(): coleta de itens. Clique para trocar: desligada (cinza), só úteis (amarela) e tudo (verde). Recrutas novos começam com ela desligada. O que você joga para ele é sempre pego.') },
+        'Lit buttons are on, grey ones are off.$(li)$(thing)Sword$(): attack hostile monsters. Off for new recruits.$(li)$(thing)Meat$(): hunt adult animals for food.$(li)$(thing)Hand$(): item pick-up. Green picks up everything they walk over, including what you drop for them; grey picks up nothing. New recruits start with it off.',
+        'Botão aceso está ligado, cinza está desligado.$(li)$(thing)Espada$(): atacar monstros hostis. Desligado ao recrutar.$(li)$(thing)Carne$(): caçar animais adultos para comida.$(li)$(thing)Mão$(): coleta de itens. Verde pega tudo por onde passa, inclusive o que você joga para ele; cinza não pega nada. Recrutas novos começam com ela desligada.') },
       { type: 'text', title: t('Tabs and Name', 'Abas e Nome'), text: t(
         'The $(thing)Backpack$() tab shows their gear and health; the $(thing)Skills$() tab shows their level, XP and class skills; the $(thing)Talents$() tab is where you spend talent points.$(br2)To rename a companion, press the $(thing)pencil$(), use a named $(item)Name Tag$() on them, or the $(l:epicvanguard:reference/commands)rename command$().',
         'A aba $(thing)Mochila$() mostra o equipamento e a vida; a aba $(thing)Habilidades$() mostra o nível, o XP e as habilidades da classe; na aba $(thing)Talentos$() você gasta os pontos de talento.$(br2)Para renomear um companheiro, aperte o $(thing)lápis$(), use uma $(item)Etiqueta$() com nome nele, ou o $(l:epicvanguard:reference/commands)comando de renomear$().') },
@@ -102,8 +102,8 @@ const entries = [
         '$(thing)Follow$() (default): walks with you and fights what threatens you. More than 13 blocks behind for 2 seconds, they teleport to your side, even across dimensions or from unloaded chunks. In a fight they finish it, unless you get over 32 blocks away.',
         '$(thing)Seguir$() (padrão): anda com você e luta contra o que te ameaça. Mais de 13 blocos para trás por 2 segundos, se teleporta para o seu lado, até entre dimensões ou de chunks descarregados. Numa luta, termina a luta, a menos que você passe de 32 blocos.') },
       { type: 'text', text: t(
-        '$(thing)Guard$(): defends the spot where you set it, within about 6 blocks.$(br2)$(thing)Stay$(): stands still and chases nothing, but defends themselves.$(br2)In $(thing)Guard$() or $(thing)Stay$() they never teleport to you. Use the $(l:epicvanguard:reference/commands)call command$() to bring them back.',
-        '$(thing)Guarda$(): defende o ponto escolhido, a uns 6 blocos dele.$(br2)$(thing)Parado$(): fica imóvel e não persegue nada, mas se defende.$(br2)Em $(thing)Guarda$() ou $(thing)Parado$() eles nunca se teleportam até você. Use o $(l:epicvanguard:reference/commands)comando de chamar$() para trazê-los de volta.') },
+        '$(thing)Guard$(): defends the spot where you set it. They attack enemies up to about 10 blocks from the post (20 with a bow) and then walk back to it. Enemies further away are ignored, unless you order an attack with the $(l:epicvanguard:commanding/war_horn)War Horn$().$(br2)$(thing)Stay$(): stands still and chases nothing, but defends themselves.$(br2)In $(thing)Guard$() or $(thing)Stay$() they never teleport to you. Use the $(l:epicvanguard:reference/commands)call command$() to bring them back.',
+        '$(thing)Guarda$(): defende o ponto escolhido. Ataca inimigos a até uns 10 blocos do posto (20 com arco) e depois volta para ele. Inimigos mais longe são ignorados, a não ser que você mande atacar com a $(l:epicvanguard:commanding/war_horn)Corneta$().$(br2)$(thing)Parado$(): fica imóvel e não persegue nada, mas se defende.$(br2)Em $(thing)Guarda$() ou $(thing)Parado$() eles nunca se teleportam até você. Use o $(l:epicvanguard:reference/commands)comando de chamar$() para trazê-los de volta.') },
       { type: 'text', title: t('Quick Orders', 'Ordens Rápidas'), text: t(
         '$(thing)Sneak + right-click$() your companion with an empty hand to cycle $(thing)Follow$() → $(thing)Guard$() → $(thing)Stay$() without opening the screen. Guard protects the spot where they are at that moment.$(br2)To command everyone at once, use the $(l:epicvanguard:commanding/war_horn)Vanguard War Horn$().',
         '$(thing)Agachado + botão direito$() no companheiro, de mão vazia, alterna $(thing)Seguir$() → $(thing)Guarda$() → $(thing)Parado$() sem abrir a tela. A Guarda protege o lugar onde ele está naquele momento.$(br2)Para comandar todos de uma vez, use a $(l:epicvanguard:commanding/war_horn)Corneta da Vanguarda$().') },
@@ -115,14 +115,20 @@ const entries = [
         'Every companion has $(thing)4 armor slots$(), a $(thing)main weapon$() slot, an $(thing)off-hand$() slot for a shield or second weapon, and a $(thing)15-slot backpack$().$(br2)Swords, axes, Epic Fight weapons and most modded weapons fit the weapon slots. Shift-click sends armor and weapons to the right slot.',
         'Todo companheiro tem $(thing)4 slots de armadura$(), um slot de $(thing)arma principal$(), um slot de $(thing)mão secundária$() para escudo ou segunda arma, e uma $(thing)mochila de 15 slots$().$(br2)Espadas, machados, armas do Epic Fight e a maioria das armas de outros mods cabem nos slots de arma. Shift + clique manda armadura e armas para o slot certo.') },
       { type: 'text', text: t(
-        'Weapon enchantments work: $(thing)Sharpness$(), $(thing)Smite$(), $(thing)Knockback$(), $(thing)Fire Aspect$() and others. Weapons lose durability like yours and break when worn out.$(br2)Companions $(thing)pick up items$() they walk over, including what you drop for them. See the $(thing)Hand$() button.',
-        'Os encantamentos da arma funcionam: $(thing)Afiação$(), $(thing)Julgamento$(), $(thing)Repulsão$(), $(thing)Aspecto Flamejante$() e outros. As armas gastam como as suas e quebram quando acabam.$(br2)Companheiros $(thing)pegam itens$() do chão ao passar por cima, inclusive o que você joga para eles. Veja o botão $(thing)Mão$().') },
+        'Weapon enchantments work: $(thing)Sharpness$(), $(thing)Smite$(), $(thing)Knockback$(), $(thing)Fire Aspect$() and others. Weapons lose durability like yours and break when worn out.$(br2)Companions $(thing)pick up items$() they walk over, including what you drop for them, when the $(thing)Hand$() button is on.',
+        'Os encantamentos da arma funcionam: $(thing)Afiação$(), $(thing)Julgamento$(), $(thing)Repulsão$(), $(thing)Aspecto Flamejante$() e outros. As armas gastam como as suas e quebram quando acabam.$(br2)Companheiros $(thing)pegam itens$() do chão ao passar por cima, inclusive o que você joga para eles, quando o botão $(thing)Mão$() está ligado.') },
       { type: 'text', title: t('Auto-Equip', 'Auto-Equipar'), text: t(
-        'Put better gear in the $(thing)backpack$() and the companion wears it on their own after a moment out of combat: armor by protection, melee weapon by damage, a shield if the off-hand is empty. The old piece goes back to the backpack.$(br2)They never swap out a bow or crossbow, and skip nearly broken items.',
-        'Coloque equipamento melhor na $(thing)mochila$() e o companheiro veste sozinho depois de um tempo fora de combate: armadura pela proteção, arma corpo a corpo pelo dano, escudo se a mão secundária estiver vazia. A peça antiga volta para a mochila.$(br2)Ele nunca troca um arco ou besta e ignora itens quase quebrados.') },
+        'Put better gear in the $(thing)backpack$() and the companion wears it on their own after a moment out of combat: armor by protection, melee weapon by damage, a shield if the off-hand is empty (a banner for the Standard-bearer, nothing for the Archer). The old piece goes back to the backpack.$(br2)They never swap out a bow or crossbow, and skip nearly broken items.',
+        'Coloque equipamento melhor na $(thing)mochila$() e o companheiro veste sozinho depois de um tempo fora de combate: armadura pela proteção, arma corpo a corpo pelo dano, escudo se a mão secundária estiver vazia (estandarte no Porta-estandarte, nada no Arqueiro). A peça antiga volta para a mochila.$(br2)Ele nunca troca um arco ou besta e ignora itens quase quebrados.') },
+      { type: 'text', title: t('Wear and Repair', 'Desgaste e Reparo'), text: t(
+        'Armor, shields and weapons wear out like yours. When an item drops below $(thing)10%$() durability you get a warning in chat. If it breaks, they swap to the best spare from the backpack on their own.$(br2)$(thing)Repair$(): while sitting to rest (see $(l:epicvanguard:vanguard_point/base_life)Life at the Base$()) they use materials from the backpack, the same ones an anvil takes (ingots, leather, planks...). Each one restores a quarter of the item.',
+        'Armadura, escudo e armas gastam como as suas. Quando um item fica abaixo de $(thing)10%$() de durabilidade, você recebe um aviso no chat. Se quebrar, ele troca sozinho pelo melhor reserva da mochila.$(br2)$(thing)Reparo$(): enquanto está sentado descansando (veja $(l:epicvanguard:vanguard_point/base_life)Vida na Base$()), ele usa materiais da mochila, os mesmos da bigorna (lingotes, couro, tábuas...). Cada um recupera um quarto do item.') },
+      { type: 'text', title: t('Bows and Crossbows', 'Arco e Besta'), text: t(
+        'Any companion with a $(item)bow$() or $(item)crossbow$() in the main hand and $(item)arrows$() in the backpack fights at range, keeping distance from the target. Their arrows never hit you or your other companions.$(br2)Out of arrows in a fight, they draw the best melee weapon from the backpack. The $(l:epicvanguard:classes/archer)Archer$() goes back to the bow when there are arrows again.',
+        'Qualquer companheiro com $(item)arco$() ou $(item)besta$() na mão principal e $(item)flechas$() na mochila luta de longe, mantendo distância do alvo. As flechas dele nunca acertam você nem seus outros companheiros.$(br2)Sem flechas numa luta, ele saca a melhor arma corpo a corpo da mochila. O $(l:epicvanguard:classes/archer)Arqueiro$() volta ao arco quando tiver flechas de novo.') },
       { type: 'text', title: t('If They Fall', 'Se Ele Cair'), text: t(
-        'When a companion dies, everything they carried drops on the ground. The companion is gone for good, so keep them fed and well armored.',
-        'Quando um companheiro morre, tudo o que ele carregava cai no chão. Ele não volta, então mantenha-o alimentado e bem protegido.') },
+        'When a companion dies you get a $(thing)chat message$() with their name, how they died and the coordinates and dimension where their items dropped. Everything they carried is on the ground there (grave mods also catch these items).$(br2)The companion is gone for good, so keep them fed and well armored.',
+        'Quando um companheiro morre, você recebe uma $(thing)mensagem no chat$() com o nome, como ele morreu e as coordenadas e a dimensão onde os itens caíram. Tudo o que ele carregava fica no chão ali (mods de lápide também guardam esses itens).$(br2)Ele não volta, então mantenha-o alimentado e bem protegido.') },
     ] },
   { category: 'commanding', id: 'survival', icon: 'minecraft:golden_apple', sortnum: 3,
     name: t('Food and Healing', 'Comida e Cura'),
@@ -148,10 +154,33 @@ const entries = [
     name: t('Vanguard War Horn', 'Corneta da Vanguarda'),
     pages: [
       { type: 'text', text: t(
-        'Blow the horn ($(thing)right-click$()) to give an order to all your companions within 32 blocks:$(li)$(thing)aiming at a creature$(): they all attack it, even if peaceful;$(li)$(thing)aiming at nothing$(): they stop fighting and regroup.$(br2)Companions in $(thing)Stay$() hold their position. Players, companions and your own pets can\'t be targeted.',
-        'Toque a corneta ($(thing)botão direito$()) para dar uma ordem a todos os seus companheiros num raio de 32 blocos:$(li)$(thing)mirando numa criatura$(): todos atacam, mesmo pacíficos;$(li)$(thing)mirando no nada$(): param de lutar e se reagrupam.$(br2)Quem está em $(thing)Parado$() segura a posição. Jogadores, companheiros e seus animais não podem ser alvo.') },
+        'Blow the horn ($(thing)right-click$()) to give an order to all your companions within 32 blocks:$(li)$(thing)aiming at a creature$(): they all attack it, even if peaceful;$(li)$(thing)aiming at nothing$(): they stop fighting and regroup.$(br2)Companions in $(thing)Guard$() chase the target even far from their post, then go back to it. Companions in $(thing)Stay$() hold their position.$(br2)Players, companions, tamed animals (anyone\'s), villagers, golems and armor stands can\'t be targeted: the horn aims past them.',
+        'Toque a corneta ($(thing)botão direito$()) para dar uma ordem a todos os seus companheiros num raio de 32 blocos:$(li)$(thing)mirando numa criatura$(): todos atacam, mesmo pacíficos;$(li)$(thing)mirando no nada$(): param de lutar e se reagrupam.$(br2)Quem está de $(thing)Guarda$() persegue o alvo mesmo longe do posto e depois volta para ele. Quem está em $(thing)Parado$() segura a posição.$(br2)Jogadores, companheiros, animais domesticados (de qualquer um), aldeões, golens e suportes de armadura não podem ser alvo: a corneta mira através deles.') },
+      { type: 'text', title: t('Formations', 'Formações'), text: t(
+        '$(thing)Sneak + right-click$() with the horn to change how companions in $(thing)Follow$() walk with you:$(li)$(thing)Free$(): each one follows close by (default).$(li)$(thing)Column$(): single file behind you.$(li)$(thing)Line$(): side by side, one row behind you.$(li)$(thing)Circle$(): an escort around you.$(br2)The formation turns with you. In a fight they break formation and come back after.',
+        '$(thing)Agachado + botão direito$() com a corneta troca como os companheiros em $(thing)Seguir$() andam com você:$(li)$(thing)Livre$(): cada um segue de perto (padrão).$(li)$(thing)Coluna$(): fila indiana atrás de você.$(li)$(thing)Linha$(): lado a lado, uma fileira atrás de você.$(li)$(thing)Círculo$(): uma escolta em volta de você.$(br2)A formação gira com você. Numa luta eles saem da formação e voltam depois.') },
       { type: 'crafting', recipe: 'epicvanguard:vanguard_horn', text: t(
         'Four copper ingots and a gold coin.', 'Quatro barras de cobre e uma moeda de ouro.') },
+    ] },
+  { category: 'commanding', id: 'my_company', icon: 'minecraft:filled_map', sortnum: 7,
+    name: t('My Company', 'Minha Companhia'),
+    pages: [
+      { type: 'text', text: t(
+        'Press $(thing)J$() (change it in Controls) to open $(thing)My Company$(): a list of all your companions, even the ones far away or in other dimensions.$(br2)Each row shows the class, level, health, stance and where they are: the distance, or the dimension and coordinates. $(thing)far$() means their area is not loaded.',
+        'Aperte $(thing)J$() (dá para mudar em Controles) para abrir a $(thing)Minha Companhia$(): a lista de todos os seus companheiros, mesmo os que estão longe ou em outra dimensão.$(br2)Cada linha mostra a classe, o nível, a vida, a postura e onde ele está: a distância, ou a dimensão e as coordenadas. $(thing)longe$() quer dizer que a área dele não está carregada.') },
+      { type: 'text', text: t(
+        '$(li)$(thing)Call$(): brings that companion to you.$(li)$(thing)Call everyone$(): brings all of them.$(li)The $(thing)stance$() button cycles Follow, Guard and Stay. It only works for companions whose area is loaded: call them first.$(li)$(thing)Formation$(): the same choice as the $(l:epicvanguard:commanding/war_horn)War Horn$().',
+        '$(li)$(thing)Chamar$(): traz aquele companheiro até você.$(li)$(thing)Chamar todos$(): traz todos.$(li)O botão de $(thing)postura$() alterna Seguir, Guarda e Parado. Só funciona com quem está numa área carregada: chame-o primeiro.$(li)$(thing)Formação$(): a mesma escolha da $(l:epicvanguard:commanding/war_horn)Corneta$().') },
+    ] },
+  { category: 'commanding', id: 'mounts', icon: 'minecraft:saddle', sortnum: 6,
+    name: t('Mounts', 'Montarias'),
+    pages: [
+      { type: 'text', text: t(
+        'When you ride a horse, companions in $(thing)Follow$() look for a free horse within 16 blocks and ride along. It has to be $(thing)yours$(): tamed by you and saddled. Wild horses and horses of other players are left alone.$(br2)When you get off, they get off too. In a fight, melee companions dismount to fight and archers keep shooting from the saddle. If you ride far away, each companion teleports together with their horse.',
+        'Quando você monta num cavalo, companheiros em $(thing)Seguir$() procuram um cavalo livre a até 16 blocos e montam junto. O cavalo precisa ser $(thing)seu$(): domado por você e com sela. Cavalos selvagens e de outros jogadores ficam de fora.$(br2)Quando você desce, eles descem também. Numa luta, quem luta corpo a corpo desce para lutar e quem tem arco continua atirando montado. Se você cavalgar para longe, cada companheiro se teleporta junto com o cavalo.') },
+      { type: 'text', text: t(
+        'Tip: keep a few saddled horses at your base, one for each companion. Donkeys and mules work too.$(br2)Companions in $(thing)Guard$() or $(thing)Stay$() never mount: they hold their position.$(br2)Servers can turn mounts off or change the search radius in the config.',
+        'Dica: deixe alguns cavalos selados na base, um para cada companheiro. Burros e mulas também servem.$(br2)Companheiros em $(thing)Guarda$() ou $(thing)Parado$() nunca montam: eles seguram a posição.$(br2)O servidor pode desligar as montarias ou mudar o raio de busca na config.') },
     ] },
 
   // ═══ Classes ═══
@@ -162,11 +191,11 @@ const entries = [
         'Companions gain XP by fighting:$(li)Killing a monster themselves gives the most.$(li)Helping with a kill gives some.$(li)When $(thing)you$() kill a monster, companions within 24 blocks also learn.$(br2)The maximum level is $(thing)20$(). Each level-up heals them by half their health.',
         'Os companheiros ganham XP lutando:$(li)Matar um monstro eles mesmos dá mais.$(li)Ajudar numa morte dá um pouco.$(li)Quando $(thing)você$() mata um monstro, companheiros a até 24 blocos também aprendem.$(br2)O nível máximo é $(thing)20$(). Cada nível novo cura metade da vida.') },
       { type: 'text', title: t('Per Level', 'Por Nível'), text: t(
-        'Every level adds:$(li)+1.5 max health$(li)+0.25 base damage$(li)+0.5 natural armor$(li)a little armor toughness and speed$(br2)From $(thing)level 5$() they unlock their class $(l:epicvanguard:classes/warcries)warcry$().',
-        'Cada nível adiciona:$(li)+1,5 de vida máxima$(li)+0,25 de dano base$(li)+0,5 de armadura natural$(li)um pouco de resistência de armadura e velocidade$(br2)A partir do $(thing)nível 5$() eles liberam o $(l:epicvanguard:classes/warcries)grito de guerra$() da classe.') },
+        'Every level adds:$(li)+1.5 max health$(li)+0.25 base damage$(li)+0.5 natural armor$(li)a little armor toughness and speed$(br2)From $(thing)level 5$() they unlock their class $(l:epicvanguard:classes/warcries)warcry$(). At $(thing)level 20$() the warcry recharges 20% faster.',
+        'Cada nível adiciona:$(li)+1,5 de vida máxima$(li)+0,25 de dano base$(li)+0,5 de armadura natural$(li)um pouco de resistência de armadura e velocidade$(br2)A partir do $(thing)nível 5$() eles liberam o $(l:epicvanguard:classes/warcries)grito de guerra$() da classe. No $(thing)nível 20$() o grito recarrega 20% mais rápido.') },
       { type: 'text', title: t('Classes', 'Classes'), text: t(
-        'Every companion already has a class when you meet them: $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardian$(), $(l:epicvanguard:classes/duelist)Duelist$(), Archer or Standard-bearer. The class never changes.$(br2)Level, XP and gear grow with them; talent points (1 every 2 levels) go in the $(thing)Talents$() tab.',
-        'Todo companheiro já tem uma classe quando você o encontra: $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardião$(), $(l:epicvanguard:classes/duelist)Duelista$(), Arqueiro ou Porta-estandarte. A classe não muda.$(br2)Nível, XP e equipamento evoluem com ele; os pontos de talento (1 a cada 2 níveis) vão na aba $(thing)Talentos$().') },
+        'Every companion already has a class when you meet them: $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardian$(), $(l:epicvanguard:classes/duelist)Duelist$(), $(l:epicvanguard:classes/archer)Archer$() or $(l:epicvanguard:classes/standard_bearer)Standard-bearer$(). The class never changes.$(br2)Level, XP and gear grow with them; talent points (1 every 2 levels) go in the $(thing)Talents$() tab.',
+        'Todo companheiro já tem uma classe quando você o encontra: $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardião$(), $(l:epicvanguard:classes/duelist)Duelista$(), $(l:epicvanguard:classes/archer)Arqueiro$() ou $(l:epicvanguard:classes/standard_bearer)Porta-estandarte$(). A classe não muda.$(br2)Nível, XP e equipamento evoluem com ele; os pontos de talento (1 a cada 2 níveis) vão na aba $(thing)Talentos$().') },
     ] },
   { category: 'classes', id: 'berserker', icon: 'epicvanguard:berserker_companion_spawn_egg', sortnum: 1,
     name: t('Berserker', 'Berserker'),
@@ -198,7 +227,27 @@ const entries = [
         '$(li)+15% movement speed.$(li)$(thing)Perfect Dodge$(): 18% chance to avoid all damage from an attack or projectile.$(li)Can dodge-roll twice as often as other classes.$(br2)$(thing)Warcry$(): Storm Cry, which staggers nearby enemies and speeds up you and the Duelist.',
         '$(li)+15% de velocidade.$(li)$(thing)Esquiva Perfeita$(): 18% de chance de evitar todo o dano de um ataque ou projétil.$(li)Pode rolar para esquivar duas vezes mais que as outras classes.$(br2)$(thing)Grito de guerra$(): Grito da Tempestade, que desestabiliza inimigos próximos e acelera você e o Duelista.') },
     ] },
-  { category: 'classes', id: 'warcries', icon: 'minecraft:goat_horn', sortnum: 4,
+  { category: 'classes', id: 'archer', icon: 'epicvanguard:archer_companion_spawn_egg', sortnum: 4,
+    name: t('Archer', 'Arqueiro'),
+    pages: [
+      { type: 'entity', entity: 'epicvanguard:archer_companion', scale: 0.9, name: t('Archer', 'Arqueiro'), text: t(
+        'Fights from a distance with a bow or crossbow. Keep arrows in the backpack.',
+        'Luta de longe com arco ou besta. Mantenha flechas na mochila.') },
+      { type: 'text', text: t(
+        '$(li)Starts with a bow (sometimes a crossbow), arrows and a spare sword for when arrows run out.$(li)Draws 20% faster than other companions with a bow.$(li)Leaves the off hand empty: no shield.$(li)Talents: arrows that pierce an extra enemy and a chance to loose a second arrow.$(br2)$(thing)Warcry$(): Arrow Rain. See $(l:epicvanguard:classes/warcries)Warcries$().',
+        '$(li)Começa com arco (às vezes besta), flechas e uma espada reserva para quando as flechas acabam.$(li)Puxa o arco 20% mais rápido que os outros companheiros.$(li)Deixa a mão secundária vazia: sem escudo.$(li)Talentos: flechas que atravessam mais um inimigo e chance de soltar uma segunda flecha.$(br2)$(thing)Grito de guerra$(): Chuva de Flechas. Veja $(l:epicvanguard:classes/warcries)Gritos de Guerra$().') },
+    ] },
+  { category: 'classes', id: 'standard_bearer', icon: 'epicvanguard:standard_bearer_companion_spawn_egg', sortnum: 5,
+    name: t('Standard-bearer', 'Porta-estandarte'),
+    pages: [
+      { type: 'entity', entity: 'epicvanguard:standard_bearer_companion', scale: 0.9, name: t('Standard-bearer', 'Porta-estandarte'), text: t(
+        'Carries a banner into battle and keeps everyone around standing.',
+        'Leva um estandarte para a batalha e mantém todos de pé.') },
+      { type: 'text', text: t(
+        '$(li)With a $(item)banner$() in the off hand, gives $(thing)Resistance I$() to you, to themselves and to your companions within 8 blocks.$(li)Without the banner there is no aura: keep one in the backpack.$(li)Talents: a wider aura (+4 blocks) and Speed I in the aura.$(br2)$(thing)Warcry$(): Rally. See $(l:epicvanguard:classes/warcries)Warcries$().',
+        '$(li)Com um $(item)estandarte$() na mão secundária, dá $(thing)Resistência I$() a você, a ele mesmo e aos seus companheiros a até 8 blocos.$(li)Sem estandarte não há aura: deixe um na mochila.$(li)Talentos: aura maior (+4 blocos) e Velocidade I na aura.$(br2)$(thing)Grito de guerra$(): Reagrupar. Veja $(l:epicvanguard:classes/warcries)Gritos de Guerra$().') },
+    ] },
+  { category: 'classes', id: 'warcries', icon: 'minecraft:goat_horn', sortnum: 6,
     name: t('Warcries', 'Gritos de Guerra'),
     pages: [
       { type: 'text', text: t(
@@ -207,6 +256,9 @@ const entries = [
       { type: 'text', text: t(
         '$(thing)Guardian$(): every monster within 12 blocks targets the Guardian. The Guardian gets Resistance II, and you get Strength I and Resistance I for 15 s.$(br2)$(thing)Duelist$(): enemies within 6 blocks are slowed and weakened for a moment. You and the Duelist get Speed II and Strength I for 12 s.',
         '$(thing)Guardião$(): todo monstro a até 12 blocos passa a mirar no Guardião. Ele ganha Resistência II, e você ganha Força I e Resistência I por 15 s.$(br2)$(thing)Duelista$(): inimigos a até 6 blocos ficam lentos e fracos por um instante. Você e o Duelista ganham Velocidade II e Força I por 12 s.') },
+      { type: 'text', text: t(
+        '$(thing)Archer$(): a rain of arrows falls on up to 6 monsters within 16 blocks.$(br2)$(thing)Standard-bearer$(): you and your companions within 12 blocks heal 2 hearts and get Absorption II for 20 s.$(br2)At $(thing)level 20$() every warcry recharges 20% faster.',
+        '$(thing)Arqueiro$(): uma chuva de flechas cai sobre até 6 monstros a até 16 blocos.$(br2)$(thing)Porta-estandarte$(): você e seus companheiros a até 12 blocos curam 2 corações e ganham Absorção II por 20 s.$(br2)No $(thing)nível 20$() todo grito recarrega 20% mais rápido.') },
     ] },
 
   // ═══ Vanguard Point ═══
@@ -220,8 +272,8 @@ const entries = [
         '$(thing)Right-click$() it, put $(item)20 Gold Coins$() in the slot and press $(thing)Post Request$(). Only the player who deposited the coins can use or take them back, and any extra coins are returned.$(br2)A company starts marching and arrives in $(thing)7 in-game days$(). Sleeping through the night counts too.',
         'Clique com o $(thing)botão direito$(), coloque $(item)20 Moedas de Ouro$() no slot e aperte $(thing)Publicar Edital$(). Só quem depositou as moedas pode usá-las ou retirá-las, e as moedas a mais são devolvidas.$(br2)Uma companhia começa a marchar e chega em $(thing)7 dias do jogo$(). Dormir à noite também conta.') },
       { type: 'text', title: t('Arrival', 'Chegada'), text: t(
-        'Fireworks and horns announce the arrival. A new $(thing)Berserker, Guardian or Duelist$() appears next to the Vanguard Point.$(br2)The 20 coins only pay for the march. To keep the mercenary, you still need to $(l:epicvanguard:getting_started/recruiting)hire them$() normally.$(br2)The march only advances while its chunk is loaded.',
-        'Fogos de artifício e cornetas anunciam a chegada. Um novo $(thing)Berserker, Guardião ou Duelista$() aparece ao lado do Vanguard Point.$(br2)As 20 moedas só pagam a marcha. Para ficar com o mercenário, você ainda precisa $(l:epicvanguard:getting_started/recruiting)contratá-lo$() normalmente.$(br2)A marcha só avança com o chunk carregado.') },
+        'Fireworks and horns announce the arrival. A new mercenary of a random class appears next to the Vanguard Point.$(br2)The 20 coins only pay for the march. To keep the mercenary, you still need to $(l:epicvanguard:getting_started/recruiting)hire them$() normally.$(br2)The march only advances while its chunk is loaded.',
+        'Fogos de artifício e cornetas anunciam a chegada. Um novo mercenário de classe sorteada aparece ao lado do Vanguard Point.$(br2)As 20 moedas só pagam a marcha. Para ficar com o mercenário, você ainda precisa $(l:epicvanguard:getting_started/recruiting)contratá-lo$() normalmente.$(br2)A marcha só avança com o chunk carregado.') },
     ] },
   { category: 'vanguard_point', id: 'base_life', icon: 'minecraft:campfire', sortnum: 1,
     name: t('Life at the Base', 'Vida na Base'),
@@ -229,6 +281,9 @@ const entries = [
       { type: 'text', text: t(
         'Your companions in $(thing)Guard$() or $(thing)Stay$() near a $(item)Vanguard Point$() patrol around it when there is nothing to fight.$(br2)Near a lit $(item)campfire$(), resting companions sit down around the fire.$(br2)Mercenaries who are not hired yet hang around the closest Vanguard Point.',
         'Seus companheiros em $(thing)Guarda$() ou $(thing)Parado$() perto de um $(item)Vanguard Point$() patrulham em volta dele quando não há nada para enfrentar.$(br2)Perto de uma $(item)fogueira$() acesa, companheiros descansando sentam em volta do fogo.$(br2)Mercenários ainda não contratados ficam pelo Vanguard Point mais próximo.') },
+      { type: 'text', title: t('Resting', 'Descanso'), text: t(
+        'Out of combat, companions sit to rest next to a lit $(item)campfire$() or, once hired, next to a $(item)Vanguard Point$() (within 8 blocks).$(li)In $(thing)Guard$() or $(thing)Stay$() they rest whenever they can.$(li)In $(thing)Follow$() only while you stand still or sneak nearby.$(br2)While sitting they $(thing)repair their gear$() with materials from the backpack.',
+        'Fora de combate, os companheiros sentam para descansar perto de uma $(item)fogueira$() acesa ou, depois de contratados, perto de um $(item)Vanguard Point$() (a até 8 blocos).$(li)Em $(thing)Guarda$() ou $(thing)Parado$() descansam sempre que podem.$(li)Em $(thing)Seguir$() só enquanto você fica parado ou agachado por perto.$(br2)Sentados, eles $(thing)reparam o equipamento$() com materiais da mochila.') },
     ] },
 
   // ═══ Referência ═══
@@ -253,8 +308,8 @@ const entries = [
     name: t('Server Settings', 'Configurações do Servidor'),
     pages: [
       { type: 'text', text: t(
-        'The file $(thing)config/epicvanguard-common.toml$() lets the server owner change:$(li)recruit cost and XP gain;$(li)warcry cooldown;$(li)how long a Vanguard Point request takes;$(li)the follow teleport distances.$(br2)Values in this book are the defaults.',
-        'O arquivo $(thing)config/epicvanguard-common.toml$() deixa o dono do servidor mudar:$(li)custo de contratação e ganho de XP;$(li)recarga do grito de guerra;$(li)quanto tempo leva um edital do Vanguard Point;$(li)as distâncias do teleporte de seguir.$(br2)Os valores deste livro são os padrões.') },
+        'The file $(thing)config/epicvanguard-common.toml$() lets the server owner change:$(li)recruit cost and XP gain;$(li)warcry cooldown and class chances (critical hit, fury, dodge, taunt);$(li)regeneration, ranged combat, wear and repair, mounts;$(li)Vanguard Point requests and follow distances.$(br2)Values in this book are the defaults.',
+        'O arquivo $(thing)config/epicvanguard-common.toml$() deixa o dono do servidor mudar:$(li)custo de contratação e ganho de XP;$(li)recarga do grito e chances das classes (crítico, fúria, esquiva, provocação);$(li)regeneração, combate à distância, desgaste e reparo, montarias;$(li)editais do Vanguard Point e distâncias do Seguir.$(br2)Os valores deste livro são os padrões.') },
     ] },
 ];
 

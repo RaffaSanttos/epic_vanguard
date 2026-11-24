@@ -37,6 +37,11 @@ public final class EpicVanguardConfig {
     private static final ForgeConfigSpec.BooleanValue FIELD_REPAIR;
     private static final ForgeConfigSpec.BooleanValue AUTO_SWAP_BROKEN;
     private static final ForgeConfigSpec.IntValue BANNER_AURA_RADIUS;
+    private static final ForgeConfigSpec.DoubleValue BERSERKER_CRIT_CHANCE;
+    private static final ForgeConfigSpec.DoubleValue BERSERKER_CRIT_MULTIPLIER;
+    private static final ForgeConfigSpec.DoubleValue BERSERKER_RAGE_THRESHOLD;
+    private static final ForgeConfigSpec.DoubleValue BERSERKER_RAGE_BONUS;
+    private static final ForgeConfigSpec.DoubleValue GUARDIAN_TAUNT_CHANCE;
     private static final ForgeConfigSpec.BooleanValue MOUNTS;
     private static final ForgeConfigSpec.IntValue MOUNT_SEARCH_RADIUS;
     private static final ForgeConfigSpec.BooleanValue OUTPOST_PRISONERS;
@@ -127,6 +132,21 @@ public final class EpicVanguardConfig {
         BANNER_AURA_RADIUS = b
                 .comment("Standard-bearer aura radius in blocks.")
                 .defineInRange("bannerAuraRadius", 8, 2, 32);
+        BERSERKER_CRIT_CHANCE = b
+                .comment("Berserker: chance of a critical hit (0.20 = 20%). Skill tree texts show the default values.")
+                .defineInRange("berserkerCritChance", 0.20D, 0.0D, 1.0D);
+        BERSERKER_CRIT_MULTIPLIER = b
+                .comment("Berserker: damage multiplier of a critical hit.")
+                .defineInRange("berserkerCritMultiplier", 1.50D, 1.0D, 5.0D);
+        BERSERKER_RAGE_THRESHOLD = b
+                .comment("Berserker: Blood Rage starts below this fraction of max health (0.40 = 40%).")
+                .defineInRange("berserkerRageThreshold", 0.40D, 0.0D, 1.0D);
+        BERSERKER_RAGE_BONUS = b
+                .comment("Berserker: extra damage during Blood Rage (0.20 = +20%).")
+                .defineInRange("berserkerRageBonus", 0.20D, 0.0D, 5.0D);
+        GUARDIAN_TAUNT_CHANCE = b
+                .comment("Guardian: chance that a monster hitting the owner switches to the Guardian (0.70 = 70%).")
+                .defineInRange("guardianTauntChance", 0.70D, 0.0D, 1.0D);
         b.pop();
 
         b.comment("Mounts").push("mounts");
@@ -215,6 +235,11 @@ public final class EpicVanguardConfig {
     public static int regenIntervalTicks() { return loaded() ? REGEN_INTERVAL_TICKS.get() : 60; }
     public static float shieldBlockChance() { return loaded() ? SHIELD_BLOCK_CHANCE.get().floatValue() : 0.70F; }
     public static float shieldBlockReduction() { return loaded() ? SHIELD_BLOCK_REDUCTION.get().floatValue() : 0.80F; }
+    public static float berserkerCritChance() { return loaded() ? BERSERKER_CRIT_CHANCE.get().floatValue() : 0.20F; }
+    public static float berserkerCritMultiplier() { return loaded() ? BERSERKER_CRIT_MULTIPLIER.get().floatValue() : 1.50F; }
+    public static float berserkerRageThreshold() { return loaded() ? BERSERKER_RAGE_THRESHOLD.get().floatValue() : 0.40F; }
+    public static float berserkerRageBonus() { return loaded() ? BERSERKER_RAGE_BONUS.get().floatValue() : 0.20F; }
+    public static float guardianTauntChance() { return loaded() ? GUARDIAN_TAUNT_CHANCE.get().floatValue() : 0.70F; }
     public static float duelistDodgeChance() { return loaded() ? DUELIST_DODGE_CHANCE.get().floatValue() : 0.18F; }
     public static boolean rangedCombat() { return loaded() ? RANGED_COMBAT.get() : true; }
     public static boolean infiniteArrows() { return loaded() ? INFINITE_ARROWS.get() : false; }

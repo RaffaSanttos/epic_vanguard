@@ -16,7 +16,7 @@
     {
       "type": "patchouli:text",
       "title": "Arrival",
-      "text": "Fireworks and horns announce the arrival. A new $(thing)Berserker, Guardian or Duelist$() appears next to the Vanguard Point.$(br2)The 20 coins only pay for the march. To keep the mercenary, you still need to $(l:epicvanguard:getting_started/recruiting)hire them$() normally.$(br2)The march only advances while its chunk is loaded."
+      "text": "Fireworks and horns announce the arrival. A new mercenary of a random class appears next to the Vanguard Point.$(br2)The 20 coins only pay for the march. To keep the mercenary, you still need to $(l:epicvanguard:getting_started/recruiting)hire them$() normally.$(br2)The march only advances while its chunk is loaded."
     }
   ]
 }

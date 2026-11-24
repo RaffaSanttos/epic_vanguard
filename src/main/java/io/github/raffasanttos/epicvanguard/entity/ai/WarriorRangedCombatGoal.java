@@ -52,9 +52,8 @@ public class WarriorRangedCombatGoal extends Goal {
             warrior.setTarget(null);
             return false;
         }
-        // No modo Guarda não persegue alvo que se afastou do posto
-        if (warrior.isRecruited() && warrior.getCombatMode() == 1 && warrior.getGuardPos() != null
-                && target.distanceToSqr(Vec3.atCenterOf(warrior.getGuardPos())) > 20.0D * 20.0D) {
+        // No modo Guarda não persegue alvo que se afastou do posto (mesma regra da escolha de alvo)
+        if (!warrior.canEngageFromGuard(target, 2.0D)) {
             warrior.clearCombatTarget();
             return false;
         }

@@ -1,0 +1,19 @@
+{
+  "name": "Standard-bearer",
+  "icon": "epicvanguard:standard_bearer_companion_spawn_egg",
+  "category": "epicvanguard:classes",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:entity",
+      "entity": "epicvanguard:standard_bearer_companion",
+      "scale": 0.9,
+      "name": "Standard-bearer",
+      "text": "Carries a banner into battle and keeps everyone around standing."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(li)With a $(item)banner$() in the off hand, gives $(thing)Resistance I$() to you, to themselves and to your companions within 8 blocks.$(li)Without the banner there is no aura: keep one in the backpack.$(li)Talents: a wider aura (+4 blocks) and Speed I in the aura.$(br2)$(thing)Warcry$(): Rally. See $(l:epicvanguard:classes/warcries)Warcries$()."
+    }
+  ]
+}

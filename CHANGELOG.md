@@ -12,14 +12,26 @@
 - **Equipment wear:** low durability warning in chat, automatic swap when an item breaks, and repair with materials from the backpack while resting at a campfire or at the Vanguard Point.
 - **Mounts:** in Follow stance, companions ride your tamed, saddled horses when you ride, and teleport together with their horse.
 - **Death notice:** you get a chat message when a companion dies, with the cause and where their items dropped.
+- **My Company screen** (key **J**, changeable in Controls): every companion you have, even far away or in other dimensions, with class, level, health, stance and location. Call one or everyone, change stances and pick the formation from there.
+- **Formations:** sneak + right-click with the War Horn cycles **Free → Column → Line → Circle**. Companions in Follow keep their place around you and turn with you; in a fight they break formation and come back after.
 - **Jade / WTHIT** (optional): tooltip with level, class, owner and stance.
 - New config sections: regeneration, shield and dodge chances, ranged combat, equipment wear, aura radius, mounts, spawns and contract cost.
 
 **Changes**
 - Companion screens: Backpack, Skills and Talents tabs in the same place, and all three screens have the same size.
 - Fixed: right after recruiting, the Monsters button showed ON and could turn hunting on by accident.
-- Item pick-up: whatever you drop for a companion is always picked up (unless pick-up is off), even in "useful only" mode. That is how you hand them items.
-- Auto-equip: the Standard-bearer puts a banner in the off hand instead of a shield.
+- Item pick-up is simply **on or off** again: on, they pick up everything they walk over, including what you drop for them; off, they pick up nothing. The "useful only" mode was removed (companions that had it now pick up everything).
+- Auto-equip: the Standard-bearer puts a banner in the off hand instead of a shield, and the Archer leaves the off hand empty.
+- War Horn: companions in **Guard** now chase the ordered target even far from their post, then go back to it.
+- War Horn: it no longer accepts other players' tamed animals, villagers, golems or armor stands, and it aims past your own companions instead of turning the order into "regroup".
+- Coins in the off hand now count when hiring.
+- Fixed: companions in **Guard** hesitated before attacking (aimed, took a few steps, stopped, went back). They now only pick enemies up to about 10 blocks from the post (20 with a bow) and chase them smoothly.
+- Fixed: auto-equip could put a piece of **armor in the main hand** when it was empty (Epic Fight marks armor with a "not a weapon" category, which counted as a weapon). Armor no longer fits the weapon slots.
+- Level 20 now really shortens the warcry cooldown by 20% (50 s → 40 s), as the skill tree promised.
+- Items of a dead companion now go through Forge's drop event, so grave mods (Gravestone, Corail Tombstone) keep them.
+- New config options: Berserker critical chance/multiplier, Blood Rage threshold/bonus and Guardian taunt chance. The skill tree shows the configured warcry cooldown.
+- Guide book: new pages for the Archer, the Standard-bearer, mounts, wear and repair, bows and crossbows, the death notice, resting at the Vanguard Point and the Guard range.
+- A newly hired or rescued companion is saved to the companion list right away (before, it took up to 10 s).
 - Natural regeneration is now **off by default**: companions heal with food, potions and campfires (`companions.naturalRegen` turns it back on).
 - Item pick-up now starts **off** for new companions; turn it on with the ✋ button.
 - Quick order (sneak + right-click with an empty hand) now cycles **Follow → Guard → Stay**; Guard protects the spot where the companion is.
@@ -40,14 +52,26 @@
 - **Desgaste de equipamento:** aviso de durabilidade baixa no chat, troca automática quando um item quebra e reparo com materiais da mochila ao descansar numa fogueira ou no Posto da Vanguarda.
 - **Montarias:** na postura Seguir, os companheiros montam nos seus cavalos domados e selados quando você monta, e são teleportados junto com o cavalo.
 - **Aviso de morte:** você recebe uma mensagem no chat quando um companheiro morre, com a causa e o lugar onde os itens caíram.
+- **Tela Minha Companhia** (tecla **J**, muda em Controles): todos os seus companheiros, mesmo longe ou em outra dimensão, com classe, nível, vida, postura e onde estão. Dá para chamar um ou todos, trocar a postura e escolher a formação por ali.
+- **Formações:** agachado + botão direito com a Corneta alterna **Livre → Coluna → Linha → Círculo**. Os companheiros em Seguir mantêm o lugar em volta de você e giram junto; numa luta saem da formação e voltam depois.
 - **Jade / WTHIT** (opcional): tooltip com nível, classe, dono e postura.
 - Seções novas na config: regeneração, chances de escudo e esquiva, combate à distância, desgaste, raio da aura, montarias, spawns e custo do edital.
 
 **Mudanças**
 - Telas do companheiro: abas Mochila, Habilidades e Talentos no mesmo lugar, e as três telas têm o mesmo tamanho.
 - Corrigido: logo depois de contratar, o botão de Monstros aparecia ligado e podia ligar a caça sem querer.
-- Coleta: o que você joga para um companheiro é sempre pego (a menos que a coleta esteja desligada), mesmo no modo "só úteis". É assim que você entrega itens a ele.
-- Auto-equipar: o Porta-estandarte coloca um estandarte na mão secundária em vez de escudo.
+- A coleta de itens voltou a ser só **ligada ou desligada**: ligada, pega tudo por onde passa, inclusive o que você joga para ele; desligada, não pega nada. O modo "só úteis" saiu (quem estava nele passa a pegar tudo).
+- Auto-equipar: o Porta-estandarte coloca um estandarte na mão secundária em vez de escudo, e o Arqueiro deixa a mão secundária vazia.
+- Corneta: quem está de **Guarda** agora persegue o alvo mandado mesmo longe do posto, e depois volta para ele.
+- Corneta: não aceita mais animais domesticados de outros jogadores, aldeões, golens nem suportes de armadura, e mira através dos seus companheiros em vez de virar "reagrupar".
+- Moedas na mão secundária agora contam na contratação.
+- Corrigido: companheiros de **Guarda** hesitavam antes de atacar (miravam, davam uns passos, paravam, voltavam). Agora só escolhem inimigos a até uns 10 blocos do posto (20 com arco) e vão até eles sem travar.
+- Corrigido: o auto-equipar podia colocar uma **armadura na mão principal** quando ela estava vazia (o Epic Fight marca armadura com a categoria "não é arma", que contava como arma). Armadura não entra mais nos slots de arma.
+- O nível 20 agora reduz de verdade a recarga do grito em 20% (50 s → 40 s), como a árvore prometia.
+- Os itens de um companheiro morto agora passam pelo evento de drops do Forge, então mods de lápide (Gravestone, Corail Tombstone) guardam esses itens.
+- Opções novas na config: chance e multiplicador do crítico do Berserker, limite e bônus da Fúria Sangrenta e chance de provocação do Guardião. A árvore de habilidades mostra a recarga do grito configurada.
+- Livro guia: páginas novas do Arqueiro, do Porta-estandarte, montarias, desgaste e reparo, arco e besta, aviso de morte, descanso no Vanguard Point e alcance da Guarda.
+- Companheiro recém-contratado ou resgatado entra na lista de companheiros na hora (antes levava até 10 s).
 - A regeneração natural agora vem **desligada por padrão**: os companheiros se curam com comida, poções e fogueira (`companions.naturalRegen` liga de novo).
 - A coleta de itens agora começa **desligada** nos companheiros novos; ligue no botão ✋.
 - A ordem rápida (agachado + botão direito de mão vazia) agora alterna **Seguir → Guarda → Parado**; a Guarda protege o lugar onde o companheiro está.

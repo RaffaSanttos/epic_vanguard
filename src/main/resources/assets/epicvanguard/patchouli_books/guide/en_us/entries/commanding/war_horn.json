@@ -6,7 +6,12 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "Blow the horn ($(thing)right-click$()) to give an order to all your companions within 32 blocks:$(li)$(thing)aiming at a creature$(): they all attack it, even if peaceful;$(li)$(thing)aiming at nothing$(): they stop fighting and regroup.$(br2)Companions in $(thing)Stay$() hold their position. Players, companions and your own pets can't be targeted."
+      "text": "Blow the horn ($(thing)right-click$()) to give an order to all your companions within 32 blocks:$(li)$(thing)aiming at a creature$(): they all attack it, even if peaceful;$(li)$(thing)aiming at nothing$(): they stop fighting and regroup.$(br2)Companions in $(thing)Guard$() chase the target even far from their post, then go back to it. Companions in $(thing)Stay$() hold their position.$(br2)Players, companions, tamed animals (anyone's), villagers, golems and armor stands can't be targeted: the horn aims past them."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Formations",
+      "text": "$(thing)Sneak + right-click$() with the horn to change how companions in $(thing)Follow$() walk with you:$(li)$(thing)Free$(): each one follows close by (default).$(li)$(thing)Column$(): single file behind you.$(li)$(thing)Line$(): side by side, one row behind you.$(li)$(thing)Circle$(): an escort around you.$(br2)The formation turns with you. In a fight they break formation and come back after."
     },
     {
       "type": "patchouli:crafting",

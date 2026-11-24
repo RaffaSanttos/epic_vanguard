@@ -1,0 +1,16 @@
+{
+  "name": "Mounts",
+  "icon": "minecraft:saddle",
+  "category": "epicvanguard:commanding",
+  "sortnum": 6,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "When you ride a horse, companions in $(thing)Follow$() look for a free horse within 16 blocks and ride along. It has to be $(thing)yours$(): tamed by you and saddled. Wild horses and horses of other players are left alone.$(br2)When you get off, they get off too. In a fight, melee companions dismount to fight and archers keep shooting from the saddle. If you ride far away, each companion teleports together with their horse."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Tip: keep a few saddled horses at your base, one for each companion. Donkeys and mules work too.$(br2)Companions in $(thing)Guard$() or $(thing)Stay$() never mount: they hold their position.$(br2)Servers can turn mounts off or change the search radius in the config."
+    }
+  ]
+}

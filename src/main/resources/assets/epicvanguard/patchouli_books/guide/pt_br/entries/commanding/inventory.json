@@ -10,17 +10,27 @@
     },
     {
       "type": "patchouli:text",
-      "text": "Os encantamentos da arma funcionam: $(thing)Afiação$(), $(thing)Julgamento$(), $(thing)Repulsão$(), $(thing)Aspecto Flamejante$() e outros. As armas gastam como as suas e quebram quando acabam.$(br2)Companheiros $(thing)pegam itens$() do chão ao passar por cima, inclusive o que você joga para eles. Veja o botão $(thing)Mão$()."
+      "text": "Os encantamentos da arma funcionam: $(thing)Afiação$(), $(thing)Julgamento$(), $(thing)Repulsão$(), $(thing)Aspecto Flamejante$() e outros. As armas gastam como as suas e quebram quando acabam.$(br2)Companheiros $(thing)pegam itens$() do chão ao passar por cima, inclusive o que você joga para eles, quando o botão $(thing)Mão$() está ligado."
     },
     {
       "type": "patchouli:text",
       "title": "Auto-Equipar",
-      "text": "Coloque equipamento melhor na $(thing)mochila$() e o companheiro veste sozinho depois de um tempo fora de combate: armadura pela proteção, arma corpo a corpo pelo dano, escudo se a mão secundária estiver vazia. A peça antiga volta para a mochila.$(br2)Ele nunca troca um arco ou besta e ignora itens quase quebrados."
+      "text": "Coloque equipamento melhor na $(thing)mochila$() e o companheiro veste sozinho depois de um tempo fora de combate: armadura pela proteção, arma corpo a corpo pelo dano, escudo se a mão secundária estiver vazia (estandarte no Porta-estandarte, nada no Arqueiro). A peça antiga volta para a mochila.$(br2)Ele nunca troca um arco ou besta e ignora itens quase quebrados."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Desgaste e Reparo",
+      "text": "Armadura, escudo e armas gastam como as suas. Quando um item fica abaixo de $(thing)10%$() de durabilidade, você recebe um aviso no chat. Se quebrar, ele troca sozinho pelo melhor reserva da mochila.$(br2)$(thing)Reparo$(): enquanto está sentado descansando (veja $(l:epicvanguard:vanguard_point/base_life)Vida na Base$()), ele usa materiais da mochila, os mesmos da bigorna (lingotes, couro, tábuas...). Cada um recupera um quarto do item."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Arco e Besta",
+      "text": "Qualquer companheiro com $(item)arco$() ou $(item)besta$() na mão principal e $(item)flechas$() na mochila luta de longe, mantendo distância do alvo. As flechas dele nunca acertam você nem seus outros companheiros.$(br2)Sem flechas numa luta, ele saca a melhor arma corpo a corpo da mochila. O $(l:epicvanguard:classes/archer)Arqueiro$() volta ao arco quando tiver flechas de novo."
     },
     {
       "type": "patchouli:text",
       "title": "Se Ele Cair",
-      "text": "Quando um companheiro morre, tudo o que ele carregava cai no chão. Ele não volta, então mantenha-o alimentado e bem protegido."
+      "text": "Quando um companheiro morre, você recebe uma $(thing)mensagem no chat$() com o nome, como ele morreu e as coordenadas e a dimensão onde os itens caíram. Tudo o que ele carregava fica no chão ali (mods de lápide também guardam esses itens).$(br2)Ele não volta, então mantenha-o alimentado e bem protegido."
     }
   ]
 }

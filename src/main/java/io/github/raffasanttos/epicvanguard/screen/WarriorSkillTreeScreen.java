@@ -99,7 +99,7 @@ public class WarriorSkillTreeScreen extends Screen {
         this.tabMochilaButton = Button.builder(
                 Component.translatable("epicvanguard.text.warrior_skill_tree_screen.2"),
                 btn -> {
-                    Messages.sendToServer(new PacketOpenWarriorGUI(entityId, true));
+                    Messages.sendToServer(new PacketOpenWarriorGUI(entityId));
                 })
                 .bounds(leftPos + ScreenTabs.TAB1_X, topPos - ScreenTabs.TAB_H, ScreenTabs.TAB1_W, ScreenTabs.TAB_H)
                 .tooltip(Tooltip.create(Component.translatable("epicvanguard.text.warrior_skill_tree_screen.3")))
@@ -291,7 +291,7 @@ public class WarriorSkillTreeScreen extends Screen {
                         I18n.get("epicvanguard.ui.warrior_skill_tree_screen.16"),
                         I18n.get("epicvanguard.ui.warrior_skill_tree_screen.17"),
                         I18n.get("epicvanguard.ui.warrior_skill_tree_screen.18"),
-                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.19"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.19", io.github.raffasanttos.epicvanguard.config.EpicVanguardConfig.warcryCooldownTicks() / 20),
                         I18n.get("epicvanguard.ui.warrior_skill_tree_screen.20"),
                         I18n.get("epicvanguard.ui.warrior_skill_tree_screen.21")
                     )
@@ -306,7 +306,7 @@ public class WarriorSkillTreeScreen extends Screen {
                         I18n.get("epicvanguard.ui.warrior_skill_tree_screen.25"),
                         I18n.get("epicvanguard.ui.warrior_skill_tree_screen.26"),
                         I18n.get("epicvanguard.ui.warrior_skill_tree_screen.27"),
-                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.28"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.28", io.github.raffasanttos.epicvanguard.config.EpicVanguardConfig.warcryCooldownTicks() / 20),
                         I18n.get("epicvanguard.ui.warrior_skill_tree_screen.29"),
                         I18n.get("epicvanguard.ui.warrior_skill_tree_screen.30")
                     )
@@ -329,7 +329,7 @@ public class WarriorSkillTreeScreen extends Screen {
                         I18n.get("epicvanguard.ui.warrior_skill_tree_screen.33"),
                         I18n.get("epicvanguard.ui.warrior_skill_tree_screen.34"),
                         I18n.get("epicvanguard.ui.warrior_skill_tree_screen.35"),
-                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.36"),
+                        I18n.get("epicvanguard.ui.warrior_skill_tree_screen.36", io.github.raffasanttos.epicvanguard.config.EpicVanguardConfig.warcryCooldownTicks() / 20),
                         I18n.get("epicvanguard.ui.warrior_skill_tree_screen.37"),
                         I18n.get("epicvanguard.ui.warrior_skill_tree_screen.38")
                     )

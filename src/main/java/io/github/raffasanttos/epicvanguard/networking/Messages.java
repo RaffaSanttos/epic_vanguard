@@ -20,7 +20,7 @@ public class Messages {
      * Versão do protocolo de rede. Cliente e servidor precisam ter a mesma; aumente sempre que
      * um pacote mudar de formato ou for adicionado/removido.
      */
-    private static final String PROTOCOL_VERSION = "6"; // 4: coleta com 3 modos; 5: talentos e fim da escolha de classe; 6: os dois juntos
+    private static final String PROTOCOL_VERSION = "7"; // 5: talentos e fim da escolha de classe; 6: coleta e PacketOpenWarriorGUI só com o id; 7: tela Minha Companhia
 
     private static SimpleChannel INSTANCE;
     private static int packetId = 0;
@@ -85,6 +85,19 @@ public class Messages {
                 .decoder(io.github.raffasanttos.epicvanguard.networking.packet.PacketUnlockPerk::new)
                 .encoder(io.github.raffasanttos.epicvanguard.networking.packet.PacketUnlockPerk::toBytes)
                 .consumerMainThread(io.github.raffasanttos.epicvanguard.networking.packet.PacketUnlockPerk::handle)
+                .add();
+
+        // Tela Minha Companhia
+        net.messageBuilder(io.github.raffasanttos.epicvanguard.networking.packet.PacketCompanyAction.class, id(), NetworkDirection.PLAY_TO_SERVER)
+                .decoder(io.github.raffasanttos.epicvanguard.networking.packet.PacketCompanyAction::new)
+                .encoder(io.github.raffasanttos.epicvanguard.networking.packet.PacketCompanyAction::toBytes)
+                .consumerMainThread(io.github.raffasanttos.epicvanguard.networking.packet.PacketCompanyAction::handle)
+                .add();
+
+        net.messageBuilder(io.github.raffasanttos.epicvanguard.networking.packet.PacketCompanyList.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+                .decoder(io.github.raffasanttos.epicvanguard.networking.packet.PacketCompanyList::new)
+                .encoder(io.github.raffasanttos.epicvanguard.networking.packet.PacketCompanyList::toBytes)
+                .consumerMainThread(io.github.raffasanttos.epicvanguard.networking.packet.PacketCompanyList::handle)
                 .add();
     }
 

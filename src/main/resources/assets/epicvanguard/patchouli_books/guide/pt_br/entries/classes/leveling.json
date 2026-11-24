@@ -11,12 +11,12 @@
     {
       "type": "patchouli:text",
       "title": "Por Nível",
-      "text": "Cada nível adiciona:$(li)+1,5 de vida máxima$(li)+0,25 de dano base$(li)+0,5 de armadura natural$(li)um pouco de resistência de armadura e velocidade$(br2)A partir do $(thing)nível 5$() eles liberam o $(l:epicvanguard:classes/warcries)grito de guerra$() da classe."
+      "text": "Cada nível adiciona:$(li)+1,5 de vida máxima$(li)+0,25 de dano base$(li)+0,5 de armadura natural$(li)um pouco de resistência de armadura e velocidade$(br2)A partir do $(thing)nível 5$() eles liberam o $(l:epicvanguard:classes/warcries)grito de guerra$() da classe. No $(thing)nível 20$() o grito recarrega 20% mais rápido."
     },
     {
       "type": "patchouli:text",
       "title": "Classes",
-      "text": "Todo companheiro já tem uma classe quando você o encontra: $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardião$(), $(l:epicvanguard:classes/duelist)Duelista$(), Arqueiro ou Porta-estandarte. A classe não muda.$(br2)Nível, XP e equipamento evoluem com ele; os pontos de talento (1 a cada 2 níveis) vão na aba $(thing)Talentos$()."
+      "text": "Todo companheiro já tem uma classe quando você o encontra: $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardião$(), $(l:epicvanguard:classes/duelist)Duelista$(), $(l:epicvanguard:classes/archer)Arqueiro$() ou $(l:epicvanguard:classes/standard_bearer)Porta-estandarte$(). A classe não muda.$(br2)Nível, XP e equipamento evoluem com ele; os pontos de talento (1 a cada 2 níveis) vão na aba $(thing)Talentos$()."
     }
   ]
 }

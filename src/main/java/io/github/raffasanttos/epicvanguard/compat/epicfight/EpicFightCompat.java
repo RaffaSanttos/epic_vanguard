@@ -42,7 +42,11 @@ public class EpicFightCompat {
                 return true;
             }
             var cap = yesman.epicfight.world.capabilities.EpicFightCapabilities.getItemStackCapability(stack);
-            return cap != null && !cap.isEmpty() && cap.getWeaponCategory() != null;
+            if (cap == null || cap.isEmpty() || cap.getWeaponCategory() == null) return false;
+            // O Epic Fight dá capacidade a quase todo item (armadura inclusive) com categoria NOT_WEAPON ou FIST:
+            // isso não é arma, senão o capacete ia parar na mão do guerreiro
+            String category = String.valueOf(cap.getWeaponCategory());
+            return !category.equalsIgnoreCase("NOT_WEAPON") && !category.equalsIgnoreCase("FIST");
         } catch (Throwable ignored) {
             return false;
         }

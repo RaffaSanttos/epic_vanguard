@@ -1,10 +1,7 @@
 package io.github.raffasanttos.epicvanguard.entity.util;
 
 import io.github.raffasanttos.epicvanguard.entity.WarriorCompanionEntity;
-import io.github.raffasanttos.epicvanguard.init.ModItems;
 import io.github.raffasanttos.epicvanguard.inventory.WarriorInventory;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -13,21 +10,19 @@ import net.minecraft.world.item.BannerItem;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.PotionItem;
 import net.minecraft.world.item.ShieldItem;
 import net.minecraft.world.item.TridentItem;
-import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 
 /**
- * Auto-equipar (melhor armadura e arma da mochila) e o filtro "itens úteis" da coleta.
+ * Auto-equipar: veste a melhor armadura e arma da mochila.
  *
  * <p>Regras do auto-equipar:
  * <ul>
  *   <li>só troca por algo <b>melhor</b> (armadura + resistência + Proteção; dano + Afiação);</li>
  *   <li>arma corpo a corpo só substitui arma corpo a corpo (nunca troca o arco do guerreiro por espada);</li>
- *   <li>mão secundária vazia recebe escudo (ou estandarte, no Porta-estandarte);</li>
+ *   <li>mão secundária vazia recebe escudo (ou estandarte, no Porta-estandarte; o Arqueiro fica sem nada);</li>
  *   <li>ignora peças quase quebradas (menos de 10% de durabilidade);</li>
  *   <li>a peça antiga vai para o lugar da nova na mochila (nada se perde);</li>
  *   <li>não mexe enquanto o dono está com a tela aberta, nem em luta.</li>
@@ -49,7 +44,11 @@ public final class WarriorEquipment {
         if (w.level().isClientSide() || !w.isAlive() || !w.isRecruited() || w.isPrisoner()) return;
         if ((w.tickCount + w.getId()) % CHECK_INTERVAL != 0) return;
         if (w.isInventoryOpen() || w.isFighting() || w.isUsingItem()) return;
+        autoEquipNow(w);
+    }
 
+    /** Uma passada do auto-equipar, sem esperar o intervalo (usado pelo tick e pelos GameTests). */
+    public static void autoEquipNow(WarriorCompanionEntity w) {
         WarriorInventory inv = w.getWarriorInventory();
         boolean changed = false;
 
@@ -108,6 +107,7 @@ public final class WarriorEquipment {
 
     private static boolean equipOffhandIfEmpty(WarriorCompanionEntity w, WarriorInventory inv) {
         if (!inv.getItem(WarriorInventory.SLOT_WEAPON_OFF).isEmpty()) return false;
+        if (w.getSpecialization() == WarriorCompanionEntity.SPEC_ARCHER) return false; // arco usa as duas mãos
         for (int i = WarriorInventory.SLOT_BACKPACK_START; i <= WarriorInventory.SLOT_BACKPACK_END; i++) {
             ItemStack cand = inv.getItem(i);
             if (isOffhandItemFor(w, cand) && !nearlyBroken(cand)) {
@@ -172,37 +172,5 @@ public final class WarriorEquipment {
         int sharp = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.SHARPNESS, stack);
         return sumModifiers(stack, EquipmentSlot.MAINHAND, Attributes.ATTACK_DAMAGE)
                 + (sharp > 0 ? 0.5D * sharp + 0.5D : 0.0D);
-    }
-
-    /**
-     * Item útil para o modo "só úteis" da coleta: comida, poções de cura/regeneração, moedas de ouro,
-     * flechas, e equipamento melhor que o que ele está usando.
-     */
-    public static boolean isUseful(WarriorCompanionEntity w, ItemStack stack) {
-        if (stack.isEmpty()) return false;
-        if (stack.isEdible()) return true;
-        if (stack.is(ModItems.GOLD_COIN.get())) return true;
-        if (stack.is(net.minecraft.tags.ItemTags.ARROWS)) return true;
-        if (stack.getItem() instanceof PotionItem) {
-            for (MobEffectInstance effect : PotionUtils.getMobEffects(stack)) {
-                if (effect.getEffect() == MobEffects.HEAL || effect.getEffect() == MobEffects.REGENERATION) return true;
-            }
-            return false;
-        }
-        WarriorInventory inv = w.getWarriorInventory();
-        for (int i = 0; i < ARMOR_SLOTS.length; i++) {
-            if (WarriorInventory.isArmorForSlot(stack, ARMOR_EQUIP[i])) {
-                ItemStack current = inv.getItem(ARMOR_SLOTS[i]);
-                return current.isEmpty() || armorScore(stack, ARMOR_EQUIP[i]) > armorScore(current, ARMOR_EQUIP[i]) + 0.01D;
-            }
-        }
-        if (stack.getItem() instanceof ShieldItem || stack.getItem() instanceof BannerItem) {
-            return isOffhandItemFor(w, stack) && inv.getItem(WarriorInventory.SLOT_WEAPON_OFF).isEmpty();
-        }
-        if (WarriorInventory.isWeaponOrShield(stack) && isMelee(stack)) {
-            ItemStack current = inv.getItem(WarriorInventory.SLOT_WEAPON_MAIN);
-            return current.isEmpty() || (isMelee(current) && weaponScore(stack) > weaponScore(current) + 0.01D);
-        }
-        return false;
     }
 }

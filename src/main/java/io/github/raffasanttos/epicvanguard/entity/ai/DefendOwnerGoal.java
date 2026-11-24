@@ -32,7 +32,8 @@ public class DefendOwnerGoal extends TargetGoal {
         this.ownerLastHurtBy = owner.getLastHurtByMob();
         int i = owner.getLastHurtByMobTimestamp();
         return i != this.timestamp && this.canAttack(this.ownerLastHurtBy, TargetingConditions.DEFAULT) &&
-                this.ownerLastHurtBy != warrior && this.ownerLastHurtBy != owner;
+                this.ownerLastHurtBy != warrior && this.ownerLastHurtBy != owner
+                && warrior.canEngageFromGuard(this.ownerLastHurtBy); // Guarda não abandona o posto por isso
     }
 
     @Override
@@ -45,7 +46,7 @@ public class DefendOwnerGoal extends TargetGoal {
 
         // Guardian Passive Taunt: 70% de chance de forçar o monstro a focar no Guardião
         if (warrior.getSpecialization() == WarriorCompanionEntity.SPEC_GUARDIAN && this.ownerLastHurtBy instanceof Mob attackingMob) {
-            if (warrior.getRandom().nextFloat() < 0.70F) {
+            if (warrior.getRandom().nextFloat() < io.github.raffasanttos.epicvanguard.config.EpicVanguardConfig.guardianTauntChance()) {
                 attackingMob.setTarget(warrior);
                 if (warrior.level() instanceof ServerLevel serverLevel) {
                     serverLevel.sendParticles(ParticleTypes.ENCHANTED_HIT, warrior.getX(), warrior.getY() + 1.2D, warrior.getZ(),

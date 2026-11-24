@@ -8,6 +8,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.SimpleMenuProvider;
@@ -55,6 +56,7 @@ public class PacketRecruitWarrior {
                     warrior.removeEffect(net.minecraft.world.effect.MobEffects.WEAKNESS);
                     warrior.setHealth(warrior.getMaxHealth());
                 }
+                warrior.updateSavedData(); // registra já (o /companions e o resgate do Seguir não esperam os 10 s)
 
                 if (player.level() instanceof ServerLevel serverLevel) {
                     serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER,
@@ -77,9 +79,16 @@ public class PacketRecruitWarrior {
         return true;
     }
 
+    /** Inventário principal + mão secundária (moedas no offhand também pagam). */
+    private static Iterable<ItemStack> coinStacks(Player player) {
+        java.util.List<ItemStack> stacks = new java.util.ArrayList<>(player.getInventory().items);
+        stacks.addAll(player.getInventory().offhand);
+        return stacks;
+    }
+
     public static int countGoldCoins(ServerPlayer player) {
         int total = 0;
-        for (ItemStack stack : player.getInventory().items) {
+        for (ItemStack stack : coinStacks(player)) {
             if (!stack.isEmpty() && stack.is(ModItems.GOLD_COIN.get())) {
                 total += stack.getCount();
             }
@@ -92,7 +101,7 @@ public class PacketRecruitWarrior {
         if (countGoldCoins(player) < amount) return false;
 
         int remaining = amount;
-        for (ItemStack stack : player.getInventory().items) {
+        for (ItemStack stack : coinStacks(player)) {
             if (!stack.isEmpty() && stack.is(ModItems.GOLD_COIN.get())) {
                 int take = Math.min(remaining, stack.getCount());
                 stack.shrink(take);

@@ -2,7 +2,7 @@
   "name": "Gritos de Guerra",
   "icon": "minecraft:goat_horn",
   "category": "epicvanguard:classes",
-  "sortnum": 4,
+  "sortnum": 6,
   "pages": [
     {
       "type": "patchouli:text",
@@ -11,6 +11,10 @@
     {
       "type": "patchouli:text",
       "text": "$(thing)Guardião$(): todo monstro a até 12 blocos passa a mirar no Guardião. Ele ganha Resistência II, e você ganha Força I e Resistência I por 15 s.$(br2)$(thing)Duelista$(): inimigos a até 6 blocos ficam lentos e fracos por um instante. Você e o Duelista ganham Velocidade II e Força I por 12 s."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(thing)Arqueiro$(): uma chuva de flechas cai sobre até 6 monstros a até 16 blocos.$(br2)$(thing)Porta-estandarte$(): você e seus companheiros a até 12 blocos curam 2 corações e ganham Absorção II por 20 s.$(br2)No $(thing)nível 20$() todo grito recarrega 20% mais rápido."
     }
   ]
 }

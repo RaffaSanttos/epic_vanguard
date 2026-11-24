@@ -11,7 +11,12 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.OwnableEntity;
+import net.minecraft.world.entity.animal.IronGolem;
+import net.minecraft.world.entity.animal.SnowGolem;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
+import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.Item;
@@ -25,10 +30,12 @@ import net.minecraft.world.phys.Vec3;
 /**
  * Corneta da Vanguarda: ordem rápida para todos os seus companheiros por perto, sem abrir a tela.
  * <ul>
- *   <li>Mirando numa criatura: todos atacam esse alvo (mesmo se estiverem pacíficos).</li>
+ *   <li>Mirando numa criatura: todos atacam esse alvo (mesmo se estiverem pacíficos). Quem está de Guarda
+ *       persegue até o fim, mesmo longe do posto, e depois volta para o posto.</li>
  *   <li>Mirando no nada: todos param de lutar e voltam para você.</li>
  * </ul>
- * Não serve para mandar atacar jogadores, companheiros, nem os seus animais domesticados.
+ * Não serve para mandar atacar jogadores, companheiros, animais domesticados (de qualquer jogador),
+ * aldeões, golens nem suportes de armadura. A mira passa por eles e pega a próxima criatura.
  */
 public class VanguardHornItem extends Item {
 
@@ -47,6 +54,11 @@ public class VanguardHornItem extends Item {
             return InteractionResultHolder.success(stack);
         }
 
+        // Agachado: troca a formação do modo Seguir (Livre -> Coluna -> Linha -> Círculo)
+        if (player.isShiftKeyDown()) {
+            return cycleFormation(level, player, stack);
+        }
+
         List<WarriorCompanionEntity> companions = level.getEntitiesOfClass(WarriorCompanionEntity.class,
                 player.getBoundingBox().inflate(ORDER_RADIUS),
                 w -> w.isAlive() && w.isRecruited() && w.isOwner(player) && !w.isPrisoner());
@@ -61,12 +73,15 @@ public class VanguardHornItem extends Item {
         }
 
         LivingEntity target = findAimedTarget(player);
-        if (target != null && isValidOrderTarget(player, target)) {
+        if (target != null) {
             int ordered = 0;
             for (WarriorCompanionEntity w : companions) {
                 if (w.getCombatMode() == WarriorCompanionEntity.MODE_STAY) continue; // Parado segura a posição
                 w.setTarget(target);
-                if (w.getTarget() == target) ordered++;
+                if (w.getTarget() == target) {
+                    w.setHornOrderTarget(target); // Guarda: pode sair do posto até matar o alvo
+                    ordered++;
+                }
             }
             player.displayClientMessage(Component.translatable("epicvanguard.text.horn.attack", ordered, target.getDisplayName()), true);
         } else {
@@ -77,6 +92,27 @@ public class VanguardHornItem extends Item {
         }
         if (level instanceof ServerLevel serverLevel) {
             for (WarriorCompanionEntity w : companions) {
+                serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.NOTE,
+                        w.getX(), w.getY() + w.getBbHeight() + 0.3D, w.getZ(), 1, 0.0D, 0.0D, 0.0D, 0.0D);
+            }
+        }
+        return InteractionResultHolder.consume(stack);
+    }
+
+    private static InteractionResultHolder<ItemStack> cycleFormation(Level level, Player player, ItemStack stack) {
+        if (level.getServer() == null) return InteractionResultHolder.pass(stack);
+        io.github.raffasanttos.epicvanguard.entity.CompanionSavedData data =
+                io.github.raffasanttos.epicvanguard.entity.CompanionSavedData.get(level.getServer());
+        int next = io.github.raffasanttos.epicvanguard.entity.util.WarriorFormation.next(data.getFormation(player.getUUID()));
+        data.setFormation(player.getUUID(), next);
+
+        level.playSound(null, player.blockPosition(), SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(2).value(),
+                SoundSource.PLAYERS, 0.9F, 1.4F);
+        player.getCooldowns().addCooldown(stack.getItem(), 10);
+        player.displayClientMessage(Component.translatable("epicvanguard.text.horn.formation",
+                io.github.raffasanttos.epicvanguard.entity.util.WarriorFormation.name(next)), true);
+        if (level instanceof ServerLevel serverLevel) {
+            for (WarriorCompanionEntity w : io.github.raffasanttos.epicvanguard.entity.util.WarriorFormation.members(player)) {
                 serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.NOTE,
                         w.getX(), w.getY() + w.getBbHeight() + 0.3D, w.getZ(), 1, 0.0D, 0.0D, 0.0D, 0.0D);
             }
@@ -97,14 +133,19 @@ public class VanguardHornItem extends Item {
         }
         AABB box = player.getBoundingBox().expandTowards(end.subtract(eye)).inflate(1.0D);
         EntityHitResult hit = ProjectileUtil.getEntityHitResult(player, eye, end, box,
-                e -> e instanceof LivingEntity && e.isAlive() && !e.isSpectator(), eye.distanceToSqr(end));
+                e -> e instanceof LivingEntity && e.isAlive() && !e.isSpectator() && isValidOrderTarget(e),
+                eye.distanceToSqr(end));
         return hit != null && hit.getEntity() instanceof LivingEntity living ? living : null;
     }
 
-    private static boolean isValidOrderTarget(Player player, Entity target) {
+    /** Alvos que a corneta aceita. Os outros a mira atravessa (um companheiro na frente não estraga a ordem). */
+    public static boolean isValidOrderTarget(Entity target) {
         if (target instanceof Player) return false;
         if (target instanceof WarriorCompanionEntity) return false;
-        if (target instanceof TamableAnimal pet && pet.isOwnedBy(player)) return false;
+        if (target instanceof ArmorStand) return false;
+        if (target instanceof OwnableEntity pet && pet.getOwnerUUID() != null) return false; // pet de qualquer jogador
+        if (target instanceof AbstractHorse horse && horse.isTamed()) return false;
+        if (target instanceof AbstractVillager || target instanceof IronGolem || target instanceof SnowGolem) return false; // não AbstractGolem: o shulker também é
         return true;
     }
 
@@ -112,5 +153,6 @@ public class VanguardHornItem extends Item {
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("item.epicvanguard.vanguard_horn.tooltip.1").withStyle(net.minecraft.ChatFormatting.GRAY));
         tooltip.add(Component.translatable("item.epicvanguard.vanguard_horn.tooltip.2").withStyle(net.minecraft.ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("item.epicvanguard.vanguard_horn.tooltip.3").withStyle(net.minecraft.ChatFormatting.GRAY));
     }
 }

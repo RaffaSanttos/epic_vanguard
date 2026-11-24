@@ -50,6 +50,19 @@ Na primeira vez o Gradle baixa o Epic Fight pelo CurseMaven (não precisa mais d
 - [ ] Mochila, Habilidades e Talentos: as 3 abas aparecem nas duas telas, no mesmo lugar, e a tela não muda de tamanho ao trocar de aba.
 - [ ] Logo depois de contratar, o botão de monstros (⚔) aparece **desligado** e continua desligado ao mexer nos outros botões.
 - [ ] Com a coleta (✋) ligada, ele pega também os itens que você joga.
+- [ ] Com a coleta (✋) desligada, ele não pega nada, nem o que você joga. O botão só alterna cinza/verde.
+- [ ] Corneta com um companheiro de Guarda: mire num monstro longe do posto; ele vai até lá, mata e volta para o posto.
+- [ ] Corneta com um companheiro na frente da mira: a ordem de ataque vai para o monstro atrás dele.
+- [ ] Corneta mirando num aldeão, golem, suporte de armadura ou pet de outro jogador: não vira alvo.
+- [ ] Arqueiro com escudo na mochila: não equipa o escudo.
+- [ ] Contratar com as moedas só na mão secundária.
+- [ ] Guarda: com um zumbi a ~6 blocos do posto ele vai direto atacar, sem parar no meio; com um zumbi a ~20 blocos ele não sai do posto.
+- [ ] Auto-equipar com a mão principal vazia e armadura na mochila: a armadura não vai para a mão.
+- [ ] Livro: páginas do Arqueiro, Porta-estandarte, Montarias, Desgaste e Reparo, Arco e Besta e Descanso aparecem e o texto cabe na página.
+- [ ] Tecla J abre a Minha Companhia com todos os companheiros (inclusive um deixado de Guarda longe, que aparece como "longe").
+- [ ] Na Minha Companhia: Chamar, Chamar todos, trocar postura (carregado) e o aviso ao tentar trocar a postura de um companheiro longe.
+- [ ] Corneta agachado: troca a formação (mensagem na barra). Coluna, Linha e Círculo: andar e virar; eles acompanham sem ficar presos.
+- [ ] Em formação, entrar numa luta: eles saem da formação para lutar e voltam depois.
 - [ ] Arqueiro (ovo no criativo): começa com arco e flechas, atira de longe, saca a espada sem flechas, grito "Chuva de Flechas".
 - [ ] Porta-estandarte: estandarte na mão secundária, aura de Resistência em você e aliados, grito "Reagrupar".
 - [ ] Qualquer guerreiro com arco/besta + flechas na mochila luta à distância; flechas não acertam você nem aliados.

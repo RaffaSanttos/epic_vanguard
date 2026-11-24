@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "O arquivo $(thing)config/epicvanguard-common.toml$() deixa o dono do servidor mudar:$(li)custo de contratação e ganho de XP;$(li)recarga do grito de guerra;$(li)quanto tempo leva um edital do Vanguard Point;$(li)as distâncias do teleporte de seguir.$(br2)Os valores deste livro são os padrões."
+      "text": "O arquivo $(thing)config/epicvanguard-common.toml$() deixa o dono do servidor mudar:$(li)custo de contratação e ganho de XP;$(li)recarga do grito e chances das classes (crítico, fúria, esquiva, provocação);$(li)regeneração, combate à distância, desgaste e reparo, montarias;$(li)editais do Vanguard Point e distâncias do Seguir.$(br2)Os valores deste livro são os padrões."
     }
   ]
 }

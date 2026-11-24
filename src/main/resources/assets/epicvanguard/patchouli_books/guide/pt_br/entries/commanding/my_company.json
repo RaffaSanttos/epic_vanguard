@@ -1,0 +1,16 @@
+{
+  "name": "Minha Companhia",
+  "icon": "minecraft:filled_map",
+  "category": "epicvanguard:commanding",
+  "sortnum": 7,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Aperte $(thing)J$() (dá para mudar em Controles) para abrir a $(thing)Minha Companhia$(): a lista de todos os seus companheiros, mesmo os que estão longe ou em outra dimensão.$(br2)Cada linha mostra a classe, o nível, a vida, a postura e onde ele está: a distância, ou a dimensão e as coordenadas. $(thing)longe$() quer dizer que a área dele não está carregada."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(li)$(thing)Chamar$(): traz aquele companheiro até você.$(li)$(thing)Chamar todos$(): traz todos.$(li)O botão de $(thing)postura$() alterna Seguir, Guarda e Parado. Só funciona com quem está numa área carregada: chame-o primeiro.$(li)$(thing)Formação$(): a mesma escolha da $(l:epicvanguard:commanding/war_horn)Corneta$()."
+    }
+  ]
+}

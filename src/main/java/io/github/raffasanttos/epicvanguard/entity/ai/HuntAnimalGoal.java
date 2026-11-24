@@ -17,7 +17,8 @@ public class HuntAnimalGoal extends NearestAttackableTargetGoal<Animal> {
                          animal instanceof net.minecraft.world.entity.animal.Sheep ||
                          animal instanceof net.minecraft.world.entity.animal.Chicken ||
                          animal instanceof net.minecraft.world.entity.animal.Rabbit ||
-                         animal instanceof net.minecraft.world.entity.animal.goat.Goat));
+                         animal instanceof net.minecraft.world.entity.animal.goat.Goat)
+                        && warrior.canEngageFromGuard(animal)); // Guarda: só o que está perto do posto
         this.warrior = warrior;
     }
 

@@ -7,6 +7,11 @@
     {
       "type": "patchouli:text",
       "text": "Your companions in $(thing)Guard$() or $(thing)Stay$() near a $(item)Vanguard Point$() patrol around it when there is nothing to fight.$(br2)Near a lit $(item)campfire$(), resting companions sit down around the fire.$(br2)Mercenaries who are not hired yet hang around the closest Vanguard Point."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Resting",
+      "text": "Out of combat, companions sit to rest next to a lit $(item)campfire$() or, once hired, next to a $(item)Vanguard Point$() (within 8 blocks).$(li)In $(thing)Guard$() or $(thing)Stay$() they rest whenever they can.$(li)In $(thing)Follow$() only while you stand still or sneak nearby.$(br2)While sitting they $(thing)repair their gear$() with materials from the backpack."
     }
   ]
 }

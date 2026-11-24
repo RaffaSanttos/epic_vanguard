@@ -72,6 +72,7 @@ public final class WarriorInteraction {
                 w.applyRecruitDefaults(); // Seguir + pacífico
                 w.setEquipmentTier(0);
                 w.syncEquipmentWithInventory();
+                w.updateSavedData(); // registra o resgatado na hora
 
                 if (w.level() instanceof ServerLevel serverLevel) {
                     serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER,
@@ -155,8 +156,7 @@ public final class WarriorInteraction {
 
     /**
      * Coleta automática: guarda na mochila os itens do chão por onde o guerreiro passa.
-     * Botão da tela: desligada, só úteis (comida, poções de cura, moedas, flechas, equipamento melhor) ou tudo.
-     * O que o dono joga no chão é sempre pego (fora do modo desligada): é o jeito de entregar itens.
+     * Botão da tela: desligada (não pega nada, nem o que o dono joga) ou ligada (pega tudo).
      */
     public static void pickUpGroundItems(WarriorCompanionEntity w) {
         if (!w.isAlive() || w.level().isClientSide() || !w.isRecruited() || w.isPrisoner() || !w.isPickupItems()) {
@@ -165,13 +165,8 @@ public final class WarriorInteraction {
         // Não precisa checar todo tick: a cada 5 ticks, espalhado entre guerreiros pelo id
         if ((w.tickCount + w.getId()) % 5 != 0) return;
 
-        Entity owner = w.getOwner();
-        java.util.UUID ownerId = w.getOwnerUUID().orElse(null);
         AABB pickupBox = w.getBoundingBox().inflate(1.0D, 0.5D, 1.0D);
-        boolean usefulOnly = w.getPickupMode() == WarriorCompanionEntity.PICKUP_USEFUL;
-        // O que o dono joga é sempre pego (é como ele entrega itens); o resto passa pelo filtro "só úteis"
-        List<ItemEntity> items = w.level().getEntitiesOfClass(ItemEntity.class, pickupBox, e -> !e.isRemoved() && !e.hasPickUpDelay()
-                && (!usefulOnly || isThrownBy(e, owner, ownerId) || WarriorEquipment.isUseful(w, e.getItem())));
+        List<ItemEntity> items = w.level().getEntitiesOfClass(ItemEntity.class, pickupBox, e -> !e.isRemoved() && !e.hasPickUpDelay());
 
         for (ItemEntity itemEntity : items) {
             ItemStack groundStack = itemEntity.getItem();
@@ -194,12 +189,5 @@ public final class WarriorInteraction {
                 }
             }
         }
-    }
-
-    /** O item foi jogado pelo dono? ItemEntity#getOwner devolve quem jogou (Player#drop marca o thrower). */
-    private static boolean isThrownBy(ItemEntity item, Entity owner, java.util.UUID ownerId) {
-        Entity thrower = item.getOwner();
-        if (thrower == null) return false;
-        return thrower == owner || (ownerId != null && ownerId.equals(thrower.getUUID()));
     }
 }

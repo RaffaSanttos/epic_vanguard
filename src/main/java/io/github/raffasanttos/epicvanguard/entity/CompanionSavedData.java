@@ -138,6 +138,8 @@ public class CompanionSavedData extends SavedData {
      * ela ainda está marcada como recrutada no NBT e precisa ser liberada (senão voltaria ao registro).
      */
     private final Map<UUID, Long> dismissed = new ConcurrentHashMap<>();
+    /** Formação escolhida por cada dono (WarriorFormation). Quem não está aqui usa a livre. */
+    private final Map<UUID, Integer> formations = new ConcurrentHashMap<>();
     // Os mapas acima guardam o tempo de jogo (overworld) em que o UUID entrou; 0 = ainda sem data
     // (entrada de save antigo ou registrada antes da primeira manutenção). Ver pruneForgotten.
     private FriendlyFireMode globalFriendlyFireMode = FriendlyFireMode.DISABLED;
@@ -341,6 +343,17 @@ public class CompanionSavedData extends SavedData {
         return list;
     }
 
+    public int getFormation(UUID owner) {
+        return owner == null ? 0 : formations.getOrDefault(owner, 0);
+    }
+
+    public void setFormation(UUID owner, int formation) {
+        if (owner == null) return;
+        if (formation <= 0) formations.remove(owner);
+        else formations.put(owner, formation);
+        setDirty();
+    }
+
     public CompanionInfo getCompanion(UUID companionUUID) {
         if (companionUUID == null) return null;
         return companions.get(companionUUID);
@@ -377,6 +390,13 @@ public class CompanionSavedData extends SavedData {
 
         loadUuidTimes(tag, "Retired", data.retired);
         loadUuidTimes(tag, "Dismissed", data.dismissed);
+        if (tag.contains("Formations", Tag.TAG_LIST)) {
+            ListTag formationList = tag.getList("Formations", Tag.TAG_COMPOUND);
+            for (int i = 0; i < formationList.size(); i++) {
+                CompoundTag f = formationList.getCompound(i);
+                if (f.hasUUID("owner")) data.formations.put(f.getUUID("owner"), f.getInt("formation"));
+            }
+        }
 
         if (tag.contains("GlobalFriendlyFire", Tag.TAG_STRING)) {
             try {
@@ -433,6 +453,14 @@ public class CompanionSavedData extends SavedData {
         pCompoundTag.put("Companions", list);
         pCompoundTag.put("Retired", saveUuidTimes(retired));
         pCompoundTag.put("Dismissed", saveUuidTimes(dismissed));
+        ListTag formationList = new ListTag();
+        for (Map.Entry<UUID, Integer> e : formations.entrySet()) {
+            CompoundTag f = new CompoundTag();
+            f.putUUID("owner", e.getKey());
+            f.putInt("formation", e.getValue());
+            formationList.add(f);
+        }
+        pCompoundTag.put("Formations", formationList);
         pCompoundTag.putString("GlobalFriendlyFire", getGlobalFriendlyFireMode().name());
 
         return pCompoundTag;

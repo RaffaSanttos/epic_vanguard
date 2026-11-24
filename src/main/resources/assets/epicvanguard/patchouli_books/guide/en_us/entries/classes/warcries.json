@@ -2,7 +2,7 @@
   "name": "Warcries",
   "icon": "minecraft:goat_horn",
   "category": "epicvanguard:classes",
-  "sortnum": 4,
+  "sortnum": 6,
   "pages": [
     {
       "type": "patchouli:text",
@@ -11,6 +11,10 @@
     {
       "type": "patchouli:text",
       "text": "$(thing)Guardian$(): every monster within 12 blocks targets the Guardian. The Guardian gets Resistance II, and you get Strength I and Resistance I for 15 s.$(br2)$(thing)Duelist$(): enemies within 6 blocks are slowed and weakened for a moment. You and the Duelist get Speed II and Strength I for 12 s."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(thing)Archer$(): a rain of arrows falls on up to 6 monsters within 16 blocks.$(br2)$(thing)Standard-bearer$(): you and your companions within 12 blocks heal 2 hearts and get Absorption II for 20 s.$(br2)At $(thing)level 20$() every warcry recharges 20% faster."
     }
   ]
 }

@@ -15,21 +15,18 @@ import java.util.function.Supplier;
 
 public class PacketOpenWarriorGUI {
     private final int entityId;
-    private final boolean recruited;
 
-    public PacketOpenWarriorGUI(int entityId, boolean recruited) {
-        this.entityId  = entityId;
-        this.recruited = recruited;
+    /** Só o id: o servidor decide pela situação real do guerreiro qual tela abrir (mochila ou contrato). */
+    public PacketOpenWarriorGUI(int entityId) {
+        this.entityId = entityId;
     }
 
     public PacketOpenWarriorGUI(FriendlyByteBuf buf) {
-        this.entityId  = buf.readInt();
-        this.recruited = buf.readBoolean();
+        this.entityId = buf.readInt();
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeInt(entityId);
-        buf.writeBoolean(recruited);
     }
 
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
@@ -39,7 +36,7 @@ public class PacketOpenWarriorGUI {
             WarriorCompanionEntity warrior = PacketGuards.nearbyWarrior(player, entityId);
             if (warrior == null) return;
 
-            // Usa o estado real do servidor, não o flag enviado pelo cliente.
+            // Usa o estado real do servidor.
             // Inventário de guerreiro recrutado: apenas o dono pode abrir.
             if (warrior.isRecruited()) {
                 if (!warrior.isOwner(player)) return;

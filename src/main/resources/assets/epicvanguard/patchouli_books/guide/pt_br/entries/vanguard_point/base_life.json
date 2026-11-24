@@ -7,6 +7,11 @@
     {
       "type": "patchouli:text",
       "text": "Seus companheiros em $(thing)Guarda$() ou $(thing)Parado$() perto de um $(item)Vanguard Point$() patrulham em volta dele quando não há nada para enfrentar.$(br2)Perto de uma $(item)fogueira$() acesa, companheiros descansando sentam em volta do fogo.$(br2)Mercenários ainda não contratados ficam pelo Vanguard Point mais próximo."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Descanso",
+      "text": "Fora de combate, os companheiros sentam para descansar perto de uma $(item)fogueira$() acesa ou, depois de contratados, perto de um $(item)Vanguard Point$() (a até 8 blocos).$(li)Em $(thing)Guarda$() ou $(thing)Parado$() descansam sempre que podem.$(li)Em $(thing)Seguir$() só enquanto você fica parado ou agachado por perto.$(br2)Sentados, eles $(thing)reparam o equipamento$() com materiais da mochila."
     }
   ]
 }

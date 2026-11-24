@@ -10,7 +10,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(thing)Guard$(): defends the spot where you set it, within about 6 blocks.$(br2)$(thing)Stay$(): stands still and chases nothing, but defends themselves.$(br2)In $(thing)Guard$() or $(thing)Stay$() they never teleport to you. Use the $(l:epicvanguard:reference/commands)call command$() to bring them back."
+      "text": "$(thing)Guard$(): defends the spot where you set it. They attack enemies up to about 10 blocks from the post (20 with a bow) and then walk back to it. Enemies further away are ignored, unless you order an attack with the $(l:epicvanguard:commanding/war_horn)War Horn$().$(br2)$(thing)Stay$(): stands still and chases nothing, but defends themselves.$(br2)In $(thing)Guard$() or $(thing)Stay$() they never teleport to you. Use the $(l:epicvanguard:reference/commands)call command$() to bring them back."
     },
     {
       "type": "patchouli:text",

@@ -43,7 +43,7 @@ Agora quem é recrutado (moedas, resgate ou duelo) passa por `applyRecruitDefaul
 `PacketRecruitWarrior` não verifica `isAlive()` nem `isDuelMode()`, e não usa `PacketGuards.nearbyWarrior`.
 **Correção:** usar `PacketGuards.nearbyWarrior(...)` e recusar o recrutamento durante um duelo.
 
-### 🟢 1.5 Drops da morte não passam pelo `LivingDropsEvent`
+### ✅ 1.5 Drops da morte não passam pelo `LivingDropsEvent` — corrigido (24/11/2026): os itens saem em `dropEquipment()` com `spawnAtLocation`, dentro da captura do Forge
 `dropAllInventory` cria os `ItemEntity` direto com `addFreshEntity`. Mods de lápide e de keep-inventory não enxergam esses itens.
 **Correção:** chamar `spawnAtLocation(stack)` dentro de `dropCustomDeathLoot`, que já roda com captura de drops. Tirar a segunda chamada de `dropAllInventory()` em `die()`.
 
@@ -69,7 +69,7 @@ A correção de duplicação zera a chance de drop dos slots de equipamento no c
 Em `Messages.register`, `clientAcceptedVersions(s -> true)` e `serverAcceptedVersions(s -> true)` deixam versões diferentes do mod se conectarem. O resultado são pacotes com layout diferente e erros estranhos.
 **Correção:** `PROTOCOL_VERSION::equals`, e aumentar `PROTOCOL_VERSION` sempre que algum pacote mudar.
 
-### 🟢 2.3 Pacote de abrir GUI manda um `boolean recruited` inútil
+### ✅ 2.3 Pacote de abrir GUI manda um `boolean recruited` inútil — corrigido (24/11/2026)
 (O protocolo foi para "3" na 1.0.18 por causa da coleta e da escolha de classe; dá para aproveitar o próximo aumento.)
 `PacketOpenWarriorGUI` já ignora o flag e usa o estado do servidor. Dá para remover o campo e economizar o byte. Isso exige aumentar a versão do protocolo (2.2).
 
@@ -196,8 +196,8 @@ Continua rodando todo tick (é barato), mas só chama `setItemSlot` quando o slo
   - `WarriorProgression` (escolha de classe)
   - 🟢 Falta: `WarriorPersistence` (save/load/snapshot) e a parte de XP/nível.
 - ✅ **Config `epicvanguard-common.toml`** — feito (22/11/2026): `config/EpicVanguardConfig` (ForgeConfigSpec COMMON) com custo de contratação, XP, raio do XP compartilhado, recarga do grito, duração do edital, distâncias/tempo do Seguir e memória do registro. Ver [ARQUITETURA.md](ARQUITETURA.md#config).
-  - 🟢 Falta: porcentagens das classes (crítico, esquiva, fúria) e a curva de XP por nível. Os textos das árvores ainda mostram "50s" fixo.
-  - 🟢 O talento de nível 20 promete "recarga do grito em 40 s", mas o código não reduz a recarga. Implementar ou corrigir o texto.
+  - ✅ Porcentagens das classes na config (crítico e fúria do Berserker, provocação do Guardião; a esquiva já estava) e a recarga do grito nos textos da árvore (24/11/2026). A curva de XP ficou de fora: o `xpMultiplier` já cobre, e a tela do cliente calcula o XP necessário com a própria config.
+  - ✅ Nível 20 reduz a recarga do grito em 20% (50 s → 40 s) (24/11/2026).
 - ✅ Indentação de `isSpellOrMagicDamage` arrumada (22/11/2026).
 - ✅ **Código morto** — removido (22/11/2026):
   - ~~`NEXT_TAVERN_SPAWN` / `MIN_TAVERN_INTERVAL` / `checkTavernRespawn` / `findImmersiveSpawnPos`~~ em `VillageWarriorSpawner` (e os imports que só eles usavam)
@@ -216,7 +216,7 @@ Continua rodando todo tick (é barato), mas só chama `setItemSlot` quando o slo
 - ✅ `build_jar.bat` (22/11/2026): lista o jar gerado de verdade (`EpicVanguard <versão> [1.20.1].jar`) e o `PATH` do Java do launcher agora funciona (antes a variável era expandida antes de ser definida).
 - ✅ `scratch_test_nbt.java` movido para `tools/dev/InspectStructureNbt.java.txt` (22/11/2026) (ferramenta de inspeção de NBT de estruturas; não compila com o mod).
 - ✅ `forge.logging.console.level` em `info` (22/11/2026).
-- 🟢 CI no GitHub Actions rodando `./gradlew build` e `./gradlew runGameTestServer` a cada push. Agora dá: o Epic Fight vem do CurseMaven.
+- ✅ CI no GitHub Actions (`.github/workflows/build.yml`): `build` + `runGameTestServer` a cada push, com o jar como artefato (24/11/2026).
 
 ---
 
@@ -234,38 +234,39 @@ Continua rodando todo tick (é barato), mas só chama `setItemSlot` quando o slo
 
 Achados de uma nova leitura do código. A 1.0.19 já foi publicada com eles; os 🟠 valem entrar na 1.0.20.
 
-### 🟠 9.1 Corneta pode mandar atacar os animais de outro jogador
+### ✅ 9.1 Corneta pode mandar atacar os animais de outro jogador — corrigido (24/11/2026): recusa pets de qualquer dono, cavalos domados, aldeões, golens de ferro/neve e suportes de armadura
 `VanguardHornItem.isValidOrderTarget` só protege os pets **do próprio dono**. Em multiplayer dá para mandar os companheiros matarem o lobo, gato ou cavalo domado de outro jogador.
 **Correção:** recusar qualquer `OwnableEntity` com dono e `AbstractHorse` domado (e talvez aldeões, para evitar clique errado).
 
-### 🟠 9.2 Corneta "erra" quando um companheiro está na frente
+### ✅ 9.2 Corneta "erra" quando um companheiro está na frente — corrigido (24/11/2026): o raio atravessa alvos inválidos
 O raio pega a primeira criatura na mira. Se for um dos seus companheiros (comum: eles andam na sua frente), o alvo é inválido e a corneta vira "reagrupar" em vez de "atacar".
 **Correção:** o filtro do raio deve ignorar seus companheiros e os alvos inválidos, e seguir até a próxima criatura.
 
-### 🟠 9.3 Livro diz que a poção deixa o frasco vazio
+### ✅ 9.3 Livro diz que a poção deixa o frasco vazio — corrigido (o livro já diz que o frasco é descartado)
 A página "Comida e Cura" diz "deixando o frasco vazio", mas `WarriorHealingHelper` descarta o frasco (e a tigela dos ensopados). Corrigir o texto do livro.
 
-### 🟢 9.4 Recrutar com moedas só registra o companheiro depois de até 10 s
+### ✅ 9.4 Recrutar com moedas só registra o companheiro depois de até 10 s — corrigido (24/11/2026)
 `PacketRecruitWarrior` não chama `updateSavedData()`. O `/companions` não mostra o recruta nesse intervalo, e se o servidor cair antes ele não entra no registro (o resgate do modo Seguir não o acha). Chamar `updateSavedData()` ao recrutar (moedas e prisioneiro).
 
-### 🟢 9.5 Moedas na mão secundária não contam
+### ✅ 9.5 Moedas na mão secundária não contam — corrigido (24/11/2026)
 `countGoldCoins`/`consumeGoldCoins` só olham `getInventory().items`. Moedas no offhand ficam de fora do contrato.
 
-### 🟢 9.6 Pacote de abrir GUI ainda manda o `boolean` inútil (2.3)
+### ✅ 9.6 Pacote de abrir GUI ainda manda o `boolean` inútil (2.3) — corrigido antes do upload da 1.0.20 (protocolo continua "6")
 O protocolo foi para "6" na 1.0.20 (merge com o trabalho da nuvem). Se o campo sair antes do upload da 1.0.20, não precisa de outro aumento depois.
 
 ### 🟢 9.7 Auto-equipar: casos a conferir no jogo
 - Com uma arma de duas mãos do Epic Fight (montante, lança), ele ainda coloca escudo na mão secundária se ela estiver vazia. Conferir se atrapalha a animação; se sim, não equipar escudo com arma de duas mãos.
 - Armaduras de mod com habilidade especial e pouca armadura são trocadas por outras com mais armadura (comportamento esperado, mas vale citar no livro).
-- No modo "só úteis", ele pega várias cópias da mesma peça melhor (compara só com a equipada, não com a mochila).
+- ~~No modo "só úteis", ele pega várias cópias da mesma peça melhor~~: o modo "só úteis" saiu (24/11/2026); a coleta é só ligada (tudo) ou desligada (nada).
+- ✅ O Arqueiro não recebe mais escudo na mão secundária (24/11/2026).
 
 ### 🟢 9.8 Mapas de cooldown de fala nunca são limpos
 `WarriorSpeechSystem` guarda cooldowns em mapas estáticos (por dono, por gatilho e por chunk) que só crescem durante a sessão do servidor. Pequeno, mas dá para limpar entradas velhas de vez em quando.
 
-### 🟢 9.9 Contagem da corneta
+### ✅ 9.9 Contagem da corneta — corrigido (24/11/2026): quem está de Guarda agora vai até o alvo da corneta (ignora o raio do posto enquanto a ordem vale) e volta ao posto depois
 A mensagem "N companheiros avançam" conta quem está em Guarda, mas eles largam o alvo se ele estiver a mais de 8 blocos do ponto de guarda. Contar só quem vai de fato, ou deixar Guarda fora da ordem de ataque.
 
-### 🟢 9.10 GameTests para o que entrou na 1.0.19
+### ✅ 9.10 GameTests para o que entrou na 1.0.19 — feito (24/11/2026): `Release120Tests` (auto-equipar, coleta, corneta, regra da Guarda, drops da morte, nível 20)
 Auto-equipar (troca e devolve a peça antiga), filtro "só úteis", `pruneForgotten`, migração do `VillageWarriorSavedData` por dimensão, `setDirty` só com mudança, e a corneta (alvo válido / inválido).
 
 ---
@@ -277,3 +278,19 @@ Auto-equipar (troca e devolve a peça antiga), filtro "só úteis", `pruneForgot
 3. 4.1 (migração do `DATA_NAME`) e config com `ForgeConfigSpec`
 4. Divisão da `WarriorCompanionEntity`, GameTests e README
 5. Novas mecânicas: escolha de especialização (3.3), auto-equipar (3.4), ordens rápidas (3.5)
+
+---
+
+## 10. Revisão de 24/11/2026
+
+### ✅ 10.1 Guarda hesitava antes de atacar — corrigido
+A escolha de alvo (`AggressiveTargetGoal`, alcance de 32 blocos) achava monstros longe do posto, e o combate largava qualquer alvo a mais de 8 blocos do posto. O guerreiro mirava, andava, largava, voltava ao posto e mirava de novo. Agora as duas partes usam `canEngageFromGuard` (10 blocos corpo a corpo, 20 com arco, +2 de folga para quem já luta, +6 contra quem atacou o guarda; ordem da Corneta sem limite). Também: a órbita (strafe) volta a perseguir quando o alvo se afasta e o bote recalcula o caminho a cada 4 ticks.
+
+### ✅ 10.2 Armadura ia para a mão principal — corrigido
+`EpicFightCompat.isEpicFightWeapon` aceitava qualquer item com capacidade do Epic Fight, e armadura tem categoria `NOT_WEAPON`. Com a mão vazia, o auto-equipar colocava o capacete velho na mão. Agora `NOT_WEAPON`/`FIST` não contam e `ArmorItem` nunca é arma.
+
+### ✅ 10.3 Tela Minha Companhia e formações — feito (24/11/2026)
+- Tela `MyCompanyScreen` (tecla J): lista do `CompanionSavedData` com dados ao vivo para quem está carregado. Ações em `CompanyManager` (servidor confere o dono; anti-spam de 5 ticks): chamar, chamar todos, postura (só carregado), formação. Pacotes `PacketCompanyAction` (C→S) e `PacketCompanyList` (S→C); protocolo "7".
+- Formações (`WarriorFormation`): Livre, Coluna, Linha, Círculo, por dono, salvas no `CompanionSavedData`. O `FollowOwnerGoal` anda até o lugar (ordem por UUID entre os companheiros em Seguir a até 24 blocos) e o passeio à toa fica desligado em formação.
+- 🟢 Ideias para depois: ícone/cabeça do companheiro na linha, filtro por dimensão, botão "ir até ele" (como `/companions goto`) para operadores.
+

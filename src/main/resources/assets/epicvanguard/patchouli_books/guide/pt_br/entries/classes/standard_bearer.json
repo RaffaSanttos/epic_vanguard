@@ -1,0 +1,19 @@
+{
+  "name": "Porta-estandarte",
+  "icon": "epicvanguard:standard_bearer_companion_spawn_egg",
+  "category": "epicvanguard:classes",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:entity",
+      "entity": "epicvanguard:standard_bearer_companion",
+      "scale": 0.9,
+      "name": "Porta-estandarte",
+      "text": "Leva um estandarte para a batalha e mantém todos de pé."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(li)Com um $(item)estandarte$() na mão secundária, dá $(thing)Resistência I$() a você, a ele mesmo e aos seus companheiros a até 8 blocos.$(li)Sem estandarte não há aura: deixe um na mochila.$(li)Talentos: aura maior (+4 blocos) e Velocidade I na aura.$(br2)$(thing)Grito de guerra$(): Reagrupar. Veja $(l:epicvanguard:classes/warcries)Gritos de Guerra$()."
+    }
+  ]
+}

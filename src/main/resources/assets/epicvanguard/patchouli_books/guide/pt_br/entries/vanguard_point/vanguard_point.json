@@ -16,7 +16,7 @@
     {
       "type": "patchouli:text",
       "title": "Chegada",
-      "text": "Fogos de artifício e cornetas anunciam a chegada. Um novo $(thing)Berserker, Guardião ou Duelista$() aparece ao lado do Vanguard Point.$(br2)As 20 moedas só pagam a marcha. Para ficar com o mercenário, você ainda precisa $(l:epicvanguard:getting_started/recruiting)contratá-lo$() normalmente.$(br2)A marcha só avança com o chunk carregado."
+      "text": "Fogos de artifício e cornetas anunciam a chegada. Um novo mercenário de classe sorteada aparece ao lado do Vanguard Point.$(br2)As 20 moedas só pagam a marcha. Para ficar com o mercenário, você ainda precisa $(l:epicvanguard:getting_started/recruiting)contratá-lo$() normalmente.$(br2)A marcha só avança com o chunk carregado."
     }
   ]
 }

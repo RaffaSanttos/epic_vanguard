@@ -7,7 +7,7 @@
     {
       "type": "patchouli:text",
       "title": "Warrior Houses",
-      "text": "Small $(thing)warrior houses$() are scattered across the Overworld. When you get close to one for the first time, a mercenary is waiting there to be hired.$(br2)Every mercenary belongs to one of the classes: $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardian$() or $(l:epicvanguard:classes/duelist)Duelist$()."
+      "text": "Small $(thing)warrior houses$() are scattered across the Overworld. When you get close to one for the first time, a mercenary is waiting there to be hired.$(br2)Every mercenary belongs to one of the classes: $(l:epicvanguard:classes/berserker)Berserker$(), $(l:epicvanguard:classes/guardian)Guardian$(), $(l:epicvanguard:classes/duelist)Duelist$(), $(l:epicvanguard:classes/archer)Archer$() or $(l:epicvanguard:classes/standard_bearer)Standard-bearer$()."
     },
     {
       "type": "patchouli:text",

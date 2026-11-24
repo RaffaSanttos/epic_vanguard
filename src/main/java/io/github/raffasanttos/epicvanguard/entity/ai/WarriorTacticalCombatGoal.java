@@ -61,18 +61,10 @@ public class WarriorTacticalCombatGoal extends Goal {
                 warrior.clearCombatTarget();
                 return false;
             }
-            if (warrior.getCombatMode() == 1 && warrior.getGuardPos() != null) { // Guarda
-                if (warrior.getTarget() != null) {
-                    double distToGuard = warrior.getTarget().distanceToSqr(
-                            warrior.getGuardPos().getX() + 0.5D,
-                            warrior.getGuardPos().getY(),
-                            warrior.getGuardPos().getZ() + 0.5D
-                    );
-                    if (distToGuard > 64.0D) {
-                        warrior.clearCombatTarget();
-                        return false;
-                    }
-                }
+            // Guarda: mesma regra da escolha de alvo (canEngageFromGuard)
+            if (!warrior.canEngageFromGuard(warrior.getTarget())) {
+                warrior.clearCombatTarget();
+                return false;
             }
         }
 
@@ -102,6 +94,10 @@ public class WarriorTacticalCombatGoal extends Goal {
             return false;
         }
         LivingEntity target = warrior.getTarget();
+        if (target != null && !warrior.canEngageFromGuard(target, 2.0D)) {
+            warrior.clearCombatTarget(); // Guarda: o alvo fugiu para longe do posto
+            return false;
+        }
         return target != null && target.isAlive();
     }
 
@@ -207,6 +203,13 @@ public class WarriorTacticalCombatGoal extends Goal {
                     forward = -0.50F; // recua para não tomar golpe de graça!
                 }
 
+                // O alvo se afastou durante a órbita: volta a correr atrás dele em vez de ficar rodando parado
+                if (distSq > reachSqr + 12.0D) {
+                    phase = Phase.APPROACH;
+                    pathRecalcTicks = 0;
+                    break;
+                }
+
                 float strafeSpeed = (warrior.getSpecialization() == WarriorCompanionEntity.SPEC_DUELIST) ? 0.85F : 0.60F;
                 warrior.getMoveControl().strafe(forward, strafeSpeed * strafeDir);
 
@@ -223,8 +226,11 @@ public class WarriorTacticalCombatGoal extends Goal {
             }
 
             case LUNGE -> {
-                // Bote ofensivo: acelera direto ao alcance de ataque
-                warrior.getNavigation().moveTo(target, speedModifier * 1.25D);
+                // Bote ofensivo: acelera direto ao alcance de ataque (recalcula o caminho a cada 4 ticks, não todo tick)
+                if (--pathRecalcTicks <= 0 || warrior.getNavigation().isDone()) {
+                    pathRecalcTicks = 4;
+                    warrior.getNavigation().moveTo(target, speedModifier * 1.25D);
+                }
 
                 if (distSq <= reachSqr && attackCooldown <= 0) {
                     // Executa o golpe

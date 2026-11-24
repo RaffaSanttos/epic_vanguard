@@ -10,17 +10,27 @@
     },
     {
       "type": "patchouli:text",
-      "text": "Weapon enchantments work: $(thing)Sharpness$(), $(thing)Smite$(), $(thing)Knockback$(), $(thing)Fire Aspect$() and others. Weapons lose durability like yours and break when worn out.$(br2)Companions $(thing)pick up items$() they walk over, including what you drop for them. See the $(thing)Hand$() button."
+      "text": "Weapon enchantments work: $(thing)Sharpness$(), $(thing)Smite$(), $(thing)Knockback$(), $(thing)Fire Aspect$() and others. Weapons lose durability like yours and break when worn out.$(br2)Companions $(thing)pick up items$() they walk over, including what you drop for them, when the $(thing)Hand$() button is on."
     },
     {
       "type": "patchouli:text",
       "title": "Auto-Equip",
-      "text": "Put better gear in the $(thing)backpack$() and the companion wears it on their own after a moment out of combat: armor by protection, melee weapon by damage, a shield if the off-hand is empty. The old piece goes back to the backpack.$(br2)They never swap out a bow or crossbow, and skip nearly broken items."
+      "text": "Put better gear in the $(thing)backpack$() and the companion wears it on their own after a moment out of combat: armor by protection, melee weapon by damage, a shield if the off-hand is empty (a banner for the Standard-bearer, nothing for the Archer). The old piece goes back to the backpack.$(br2)They never swap out a bow or crossbow, and skip nearly broken items."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Wear and Repair",
+      "text": "Armor, shields and weapons wear out like yours. When an item drops below $(thing)10%$() durability you get a warning in chat. If it breaks, they swap to the best spare from the backpack on their own.$(br2)$(thing)Repair$(): while sitting to rest (see $(l:epicvanguard:vanguard_point/base_life)Life at the Base$()) they use materials from the backpack, the same ones an anvil takes (ingots, leather, planks...). Each one restores a quarter of the item."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Bows and Crossbows",
+      "text": "Any companion with a $(item)bow$() or $(item)crossbow$() in the main hand and $(item)arrows$() in the backpack fights at range, keeping distance from the target. Their arrows never hit you or your other companions.$(br2)Out of arrows in a fight, they draw the best melee weapon from the backpack. The $(l:epicvanguard:classes/archer)Archer$() goes back to the bow when there are arrows again."
     },
     {
       "type": "patchouli:text",
       "title": "If They Fall",
-      "text": "When a companion dies, everything they carried drops on the ground. The companion is gone for good, so keep them fed and well armored."
+      "text": "When a companion dies you get a $(thing)chat message$() with their name, how they died and the coordinates and dimension where their items dropped. Everything they carried is on the ground there (grave mods also catch these items).$(br2)The companion is gone for good, so keep them fed and well armored."
     }
   ]
 }

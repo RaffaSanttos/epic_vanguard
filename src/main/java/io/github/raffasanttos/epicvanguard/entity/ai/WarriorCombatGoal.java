@@ -30,18 +30,10 @@ public class WarriorCombatGoal extends MeleeAttackGoal {
                 warrior.clearCombatTarget();
                 return false;
             }
-            if (warrior.getCombatMode() == 1 && warrior.getGuardPos() != null) { // 1 = Guarda
-                if (warrior.getTarget() != null) {
-                    double distToGuard = warrior.getTarget().distanceToSqr(
-                            warrior.getGuardPos().getX() + 0.5D,
-                            warrior.getGuardPos().getY(),
-                            warrior.getGuardPos().getZ() + 0.5D
-                    );
-                    if (distToGuard > 64.0D) { // > 8 blocos do ponto de guarda
-                        warrior.clearCombatTarget();
-                        return false;
-                    }
-                }
+            // Guarda: mesma regra da escolha de alvo (canEngageFromGuard)
+            if (!warrior.canEngageFromGuard(warrior.getTarget())) {
+                warrior.clearCombatTarget();
+                return false;
             }
             if (warrior.getTarget() != null && warrior.getTarget() == warrior.getOwner()) {
                 warrior.setTarget(null);
@@ -60,18 +52,10 @@ public class WarriorCombatGoal extends MeleeAttackGoal {
                 warrior.clearCombatTarget();
                 return false;
             }
-            if (warrior.getCombatMode() == 1 && warrior.getGuardPos() != null) {
-                if (warrior.getTarget() != null) {
-                    double distToGuard = warrior.getTarget().distanceToSqr(
-                            warrior.getGuardPos().getX() + 0.5D,
-                            warrior.getGuardPos().getY(),
-                            warrior.getGuardPos().getZ() + 0.5D
-                    );
-                    if (distToGuard > 64.0D) {
-                        warrior.clearCombatTarget();
-                        return false;
-                    }
-                }
+            // Guarda: com 2 blocos de folga para não largar o alvo na beirada do raio
+            if (!warrior.canEngageFromGuard(warrior.getTarget(), 2.0D)) {
+                warrior.clearCombatTarget();
+                return false;
             }
         }
         return super.canContinueToUse();

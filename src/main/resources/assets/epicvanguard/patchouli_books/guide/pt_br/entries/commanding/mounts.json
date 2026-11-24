@@ -1,0 +1,16 @@
+{
+  "name": "Montarias",
+  "icon": "minecraft:saddle",
+  "category": "epicvanguard:commanding",
+  "sortnum": 6,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Quando você monta num cavalo, companheiros em $(thing)Seguir$() procuram um cavalo livre a até 16 blocos e montam junto. O cavalo precisa ser $(thing)seu$(): domado por você e com sela. Cavalos selvagens e de outros jogadores ficam de fora.$(br2)Quando você desce, eles descem também. Numa luta, quem luta corpo a corpo desce para lutar e quem tem arco continua atirando montado. Se você cavalgar para longe, cada companheiro se teleporta junto com o cavalo."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Dica: deixe alguns cavalos selados na base, um para cada companheiro. Burros e mulas também servem.$(br2)Companheiros em $(thing)Guarda$() ou $(thing)Parado$() nunca montam: eles seguram a posição.$(br2)O servidor pode desligar as montarias ou mudar o raio de busca na config."
+    }
+  ]
+}
