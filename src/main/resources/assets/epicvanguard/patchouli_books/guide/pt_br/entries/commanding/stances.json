@@ -10,7 +10,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(thing)Guarda$(): defende o ponto escolhido. Ataca inimigos a até uns 10 blocos do posto (20 com arco) e depois volta para ele. Inimigos mais longe são ignorados, a não ser que você mande atacar com a $(l:epicvanguard:commanding/war_horn)Corneta$().$(br2)$(thing)Parado$(): fica imóvel e não persegue nada, mas se defende.$(br2)Em $(thing)Guarda$() ou $(thing)Parado$() eles nunca se teleportam até você. Use o $(l:epicvanguard:reference/commands)comando de chamar$() para trazê-los de volta."
+      "text": "$(thing)Guarda$(): defende o ponto escolhido. Ataca inimigos a até uns 16 blocos do posto (24 com arco) e depois volta para ele. Inimigos mais longe são ignorados, a não ser que você mande atacar com a $(l:epicvanguard:commanding/war_horn)Corneta$().$(br2)$(thing)Parado$(): fica imóvel e não persegue nada, mas se defende.$(br2)Em $(thing)Guarda$() ou $(thing)Parado$() eles nunca se teleportam até você. Use o $(l:epicvanguard:reference/commands)comando de chamar$() para trazê-los de volta."
     },
     {
       "type": "patchouli:text",

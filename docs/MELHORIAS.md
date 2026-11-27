@@ -284,7 +284,9 @@ Auto-equipar (troca e devolve a peça antiga), filtro "só úteis", `pruneForgot
 ## 10. Revisão de 24/11/2026
 
 ### ✅ 10.1 Guarda hesitava antes de atacar — corrigido
-A escolha de alvo (`AggressiveTargetGoal`, alcance de 32 blocos) achava monstros longe do posto, e o combate largava qualquer alvo a mais de 8 blocos do posto. O guerreiro mirava, andava, largava, voltava ao posto e mirava de novo. Agora as duas partes usam `canEngageFromGuard` (10 blocos corpo a corpo, 20 com arco, +2 de folga para quem já luta, +6 contra quem atacou o guarda; ordem da Corneta sem limite). Também: a órbita (strafe) volta a perseguir quando o alvo se afasta e o bote recalcula o caminho a cada 4 ticks.
+A escolha de alvo (`AggressiveTargetGoal`, alcance de 32 blocos) achava monstros longe do posto, e o combate largava qualquer alvo a mais de 8 blocos do posto. O guerreiro mirava, andava, largava, voltava ao posto e mirava de novo. Agora as duas partes usam `canEngageFromGuard` (16 blocos corpo a corpo, 24 com arco, configuráveis, +2 de folga para quem já luta, +6 contra quem atacou o guarda; ordem da Corneta sem limite). Também: a órbita (strafe) volta a perseguir quando o alvo se afasta e o bote recalcula o caminho a cada 4 ticks.
+
+Depois: a hesitação de perto vinha do `WarriorTacticalCombatGoal`: ao chegar a ~2,6 blocos ele parava a navegação e rodeava o alvo por 20 a 45 ticks antes do primeiro bote (e 20 ticks de novo a cada bote que errava). Agora o primeiro contato vai direto ao bote, a órbita entre combos dura 4 a 18 ticks, ele revida na hora quem está batendo nele, e colado no alvo (< 3 blocos) anda direto até ele em vez de depender do pathfinding.
 
 ### ✅ 10.2 Armadura ia para a mão principal — corrigido
 `EpicFightCompat.isEpicFightWeapon` aceitava qualquer item com capacidade do Epic Fight, e armadura tem categoria `NOT_WEAPON`. Com a mão vazia, o auto-equipar colocava o capacete velho na mão. Agora `NOT_WEAPON`/`FIST` não contam e `ArmorItem` nunca é arma.

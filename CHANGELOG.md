@@ -25,7 +25,8 @@
 - War Horn: companions in **Guard** now chase the ordered target even far from their post, then go back to it.
 - War Horn: it no longer accepts other players' tamed animals, villagers, golems or armor stands, and it aims past your own companions instead of turning the order into "regroup".
 - Coins in the off hand now count when hiring.
-- Fixed: companions in **Guard** hesitated before attacking (aimed, took a few steps, stopped, went back). They now only pick enemies up to about 10 blocks from the post (20 with a bow) and chase them smoothly.
+- Fixed: companions in **Guard** hesitated before attacking (aimed, took a few steps, stopped, went back). They now pick enemies up to about 16 blocks from the post (24 with a bow, both configurable: `guard.guardMeleeRadius` / `guard.guardRangedRadius`) and chase them smoothly.
+- Fixed: up close, companions circled the enemy for 1 to 2 seconds before the first hit (looked, stepped, stopped). They now strike right away; the short circling only happens between combos, and they hit back at once when the enemy is attacking them.
 - Fixed: auto-equip could put a piece of **armor in the main hand** when it was empty (Epic Fight marks armor with a "not a weapon" category, which counted as a weapon). Armor no longer fits the weapon slots.
 - Level 20 now really shortens the warcry cooldown by 20% (50 s → 40 s), as the skill tree promised.
 - Items of a dead companion now go through Forge's drop event, so grave mods (Gravestone, Corail Tombstone) keep them.
@@ -65,7 +66,8 @@
 - Corneta: quem está de **Guarda** agora persegue o alvo mandado mesmo longe do posto, e depois volta para ele.
 - Corneta: não aceita mais animais domesticados de outros jogadores, aldeões, golens nem suportes de armadura, e mira através dos seus companheiros em vez de virar "reagrupar".
 - Moedas na mão secundária agora contam na contratação.
-- Corrigido: companheiros de **Guarda** hesitavam antes de atacar (miravam, davam uns passos, paravam, voltavam). Agora só escolhem inimigos a até uns 10 blocos do posto (20 com arco) e vão até eles sem travar.
+- Corrigido: companheiros de **Guarda** hesitavam antes de atacar (miravam, davam uns passos, paravam, voltavam). Agora escolhem inimigos a até uns 16 blocos do posto (24 com arco, os dois na config: `guard.guardMeleeRadius` / `guard.guardRangedRadius`) e vão até eles sem travar.
+- Corrigido: de perto, os companheiros rodeavam o inimigo por 1 a 2 segundos antes do primeiro golpe (olhavam, davam um passo, paravam). Agora atacam na hora; a volta curta em torno do inimigo só acontece entre um combo e outro, e eles revidam na hora quando o inimigo está batendo neles.
 - Corrigido: o auto-equipar podia colocar uma **armadura na mão principal** quando ela estava vazia (o Epic Fight marca armadura com a categoria "não é arma", que contava como arma). Armadura não entra mais nos slots de arma.
 - O nível 20 agora reduz de verdade a recarga do grito em 20% (50 s → 40 s), como a árvore prometia.
 - Os itens de um companheiro morto agora passam pelo evento de drops do Forge, então mods de lápide (Gravestone, Corail Tombstone) guardam esses itens.

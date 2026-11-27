@@ -183,13 +183,13 @@ public class WarriorTacticalCombatGoal extends Goal {
                         pathRecalcTicks = 10;
                         warrior.getNavigation().moveTo(target, speedModifier);
                     }
-                    // Ao atingir a zona de combate (raio de 3 a 4 blocos), entra em órbita de strafe
+                    // Chegou perto: parte direto para o golpe. Antes ele parava para rodear o alvo por 1 a 2 s
+                    // logo no primeiro contato (olhava, andava, parava), o que parecia hesitação.
+                    // A órbita agora só acontece entre um combo e outro.
                     if (distSq <= reachSqr + 4.5D) {
-                        warrior.getNavigation().stop();
-                        phase = Phase.STRAFE;
-                        int spec = warrior.getSpecialization();
-                        // Berserker passa menos tempo circulando; Guardião e Duelista analisam mais
-                        phaseTicks = (spec == WarriorCompanionEntity.SPEC_BERSERKER) ? 10 + warrior.getRandom().nextInt(10) : 20 + warrior.getRandom().nextInt(25);
+                        phase = Phase.LUNGE;
+                        phaseTicks = 25;
+                        pathRecalcTicks = 0;
                     }
                 }
             }
@@ -218,8 +218,10 @@ public class WarriorTacticalCombatGoal extends Goal {
                     strafeDir = -strafeDir;
                 }
 
+                // O alvo está batendo nele (ou colado): não fica rodeando, revida
+                boolean pressed = target instanceof net.minecraft.world.entity.Mob m && m.getTarget() == warrior && distSq <= reachSqr + 1.5D;
                 // Quando o timer da órbita termina ou se o ataque já estiver pronto
-                if (phaseTicks <= 0 && attackCooldown <= 0) {
+                if ((phaseTicks <= 0 || pressed) && attackCooldown <= 0) {
                     phase = Phase.LUNGE;
                     phaseTicks = 25;
                 }
@@ -227,7 +229,11 @@ public class WarriorTacticalCombatGoal extends Goal {
 
             case LUNGE -> {
                 // Bote ofensivo: acelera direto ao alcance de ataque (recalcula o caminho a cada 4 ticks, não todo tick)
-                if (--pathRecalcTicks <= 0 || warrior.getNavigation().isDone()) {
+                if (distSq <= 9.0D) {
+                    // Colado no alvo o pathfinding costuma "chegar" e parar a meio bloco: anda direto até ele
+                    warrior.getNavigation().stop();
+                    warrior.getMoveControl().setWantedPosition(target.getX(), target.getY(), target.getZ(), speedModifier * 1.25D);
+                } else if (--pathRecalcTicks <= 0 || warrior.getNavigation().isDone()) {
                     pathRecalcTicks = 4;
                     warrior.getNavigation().moveTo(target, speedModifier * 1.25D);
                 }
@@ -260,9 +266,10 @@ public class WarriorTacticalCombatGoal extends Goal {
                         }
                     }
                 } else if (phaseTicks <= 0) {
-                    // Se não alcançou a tempo, reseta para strafe
-                    phase = Phase.STRAFE;
-                    phaseTicks = 20;
+                    // Não alcançou a tempo: volta a perseguir (longe) ou tenta de novo logo (perto)
+                    phase = (distSq > reachSqr + 4.5D) ? Phase.APPROACH : Phase.LUNGE;
+                    phaseTicks = 25;
+                    pathRecalcTicks = 0;
                 }
             }
 
@@ -281,7 +288,10 @@ public class WarriorTacticalCombatGoal extends Goal {
                     strafeDir = -strafeDir; // Inverte o sentido do próximo ataque
                     maxCombo = getMaxComboForSpec();
                     phase = (distSq > reachSqr + 5.0D) ? Phase.APPROACH : Phase.STRAFE;
-                    phaseTicks = 20;
+                    // Órbita curta entre combos (Berserker quase não espera)
+                    phaseTicks = (warrior.getSpecialization() == WarriorCompanionEntity.SPEC_BERSERKER)
+                            ? 4 + warrior.getRandom().nextInt(6) : 8 + warrior.getRandom().nextInt(10);
+                    pathRecalcTicks = 0;
                 }
             }
         }

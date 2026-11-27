@@ -19,6 +19,8 @@ public final class EpicVanguardConfig {
     private static final ForgeConfigSpec.IntValue CONTRACT_DAYS;
     private static final ForgeConfigSpec.DoubleValue FOLLOW_TELEPORT_DISTANCE;
     private static final ForgeConfigSpec.DoubleValue COMBAT_LEASH_DISTANCE;
+    private static final ForgeConfigSpec.DoubleValue GUARD_MELEE_RADIUS;
+    private static final ForgeConfigSpec.DoubleValue GUARD_RANGED_RADIUS;
     private static final ForgeConfigSpec.IntValue FOLLOW_TELEPORT_DELAY_TICKS;
     private static final ForgeConfigSpec.IntValue REGISTRY_MEMORY_DAYS;
     private static final ForgeConfigSpec.IntValue CONTRACT_COINS;
@@ -93,6 +95,15 @@ public final class EpicVanguardConfig {
         DUELIST_DODGE_CHANCE = b
                 .comment("Chance (0-1) that a Duelist dodges a hit completely.")
                 .defineInRange("duelistDodgeChance", 0.18D, 0.0D, 1.0D);
+        b.pop();
+
+        b.comment("Guard stance").push("guard");
+        GUARD_MELEE_RADIUS = b
+                .comment("Blocks from the guard post within which a melee companion on Guard attacks monsters.")
+                .defineInRange("guardMeleeRadius", 16.0D, 4.0D, 32.0D);
+        GUARD_RANGED_RADIUS = b
+                .comment("Same, for companions fighting with a bow or crossbow.")
+                .defineInRange("guardRangedRadius", 24.0D, 4.0D, 32.0D);
         b.pop();
 
         b.comment("Ranged combat (bows and crossbows)").push("ranged");
@@ -225,6 +236,9 @@ public final class EpicVanguardConfig {
         double leash = loaded() ? COMBAT_LEASH_DISTANCE.get() : 32.0D;
         return Math.max(leash, followTeleportDistance() + 1.0D);
     }
+
+    public static double guardMeleeRadius() { return loaded() ? GUARD_MELEE_RADIUS.get() : 16.0D; }
+    public static double guardRangedRadius() { return loaded() ? GUARD_RANGED_RADIUS.get() : 24.0D; }
 
     public static int followTeleportDelayTicks() {
         return loaded() ? FOLLOW_TELEPORT_DELAY_TICKS.get() : 40;

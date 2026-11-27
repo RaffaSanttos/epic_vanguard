@@ -706,9 +706,14 @@ public class WarriorCompanionEntity extends PathfinderMob {
         this.updateSavedData();
     }
 
-    /** Até onde quem está de Guarda vai atrás de um alvo, medido a partir do posto (corpo a corpo / arco). */
-    public static final double GUARD_CHASE_RADIUS = 10.0D;
-    public static final double GUARD_RANGED_RADIUS = 20.0D;
+    /** Até onde quem está de Guarda vai atrás de um alvo, medido a partir do posto (config: guardMeleeRadius / guardRangedRadius). */
+    public static double guardChaseRadius() {
+        return io.github.raffasanttos.epicvanguard.config.EpicVanguardConfig.guardMeleeRadius();
+    }
+
+    public static double guardRangedRadius() {
+        return io.github.raffasanttos.epicvanguard.config.EpicVanguardConfig.guardRangedRadius();
+    }
 
     /**
      * Regra única da Guarda, usada pela escolha de alvo E pelos goals de combate. Antes a escolha de alvo achava
@@ -721,7 +726,7 @@ public class WarriorCompanionEntity extends PathfinderMob {
         if (target == null || !this.isRecruited() || this.getCombatMode() != MODE_GUARD || this.guardPos == null) return true;
         if (target == this.hornOrderTarget && target.isAlive()) return true; // ordem da Corneta vai até o fim
         double r = (io.github.raffasanttos.epicvanguard.entity.util.WarriorRangedHelper.canFightAtRange(this)
-                ? GUARD_RANGED_RADIUS : GUARD_CHASE_RADIUS) + extra;
+                ? guardRangedRadius() : guardChaseRadius()) + extra;
         if (target == this.getLastHurtByMob()) r += 6.0D; // quem atacou o guarda pode ser respondido um pouco mais longe
         return target.distanceToSqr(Vec3.atBottomCenterOf(this.guardPos)) <= r * r;
     }

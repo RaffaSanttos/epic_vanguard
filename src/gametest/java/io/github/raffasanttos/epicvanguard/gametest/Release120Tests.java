@@ -136,6 +136,9 @@ public class Release120Tests {
         w.setGuardPos(zombie.blockPosition());
         check(helper, w.canEngageFromGuard(zombie), "alvo junto do posto deveria ser aceito");
 
+        w.setGuardPos(zombie.blockPosition().offset(12, 0, 0)); // posto a 12 blocos: dentro do raio padrão (16)
+        check(helper, w.canEngageFromGuard(zombie), "monstro a 12 blocos do posto deveria ser atacado");
+
         w.setGuardPos(zombie.blockPosition().offset(30, 0, 0)); // posto a 30 blocos do zumbi
         check(helper, !w.canEngageFromGuard(zombie), "alvo longe do posto não deveria ser escolhido");
 

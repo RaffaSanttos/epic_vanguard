@@ -56,7 +56,8 @@ Na primeira vez o Gradle baixa o Epic Fight pelo CurseMaven (não precisa mais d
 - [ ] Corneta mirando num aldeão, golem, suporte de armadura ou pet de outro jogador: não vira alvo.
 - [ ] Arqueiro com escudo na mochila: não equipa o escudo.
 - [ ] Contratar com as moedas só na mão secundária.
-- [ ] Guarda: com um zumbi a ~6 blocos do posto ele vai direto atacar, sem parar no meio; com um zumbi a ~20 blocos ele não sai do posto.
+- [ ] Guarda: com um zumbi a ~12 blocos do posto ele vai direto atacar, sem parar no meio; com um zumbi a ~25 blocos ele não sai do posto.
+- [ ] Combate de perto: quando um zumbi chega colado, o companheiro bate na hora (sem rodear antes do primeiro golpe).
 - [ ] Auto-equipar com a mão principal vazia e armadura na mochila: a armadura não vai para a mão.
 - [ ] Livro: páginas do Arqueiro, Porta-estandarte, Montarias, Desgaste e Reparo, Arco e Besta e Descanso aparecem e o texto cabe na página.
 - [ ] Tecla J abre a Minha Companhia com todos os companheiros (inclusive um deixado de Guarda longe, que aparece como "longe").
